@@ -1,6 +1,14 @@
-# Orosign Smart Contracts
+# Orosign
 
-Smart Contracts of Orosign project
+Orosign is a self-managed custodial service for semi-retails customers that empowers our customers to organize and manage their digital assets.
+
+Orosign is designed for ease of use, even for non-crypto users. You can send, receive or store various cryptocurrencies and digital assets safely and securely with Orosign mobile app.
+
+Orosign allows customers to create their own multisig wallet with minimal cost as well as customize the smart contract to meet their own needs. Off-chain signing and verification are used to secure the signing process. All proofs are verified independently with secp256k1 thus the fund is safe as long as the majority private keys are safe
+
+## Orosign Smart Contracts
+
+Smart Contracts is a part of Orosign project, these smart contracts are using to verify ECDSA proof from off-chain signers.
 
 ## Orosign on BNB testnet
 
