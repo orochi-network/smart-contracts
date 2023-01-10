@@ -29,3 +29,9 @@ Deployer: 0xD62f6bCc528AAb6D21d63102bE4Fdf60C83dCDE5
 - [0xdeeAdC11B67d0cDcBF2869E74563d84dd21B4631](https://testnet.bscscan.com/address/0xdeeadc11b67d0cdcbf2869e74563d84dd21b4631#code) BigO Test Token
 - [0x405f8f3dD47F2C0f0eB7016925dAac45d2b6B2ed](https://testnet.bscscan.com/address/0x405f8f3dD47F2C0f0eB7016925dAac45d2b6B2ed#code) OrosignV1 Implement
 - [0x078fD9549d5EFB0d4133b5DE879A72ad44FC535b](https://testnet.bscscan.com/address/0x078fD9549d5EFB0d4133b5DE879A72ad44FC535b#code) OrosignMasterV1
+
+## License
+
+Orochi Network's source code licensed under [Apache License 2.0](./LICENSE)
+
+_built with ❤️_
