@@ -125,6 +125,11 @@ contract OrosignMasterV1 is Permissioned {
    * View section
    ********************************************************/
 
+  // Get chain id of Orosign Master V1
+  function getChainId() external view returns (uint256) {
+    return _chainId;
+  }
+
   // Get fee to generate a new wallet
   function getFee() external view returns (uint256) {
     return _walletFee;
