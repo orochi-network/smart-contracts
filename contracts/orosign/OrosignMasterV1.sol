@@ -104,21 +104,12 @@ contract OrosignMasterV1 is Permissioned {
     uint256[] memory roles_,
     uint256 threshold_
   ) external payable requireFee returns (address) {
-    address newWallet = _implementation.cloneDeterministic(_getUniqueSalt(msg.sender, salt));
+    address newWallet = _implementation.cloneDeterministic(_packing(msg.sender, salt));
     emit CreateNewWallet(newWallet, salt, threshold_);
     if (!IOrosignV1(newWallet).init(_chainId, users_, roles_, threshold_)) {
       revert UnableToInitNewWallet(newWallet);
     }
     return newWallet;
-  }
-
-  /*******************************************************
-   * Private section
-   ********************************************************/
-  function _getUniqueSalt(address creatorAddress, uint256 salt) private pure returns (bytes32 packedSalt) {
-    assembly {
-      packedSalt := xor(shl(160, salt), creatorAddress)
-    }
   }
 
   /*******************************************************
@@ -151,7 +142,12 @@ contract OrosignMasterV1 is Permissioned {
   }
 
   // Calculate deterministic address
+  function packingSalt(address creatorAddress, uint256 salt) external pure returns (uint256) {
+    return uint256(_packing(creatorAddress, salt));
+  }
+
+  // Calculate deterministic address
   function predictWalletAddress(address creatorAddress, uint256 salt) public view returns (address) {
-    return _implementation.predictDeterministicAddress(_getUniqueSalt(creatorAddress, salt));
+    return _implementation.predictDeterministicAddress(_packing(creatorAddress, salt));
   }
 }

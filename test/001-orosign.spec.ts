@@ -88,6 +88,19 @@ describe('OrosignV1', function () {
     expect(await contractMultiSig.isPermissions(admin3.address, PERMISSION_OBSERVER)).to.eq(true);
   });
 
+  it('user list should be correct', async () => {
+    const users = [creator, voter, executor, viewer, admin1, admin2, admin3].map((e) => e.address);
+    const roles = [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, ROLE_VIEWER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN];
+    const userList = await contractMultiSig.getAllUsers();
+    for (let i = 0; i < userList.length; i += 1) {
+      let value = userList[i].toHexString().replace(/^0x/gi, '').padStart(64, '0');
+      const permission = BigNumber.from(`0x${value.substring(0, 24)}`);
+      const address = `0x${value.substring(24, 64)}`;
+      expect(permission.toNumber()).to.eq(roles[i]);
+      expect(users[i].toLowerCase()).to.eq(address);
+    }
+  });
+
   it('should able to deploy multisig master correctly', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
     contractMultiSigMaster = <OrosignMasterV1>(

@@ -25,11 +25,11 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Permission constants
   // View permission only
   uint256 private constant PERMISSION_OBSERVER = 1;
-  // Create a new proposal and do qick transfer
+  // Create a new ECDSA proof
   uint256 private constant PERMISSION_CREATE = 2;
-  // Allowed to sign quick transfer message and vote a proposal
+  // Allowed to sign ECDSA proof
   uint256 private constant PERMISSION_VOTE = 4;
-  // Permission to execute the proposal
+  // Permission to execute transaction
   uint256 private constant PERMISSION_EXECUTE = 8;
 
   // Secure timeout
@@ -101,7 +101,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   function executeTransaction(
     bytes[] memory signatures,
     bytes memory txData
-  ) external onlyAllow(PERMISSION_CREATE | PERMISSION_EXECUTE) returns (bool) {
+  ) external onlyAllow(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
     address[] memory signedAddresses = new address[](signatures.length);
     for (uint256 i = 0; i < signatures.length; i += 1) {

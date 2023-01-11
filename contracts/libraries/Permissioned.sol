@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.8.4 <0.9.0;
-import 'hardhat/console.sol';
 
 // Top sender to process further
 error AccessDenied();
@@ -23,6 +22,9 @@ contract Permissioned {
   // Active time of user
   mapping(address => uint256) private _activeTime;
 
+  // User list
+  mapping(uint256 => address) private _userList;
+
   // Total number of users
   uint256 private _totalUser;
 
@@ -31,7 +33,6 @@ contract Permissioned {
 
   // Only allow users who has given role trigger smart contract
   modifier onlyAllow(uint256 permissions) {
-    console.log(msg.sender, permissions, isPermissions(msg.sender, permissions));
     if (!isPermissions(msg.sender, permissions)) {
       revert AccessDenied();
     }
@@ -61,6 +62,7 @@ contract Permissioned {
       revert RecordLengthMismatch();
     }
     for (uint256 i = 0; i < users_.length; i += 1) {
+      _userList[i] = users_[i];
       _userRole[users_[i]] = roles_[i];
       emit TransferRole(address(0), users_[i], roles_[i]);
     }
@@ -82,6 +84,14 @@ contract Permissioned {
     _activeTime[newUser] = block.timestamp + lockDuration;
     emit TransferRole(msg.sender, newUser, role);
     return _userRole[newUser];
+  }
+
+  // Packing adderss and uint96 to a single bytes32
+  // 96 bits b ++ 160 bits a
+  function _packing(address a, uint256 b) internal pure returns (bytes32 packed) {
+    assembly {
+      packed := xor(shl(160, b), a)
+    }
   }
 
   /*******************************************************
@@ -106,6 +116,14 @@ contract Permissioned {
   // Check a permission is granted to user
   function isPermissions(address checkAddress, uint256 checkPermissions) public view returns (bool) {
     return isUser(checkAddress) && ((_userRole[checkAddress] & checkPermissions) > 0);
+  }
+
+  // Get list of users include its permission
+  function getAllUsers() public view returns (uint256[] memory userList) {
+    userList = new uint256[](_totalUser);
+    for (uint256 i = 0; i < _totalUser; i += 1) {
+      userList[i] = uint256(_packing(_userList[i], _userRole[_userList[i]]));
+    }
   }
 
   // Get total number of user
