@@ -25,6 +25,9 @@ contract Permissioned {
   // User list
   mapping(uint256 => address) private _userList;
 
+  // Reversed map
+  mapping(address => uint256) private _reversedUserList;
+
   // Total number of users
   uint256 private _totalUser;
 
@@ -63,6 +66,7 @@ contract Permissioned {
     }
     for (uint256 i = 0; i < users_.length; i += 1) {
       _userList[i] = users_[i];
+      _reversedUserList[users_[i]] = i;
       _userRole[users_[i]] = roles_[i];
       emit TransferRole(address(0), users_[i], roles_[i]);
     }
@@ -82,6 +86,8 @@ contract Permissioned {
     // Assign role for new user
     _userRole[newUser] = role;
     _activeTime[newUser] = block.timestamp + lockDuration;
+    // Replace old user in user list
+    _userList[_reversedUserList[msg.sender]] = newUser;
     emit TransferRole(msg.sender, newUser, role);
     return _userRole[newUser];
   }
