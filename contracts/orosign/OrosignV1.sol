@@ -72,7 +72,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     }
     uint256 totalSinger = 0;
     for (uint256 i = 0; i < users_.length; i += 1) {
-      if (roles_[i] & PERMISSION_VOTE > 0) {
+      if (roles_[i] & PERMISSION_VOTE == PERMISSION_VOTE) {
         totalSinger += 1;
       }
     }

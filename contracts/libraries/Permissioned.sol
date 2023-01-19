@@ -121,7 +121,7 @@ contract Permissioned {
 
   // Check a permission is granted to user
   function isPermissions(address checkAddress, uint256 checkPermissions) public view returns (bool) {
-    return isUser(checkAddress) && ((_userRole[checkAddress] & checkPermissions) > 0);
+    return isUser(checkAddress) && ((_userRole[checkAddress] & checkPermissions) == checkPermissions);
   }
 
   // Get list of users include its permission
