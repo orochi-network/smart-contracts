@@ -17,6 +17,25 @@ error ProofExpired(uint256 votingDeadline, uint256 currentTimestamp);
 error InsecuredTimeout(uint256 duration);
 
 interface IOrosignV1 {
+  struct PackedTransaction {
+    uint256 chainId;
+    uint256 currentBlockTime;
+    uint256 votingDeadline;
+    uint256 nonce;
+    address target;
+    uint256 value;
+    bytes data;
+  }
+
+  struct OrosignV1Metadata {
+    uint256 chainId;
+    uint256 nonce;
+    uint256 totalSigner;
+    uint256 threshold;
+    uint256 securedTimeout;
+    uint256 blockTimestamp;
+  }
+
   function init(
     uint256 chainId_,
     address[] memory users_,

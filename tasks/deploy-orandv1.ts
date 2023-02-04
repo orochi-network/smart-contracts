@@ -13,7 +13,7 @@ task('deploy:orosign', 'Deploy multi signature v1 contract').setAction(
     const accounts = await hre.ethers.getSigners();
 
     const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
-    const bigOToken = await deployer.contractDeploy('test/BigO', []);
+    // const bigOToken = await deployer.contractDeploy('test/BigO', []);
     const orosignV1 = <OrosignV1>await deployer.contractDeploy('OrosignV1/OrosignV1', []);
     const orosignMaster = <OrosignMasterV1>await deployer.contractDeploy(
       'OrosignV1/OrosignMasterV1',

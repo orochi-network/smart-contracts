@@ -3,8 +3,8 @@ pragma solidity >=0.8.4 <0.9.0;
 pragma abicoder v2;
 
 import '@openzeppelin/contracts/utils/Address.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '../interfaces/IOrosignV1.sol';
-import '../libraries/Verifier.sol';
 import '../libraries/Bytes.sol';
 import '../libraries/Permissioned.sol';
 
@@ -20,7 +20,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   using Bytes for bytes;
 
   // Verifiy digital signature
-  using Verifier for bytes;
+  using ECDSA for bytes;
+  using ECDSA for bytes32;
 
   // Permission constants
   // View permission only
@@ -70,16 +71,16 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     if (threshold_ <= 0 || threshold_ > users_.length) {
       revert InvalidThreshold();
     }
-    uint256 totalSinger = 0;
+    uint256 totalSigner = 0;
     for (uint256 i = 0; i < users_.length; i += 1) {
       if (roles_[i] & PERMISSION_VOTE == PERMISSION_VOTE) {
-        totalSinger += 1;
+        totalSigner += 1;
       }
     }
     // These values can be set once
     _chainId = chainId_;
     _threshold = threshold_;
-    _totalSigner = totalSinger;
+    _totalSigner = totalSigner;
     return true;
   }
 
@@ -105,7 +106,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 totalSigned = 0;
     address[] memory signedAddresses = new address[](signatures.length);
     for (uint256 i = 0; i < signatures.length; i += 1) {
-      address signer = txData.verifySerialized(signatures[i]);
+      address signer = txData.toEthSignedMessageHash().recover(signatures[i]);
+      // txData.verifySerialized(signatures[i]);
       // Each signer only able to be counted once
       if (isPermissions(signer, PERMISSION_VOTE) && _isNotInclude(signedAddresses, signer)) {
         signedAddresses[totalSigned] = signer;
@@ -117,34 +119,27 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert ThresholdNotPassed(totalSigned, _threshold);
     }
     // Decode packed data from packed transaction
-    (
-      uint256 chainId,
-      uint256 votingDeadline,
-      uint256 nonce,
-      address target,
-      uint256 value,
-      bytes memory data
-    ) = decodePackedTransaction(txData);
+    PackedTransaction memory packedTransaction = decodePackedTransaction(txData);
     // Chain Id should be the same
-    if (chainId != _chainId) {
-      revert ProofChainIdMismatch(chainId);
+    if (packedTransaction.chainId != _chainId) {
+      revert ProofChainIdMismatch(packedTransaction.chainId);
     }
     // Nonce should be equal
-    if (nonce != _nonce) {
-      revert ProofInvalidNonce(nonce, _nonce);
+    if (packedTransaction.nonce != _nonce) {
+      revert ProofInvalidNonce(packedTransaction.nonce, _nonce);
     }
     // Voting should not be passed
-    if (votingDeadline < block.timestamp) {
-      revert ProofExpired(votingDeadline, block.timestamp);
+    if (packedTransaction.votingDeadline < packedTransaction.currentBlockTime) {
+      revert ProofExpired(packedTransaction.votingDeadline, packedTransaction.currentBlockTime);
     }
     // Increasing nonce
-    _nonce = nonce + 1;
-    if (target.isContract()) {
-      target.functionCallWithValue(data, value);
+    _nonce = packedTransaction.nonce + 1;
+    if (packedTransaction.target.isContract()) {
+      packedTransaction.target.functionCallWithValue(packedTransaction.data, packedTransaction.value);
     } else {
-      payable(address(target)).transfer(value);
+      payable(address(packedTransaction.target)).transfer(packedTransaction.value);
     }
-    emit ExecutedTransaction(target, value, data);
+    emit ExecutedTransaction(packedTransaction.target, packedTransaction.value, packedTransaction.data);
     return true;
   }
 
@@ -167,19 +162,18 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Decode data from packed transaction
   function decodePackedTransaction(
     bytes memory txData
-  )
-    public
-    pure
-    returns (uint256 chainId, uint256 votingDeadline, uint256 nonce, address target, uint256 value, bytes memory data)
-  {
+  ) public view returns (PackedTransaction memory packedTransaction) {
     uint256 packagedNonce = txData.readUint256(0);
-    target = txData.readAddress(32);
-    value = txData.readUint256(52);
-    data = txData.readBytes(84, txData.length - 84);
-    //  ChainId ++ votingDeadline ++ Nonce
-    chainId = (packagedNonce >> 192);
-    votingDeadline = (packagedNonce >> 128) & 0xffffffffffffffff;
-    nonce = packagedNonce & 0xffffffffffffffffffffffffffffffff;
+    packedTransaction = PackedTransaction({
+      target: txData.readAddress(32),
+      value: txData.readUint256(52),
+      data: txData.readBytes(84, txData.length - 84),
+      //  ChainId ++ votingDeadline ++ Nonce
+      chainId: (packagedNonce >> 192),
+      currentBlockTime: block.timestamp,
+      votingDeadline: (packagedNonce >> 128) & 0xffffffffffffffff,
+      nonce: packagedNonce & 0xffffffffffffffffffffffffffffffff
+    });
   }
 
   // Get packed transaction to create raw ECDSA proof
@@ -196,13 +190,24 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     return abi.encodePacked(uint64(chainId), uint64(block.timestamp + timeout), uint128(_nonce), target, value, data);
   }
 
-  // Get valid nonce
-  function getNonce() external view returns (uint256) {
-    return _nonce;
+  // Get packed transaction to create raw ECDSA proof
+  function quickEncodePackedTransaction(
+    address target,
+    uint256 value,
+    bytes memory data
+  ) external view returns (bytes memory) {
+    return abi.encodePacked(_chainId, uint64(block.timestamp + 1 days), uint128(_nonce), target, value, data);
   }
 
-  // Get total number of signers in this Multi Signature
-  function getTotalSigner() external view returns (uint256) {
-    return _totalSigner;
+  // Get multisig metadata
+  function getMetadata() external view returns (OrosignV1Metadata memory result) {
+    result = OrosignV1Metadata({
+      chainId: _chainId,
+      nonce: _nonce,
+      totalSigner: _totalSigner,
+      threshold: _threshold,
+      securedTimeout: SECURED_TIMEOUT,
+      blockTimestamp: block.timestamp
+    });
   }
 }

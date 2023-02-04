@@ -79,7 +79,7 @@ describe('OrosignV1', function () {
       ),
     );
 
-    expect((await contractMultiSig.getTotalSigner()).toNumber()).to.eq(4);
+    expect((await contractMultiSig.getMetadata()).totalSigner.toNumber()).to.eq(4);
   });
 
   it('permission should be correct', async () => {
