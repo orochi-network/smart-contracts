@@ -26,12 +26,12 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Permission constants
   // View permission only
   uint256 private constant PERMISSION_OBSERVER = 1;
-  // Create a new ECDSA proof
-  uint256 private constant PERMISSION_CREATE = 2;
   // Allowed to sign ECDSA proof
-  uint256 private constant PERMISSION_VOTE = 4;
+  uint256 private constant PERMISSION_SIGN = 2;
   // Permission to execute transaction
-  uint256 private constant PERMISSION_EXECUTE = 8;
+  uint256 private constant PERMISSION_EXECUTE = 4;
+  // Allowed to propose a new transfer
+  uint256 private constant PERMISSION_CREATE = 8;
 
   // Secure timeout
   uint256 private constant SECURED_TIMEOUT = 3 days;
@@ -48,10 +48,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Required threshold for a proposal to be passed
   uint256 private _threshold;
 
-  // Receive payment
-  event InternalTransaction(address indexed from, address indexed to, uint256 indexed value);
-
-  // Qick transfer event
+  // Execute transaction event
   event ExecutedTransaction(address indexed target, uint256 indexed value, bytes indexed data);
 
   // This contract able to receive fund
@@ -64,21 +61,40 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256[] memory roles_,
     uint256 threshold_
   ) external override returns (bool) {
-    // We should able to init
-    if (_init(users_, roles_) == 0) {
-      revert UnableToInitContract();
-    }
-    if (threshold_ <= 0 || threshold_ > users_.length) {
-      revert InvalidThreshold();
-    }
     uint256 totalSigner = 0;
-    for (uint256 i = 0; i < users_.length; i += 1) {
-      if (roles_[i] & PERMISSION_VOTE == PERMISSION_VOTE) {
-        totalSigner += 1;
-      }
-    }
+    uint256 totalExecutor = 0;
+    uint256 totalCreator = 0;
     // These values can be set once
     _chainId = chainId_;
+    // We should able to init
+    if (!_init(users_, roles_)) {
+      revert UnableToInitContract();
+    }
+    for (uint256 i = 0; i < users_.length; i += 1) {
+      // Equal to isPermission(users_[i], PERMISSION_SIGN)
+      if ((roles_[i] & PERMISSION_SIGN) == PERMISSION_SIGN) {
+        totalSigner += 1;
+      }
+      if ((roles_[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
+        totalExecutor += 1;
+      }
+      if ((roles_[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
+        totalCreator += 1;
+      }
+    }
+    // Threshold <= totalSigner
+    // Theshold > 0
+    if (0 == threshold_ || threshold_ > totalSigner) {
+      revert InvalidThreshold(threshold_, totalSigner);
+    }
+
+    // totalSigner > 0
+    // totalExecutor > 0
+    // totalCreator > 0
+    if (0 == totalSigner || 0 == totalExecutor || 0 == totalCreator) {
+      revert InvalidPermission(totalSigner, totalExecutor, totalCreator);
+    }
+
     _threshold = threshold_;
     _totalSigner = totalSigner;
     return true;
@@ -88,53 +104,66 @@ contract OrosignV1 is IOrosignV1, Permissioned {
    * User section
    ********************************************************/
   // Transfer role to new user
-  function transferRole(address newUser) external onlyUser {
+  function transferRole(address newUser) external onlyUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT
     // We prevent them to vote and transfer permission to the other
     // and vote again
-    _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    return _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
   }
 
   /*******************************************************
-   * Creator section
+   * Executor section
    ********************************************************/
   // Transfer with signed ECDSA proofs instead of on-chain voting
   function executeTransaction(
-    bytes[] memory signatures,
-    bytes memory txData
+    bytes memory creatorSignature,
+    bytes[] memory signatureList,
+    bytes memory message
   ) external onlyAllow(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
-    address[] memory signedAddresses = new address[](signatures.length);
-    for (uint256 i = 0; i < signatures.length; i += 1) {
-      address signer = txData.toEthSignedMessageHash().recover(signatures[i]);
-      // txData.verifySerialized(signatures[i]);
+    address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
+    address[] memory signedAddresses = new address[](signatureList.length);
+
+    // If there is NO creator proof revert
+    if (!isPermission(creatorAddress, PERMISSION_CREATE)) {
+      revert ProofNoCreator();
+    }
+
+    // Couting total signed proof
+    for (uint256 i = 0; i < signatureList.length; i += 1) {
+      address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       // Each signer only able to be counted once
-      if (isPermissions(signer, PERMISSION_VOTE) && _isNotInclude(signedAddresses, signer)) {
-        signedAddresses[totalSigned] = signer;
+      if (isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
+        signedAddresses[totalSigned] = recoveredSigner;
         totalSigned += 1;
       }
     }
+
     // Number of votes weren't passed the threshold
     if (totalSigned < _threshold) {
       revert ThresholdNotPassed(totalSigned, _threshold);
     }
     // Decode packed data from packed transaction
-    PackedTransaction memory packedTransaction = decodePackedTransaction(txData);
+    PackedTransaction memory packedTransaction = decodePackedTransaction(message);
+
     // Chain Id should be the same
     if (packedTransaction.chainId != _chainId) {
-      revert ProofChainIdMismatch(packedTransaction.chainId);
+      revert ProofChainIdMismatch(packedTransaction.chainId, _chainId);
     }
     // Nonce should be equal
     if (packedTransaction.nonce != _nonce) {
       revert ProofInvalidNonce(packedTransaction.nonce, _nonce);
     }
-    // Voting should not be passed
-    if (packedTransaction.votingDeadline < packedTransaction.currentBlockTime) {
+    // ECDSA proofs should not expired
+    if (packedTransaction.currentBlockTime > packedTransaction.votingDeadline) {
       revert ProofExpired(packedTransaction.votingDeadline, packedTransaction.currentBlockTime);
     }
+
     // Increasing nonce
     _nonce = packedTransaction.nonce + 1;
-    if (packedTransaction.target.isContract()) {
+
+    // If contract then use CALL otherwise do normal transfer
+    if (packedTransaction.target.code.length > 0) {
       packedTransaction.target.functionCallWithValue(packedTransaction.data, packedTransaction.value);
     } else {
       payable(address(packedTransaction.target)).transfer(packedTransaction.value);
@@ -162,18 +191,21 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Decode data from packed transaction
   function decodePackedTransaction(
     bytes memory txData
-  ) public view returns (PackedTransaction memory packedTransaction) {
+  ) public view returns (PackedTransaction memory decodedTransaction) {
     uint256 packagedNonce = txData.readUint256(0);
-    packedTransaction = PackedTransaction({
+    decodedTransaction = PackedTransaction({
+      // Packed nonce
+      // ChainId 64 bits ++ votingDeadline 64 bits ++ Nonce 128 bits
+      chainId: (packagedNonce >> 192),
+      votingDeadline: (packagedNonce >> 128) & 0xffffffffffffffff,
+      nonce: packagedNonce & 0xffffffffffffffffffffffffffffffff,
+      // Transaction detail
       target: txData.readAddress(32),
       value: txData.readUint256(52),
       data: txData.readBytes(84, txData.length - 84),
-      //  ChainId ++ votingDeadline ++ Nonce
-      chainId: (packagedNonce >> 192),
-      currentBlockTime: block.timestamp,
-      votingDeadline: (packagedNonce >> 128) & 0xffffffffffffffff,
-      nonce: packagedNonce & 0xffffffffffffffffffffffffffffffff
+      currentBlockTime: block.timestamp
     });
+    return decodedTransaction;
   }
 
   // Get packed transaction to create raw ECDSA proof
@@ -183,7 +215,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     address target,
     uint256 value,
     bytes memory data
-  ) external view returns (bytes memory) {
+  ) public view returns (bytes memory) {
     if (timeout > SECURED_TIMEOUT) {
       revert InsecuredTimeout(timeout);
     }
@@ -196,7 +228,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return abi.encodePacked(_chainId, uint64(block.timestamp + 1 days), uint128(_nonce), target, value, data);
+    return encodePackedTransaction(_chainId, 1 days, target, value, data);
   }
 
   // Get multisig metadata
@@ -209,5 +241,6 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       securedTimeout: SECURED_TIMEOUT,
       blockTimestamp: block.timestamp
     });
+    return result;
   }
 }

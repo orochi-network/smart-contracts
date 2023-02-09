@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.8.4 <0.9.0;
 
-// Top sender to process further
-error AccessDenied();
-// Only allow registered users
-error OnlyUserAllowed();
-// Prevent contract to be reinit
-error OnlyAbleToInitOnce();
-// Data length mismatch between two arrays
-error RecordLengthMismatch();
-// Invalid address
-error InvalidAddress();
-
 contract Permissioned {
+  // Top sender to process further
+  error AccessDenied();
+  // Only allow registered users
+  error OnlyUserAllowed();
+  // Prevent contract to be reinit
+  error OnlyAbleToInitOnce();
+  // Data length mismatch between two arrays
+  error RecordLengthMismatch();
+  // Invalid address
+  error InvalidAddress();
+
   // Permission constants
   uint256 internal constant PERMISSION_NONE = 0;
 
@@ -36,7 +36,7 @@ contract Permissioned {
 
   // Only allow users who has given role trigger smart contract
   modifier onlyAllow(uint256 permissions) {
-    if (!isPermissions(msg.sender, permissions)) {
+    if (!isPermission(msg.sender, permissions)) {
       revert AccessDenied();
     }
     _;
@@ -55,7 +55,7 @@ contract Permissioned {
    ********************************************************/
 
   // Init method which can be called once
-  function _init(address[] memory users_, uint256[] memory roles_) internal returns (uint256) {
+  function _init(address[] memory users_, uint256[] memory roles_) internal returns (bool) {
     // Make sure that we only init this once
     if (_totalUser > 0) {
       revert OnlyAbleToInitOnce();
@@ -71,11 +71,11 @@ contract Permissioned {
       emit TransferRole(address(0), users_[i], roles_[i]);
     }
     _totalUser = users_.length;
-    return users_.length;
+    return true;
   }
 
   // Transfer role to new user
-  function _transferRole(address newUser, uint256 lockDuration) internal returns (uint256) {
+  function _transferRole(address newUser, uint256 lockDuration) internal returns (bool) {
     // Receiver shouldn't be a zero address
     if (newUser == address(0)) {
       revert InvalidAddress();
@@ -89,14 +89,14 @@ contract Permissioned {
     // Replace old user in user list
     _userList[_reversedUserList[msg.sender]] = newUser;
     emit TransferRole(msg.sender, newUser, role);
-    return _userRole[newUser];
+    return true;
   }
 
   // Packing adderss and uint96 to a single bytes32
-  // 96 bits b ++ 160 bits a
-  function _packing(address a, uint256 b) internal pure returns (bytes32 packed) {
+  // 96 bits a ++ 160 bits b
+  function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
     assembly {
-      packed := xor(shl(160, b), a)
+      packed := or(shl(160, a), b)
     }
   }
 
@@ -120,15 +120,16 @@ contract Permissioned {
   }
 
   // Check a permission is granted to user
-  function isPermissions(address checkAddress, uint256 checkPermissions) public view returns (bool) {
-    return isUser(checkAddress) && ((_userRole[checkAddress] & checkPermissions) == checkPermissions);
+  function isPermission(address checkAddress, uint256 requiredPermission) public view returns (bool) {
+    return isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
   }
 
   // Get list of users include its permission
-  function getAllUsers() public view returns (uint256[] memory userList) {
+  function getAllUser() public view returns (uint256[] memory userList) {
     userList = new uint256[](_totalUser);
     for (uint256 i = 0; i < _totalUser; i += 1) {
-      userList[i] = uint256(_packing(_userList[i], _userRole[_userList[i]]));
+      address currentUser = _userList[i];
+      userList[i] = uint256(_packing(uint96(_userRole[currentUser]), currentUser));
     }
   }
 

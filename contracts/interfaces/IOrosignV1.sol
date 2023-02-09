@@ -1,22 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.8.4 <0.9.0;
 
-// Unable to init contract
-error UnableToInitContract();
-// Invalid threshold
-error InvalidThreshold();
-// Voting process was not pass the threshold
-error ThresholdNotPassed(uint256 signed, uint256 threshold);
-// Proof Chain ID mismatch
-error ProofChainIdMismatch(uint256 chainId);
-// Proof invalid nonce value
-error ProofInvalidNonce(uint256 inputNonce, uint256 requireNonce);
-// Proof expired
-error ProofExpired(uint256 votingDeadline, uint256 currentTimestamp);
-// Insecure timeout
-error InsecuredTimeout(uint256 duration);
-
 interface IOrosignV1 {
+  // Unable to init contract
+  error UnableToInitContract();
+  // Invalid threshold
+  error InvalidThreshold(uint256 threshold, uint256 totalSignature);
+  // Invalid permission
+  error InvalidPermission(uint256 totalSinger, uint256 totalExecutor, uint256 totalCreator);
+  // Voting process was not pass the threshold
+  error ThresholdNotPassed(uint256 signed, uint256 threshold);
+  // Proof Chain ID mismatch
+  error ProofChainIdMismatch(uint256 inputChainId, uint256 requiredChainId);
+  // Proof invalid nonce value
+  error ProofInvalidNonce(uint256 inputNonce, uint256 requiredNonce);
+  // Proof expired
+  error ProofExpired(uint256 votingDeadline, uint256 currentTimestamp);
+  // There is no creator proof in the signature list
+  error ProofNoCreator();
+  // Insecure timeout
+  error InsecuredTimeout(uint256 duration);
+
   struct PackedTransaction {
     uint256 chainId;
     uint256 currentBlockTime;

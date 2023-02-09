@@ -8,12 +8,12 @@ import { dayToSec, printAllEvents } from '../helpers/functions';
 
 // View permission only
 const PERMISSION_OBSERVER = 1;
-// Create a new proposal and do qick transfer
-const PERMISSION_CREATE = 2;
 // Allowed to sign execute transaction message and vote a proposal
-const PERMISSION_VOTE = 4;
+const PERMISSION_VOTE = 2;
 // Permission to execute the proposal
-const PERMISSION_EXECUTE = 8;
+const PERMISSION_EXECUTE = 4;
+// Create a new proposal and do qick transfer
+const PERMISSION_CREATE = 8;
 
 const UNIT = '1000000000000000000';
 
@@ -84,14 +84,14 @@ describe('OrosignV1', function () {
 
   it('permission should be correct', async () => {
     expect(await contractMultiSig.isUser(admin3.address)).to.eq(true);
-    expect(await contractMultiSig.isPermissions(admin3.address, PERMISSION_CREATE | PERMISSION_EXECUTE)).to.eq(true);
-    expect(await contractMultiSig.isPermissions(admin3.address, PERMISSION_OBSERVER)).to.eq(true);
+    expect(await contractMultiSig.isPermission(admin3.address, PERMISSION_CREATE | PERMISSION_EXECUTE)).to.eq(true);
+    expect(await contractMultiSig.isPermission(admin3.address, PERMISSION_OBSERVER)).to.eq(true);
   });
 
   it('user list should be correct', async () => {
     const users = [creator, voter, executor, viewer, admin1, admin2, admin3].map((e) => e.address);
     const roles = [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, ROLE_VIEWER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN];
-    const userList = await contractMultiSig.getAllUsers();
+    const userList = await contractMultiSig.getAllUser();
     for (let i = 0; i < userList.length; i += 1) {
       let value = userList[i].toHexString().replace(/^0x/gi, '').padStart(64, '0');
       const permission = BigNumber.from(`0x${value.substring(0, 24)}`);
@@ -125,7 +125,7 @@ describe('OrosignV1', function () {
     cloneMultiSig = <OrosignV1>(
       await deployer.contractAttach(
         'test/OrosignV1',
-        await contractMultiSigMaster.predictWalletAddress(deployerSigner.address, 1),
+        await contractMultiSigMaster.predictWalletAddress(1, deployerSigner.address),
       )
     );
   });
@@ -142,6 +142,7 @@ describe('OrosignV1', function () {
       await cloneMultiSig
         .connect(admin2)
         .executeTransaction(
+          await admin1.signMessage(utils.arrayify(tx)),
           [await admin1.signMessage(utils.arrayify(tx)), await admin2.signMessage(utils.arrayify(tx))],
           tx,
         ),
@@ -166,6 +167,7 @@ describe('OrosignV1', function () {
       await cloneMultiSig
         .connect(admin2)
         .executeTransaction(
+          await admin1.signMessage(utils.arrayify(tx)),
           [await admin1.signMessage(utils.arrayify(tx)), await admin2.signMessage(utils.arrayify(tx))],
           tx,
         ),
