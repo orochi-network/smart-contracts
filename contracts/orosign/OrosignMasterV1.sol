@@ -43,6 +43,9 @@ contract OrosignMasterV1 is Permissioned {
   // Upgrade implementation
   event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
 
+  // Set new fee
+  event UpdateFee(uint256 indexed timestamp, uint256 indexed oldFee, uint256 indexed newFee);
+
   // Request small fee to create new wallet, we prevent people spaming wallet
   modifier requireFee() {
     if (msg.value != _walletFee) {
@@ -94,12 +97,20 @@ contract OrosignMasterV1 is Permissioned {
   }
 
   /*******************************************************
-   * Operate section
+   * Operator section
    ********************************************************/
   // Upgrade new implementation
-  function upgradeImplementation(address newImplementation) external onlyAllow(PERMISSION_OPERATE) {
+  function upgradeImplementation(address newImplementation) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
     emit UpgradeImplementation(_implementation, newImplementation);
     _implementation = newImplementation;
+    return true;
+  }
+
+  // Allow operator to set new fee
+  function setFee(uint256 newFee) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
+    emit UpdateFee(block.timestamp, _walletFee, newFee);
+    _walletFee = newFee;
+    return true;
   }
 
   /*******************************************************
