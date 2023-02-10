@@ -1,0 +1,5 @@
+{
+  "bnbChainTest": { "orosign": "0x62CB261fA569ce3dC2b593C807971CedC38315EB" },
+  "bnbChain": { "orosign": "0xFa3f00DD545aA3D2Ca07aC704ba28a8B402DaE56" },
+  "ethereum": { "orosign": "0x9d979587911428A2780580f2DD2A04ce5c1fc90C" }
+}
