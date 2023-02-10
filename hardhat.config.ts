@@ -26,8 +26,24 @@ const compilers = ['0.8.7'].map((item: string) => ({
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
-    bnbtest: {
-      url: env.OROCHI_RPC,
+    ethereum: {
+      url: 'https://eth-mainnet.public.blastapi.io',
+      chainId: 1,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+        path: "m/44'/60'/0'/0",
+      },
+    },
+    bnbChain: {
+      url: 'https://bsc-dataseed3.binance.org',
+      chainId: 56,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+        path: "m/44'/60'/0'/0",
+      },
+    },
+    bnbChainTest: {
+      url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       accounts: {
         mnemonic: env.OROCHI_MNEMONIC,

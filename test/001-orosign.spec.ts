@@ -111,7 +111,7 @@ describe('OrosignV1', function () {
         [deployerSigner.address, deployerSigner.address],
         [1, 2],
         contractMultiSig.address,
-        0,
+        1000,
       )
     );
   });
@@ -119,7 +119,9 @@ describe('OrosignV1', function () {
   it('anyone could able to create new signature from multi signature master', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
     printAllEvents(
-      await contractMultiSigMaster.createWallet(1, [admin1.address, admin2.address], [ROLE_ADMIN, ROLE_ADMIN], 1),
+      await contractMultiSigMaster.createWallet(1, [admin1.address, admin2.address], [ROLE_ADMIN, ROLE_ADMIN], 1, {
+        value: await contractMultiSigMaster.getFee(),
+      }),
     );
 
     cloneMultiSig = <OrosignV1>(
@@ -128,6 +130,11 @@ describe('OrosignV1', function () {
         await contractMultiSigMaster.predictWalletAddress(1, deployerSigner.address),
       )
     );
+  });
+
+  it('operator should able to set fee', async () => {
+    await contractMultiSigMaster.setFee(0);
+    expect((await contractMultiSigMaster.getFee()).toNumber()).to.eq(0);
   });
 
   it('admin should able to perform execute transaction to transfer native token', async () => {
