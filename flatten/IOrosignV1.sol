@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// Root file: contracts/interfaces/IOrosignV1.sol
 pragma solidity >=0.8.4 <0.9.0;
 
 // Unable to init contract

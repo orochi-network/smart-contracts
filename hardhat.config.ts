@@ -25,6 +25,9 @@ const compilers = ['0.8.7'].map((item: string) => ({
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
+  gasReporter: {
+    enabled: true,
+  },
   networks: {
     ethereum: {
       url: 'https://eth-mainnet.public.blastapi.io',

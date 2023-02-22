@@ -9,7 +9,7 @@
     "coverage": "hardhat compile && hardhat coverage",
     "node:local": "hardhat node",
     "test": "hardhat test",
-    "flatten": "hardhat flatten > flatten/orosign.sol"
+    "flatten": "waffle flatten && node ./clean.js"
   },
   "keywords": [
     "vrf",
@@ -31,6 +31,7 @@
     "@typechain/hardhat": "^6.1.4",
     "@types/mocha": "^10.0.1",
     "chai": "^4.2.0",
+    "ethereum-waffle": "^4.0.10",
     "ethers": "^5.4.7",
     "hardhat": "^2.11.0",
     "hardhat-gas-reporter": "^1.0.8",
