@@ -200,14 +200,14 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     decodedTransaction = PackedTransaction({
       // Packed nonce
       // ChainId 64 bits ++ votingDeadline 64 bits ++ Nonce 128 bits
-      chainId: (packagedNonce >> 192),
-      votingDeadline: (packagedNonce >> 128) & 0xffffffffffffffff,
-      nonce: packagedNonce & 0xffffffffffffffffffffffffffffffff,
+      chainId: uint64(packagedNonce >> 192),
+      votingDeadline: uint64(packagedNonce >> 128),
+      currentBlockTime: uint96(block.timestamp),
+      nonce: uint128(packagedNonce),
       // Transaction detail
       target: txData.readAddress(32),
       value: txData.readUint256(52),
-      data: txData.readBytes(84, txData.length - 84),
-      currentBlockTime: block.timestamp
+      data: txData.readBytes(84, txData.length - 84)
     });
     return decodedTransaction;
   }
@@ -255,7 +255,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return _encodePackedTransaction(chainId, 1 days, target, value, data);
+    return _encodePackedTransaction(chainId, SECURED_TIMEOUT / 3, target, value, data);
   }
 
   // Get multisig metadata

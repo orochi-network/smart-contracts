@@ -1,35 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.8.4 <0.9.0;
 
-contract Permissioned {
-  // Top sender to process further
-  error AccessDenied();
-  // Only allow registered users
-  error OnlyUserAllowed();
-  // Prevent contract to be reinit
-  error OnlyAbleToInitOnce();
-  // Data length mismatch between two arrays
-  error RecordLengthMismatch();
-  // Invalid address
-  error InvalidAddress();
+// Top sender to process further
+error AccessDenied();
+// Only allow registered users
+error OnlyUserAllowed();
+// Prevent contract to be reinit
+error OnlyAbleToInitOnce();
+// Data length mismatch between two arrays
+error RecordLengthMismatch();
+// Invalid address
+error InvalidAddress();
 
+contract Permissioned {
   // Permission constants
   uint256 internal constant PERMISSION_NONE = 0;
 
   // Multi user data
-  mapping(address => uint256) private _userRole;
+  mapping(address => uint256) private role;
 
   // Active time of user
-  mapping(address => uint256) private _activeTime;
+  mapping(address => uint256) private activeTime;
 
   // User list
-  mapping(uint256 => address) private _userList;
+  mapping(uint256 => address) private user;
 
   // Reversed map
-  mapping(address => uint256) private _reversedUserList;
+  mapping(address => uint256) private reversedUserMap;
 
   // Total number of users
-  uint256 private _totalUser;
+  uint256 private totalUser;
 
   // Transfer role to new user event
   event TransferRole(address indexed preUser, address indexed newUser, uint256 indexed role);
@@ -55,22 +55,22 @@ contract Permissioned {
    ********************************************************/
 
   // Init method which can be called once
-  function _init(address[] memory users_, uint256[] memory roles_) internal {
+  function _init(address[] memory userList, uint256[] memory roleList) internal {
     // Make sure that we only init this once
-    if (_totalUser > 0) {
+    if (totalUser > 0) {
       revert OnlyAbleToInitOnce();
     }
     // Data length should match
-    if (users_.length != roles_.length) {
+    if (userList.length != roleList.length) {
       revert RecordLengthMismatch();
     }
-    for (uint256 i = 0; i < users_.length; i += 1) {
-      _userList[i] = users_[i];
-      _reversedUserList[users_[i]] = i;
-      _userRole[users_[i]] = roles_[i];
-      emit TransferRole(address(0), users_[i], roles_[i]);
+    for (uint256 i = 0; i < userList.length; i += 1) {
+      user[i] = userList[i];
+      reversedUserMap[userList[i]] = i;
+      role[userList[i]] = roleList[i];
+      emit TransferRole(address(0), userList[i], roleList[i]);
     }
-    _totalUser = users_.length;
+    totalUser = userList.length;
   }
 
   // Transfer role to new user
@@ -79,15 +79,15 @@ contract Permissioned {
     if (newUser == address(0)) {
       revert InvalidAddress();
     }
-    uint256 role = _userRole[msg.sender];
+    uint256 currentRole = role[msg.sender];
     // Remove user
-    _userRole[msg.sender] = PERMISSION_NONE;
+    role[msg.sender] = PERMISSION_NONE;
     // Assign role for new user
-    _userRole[newUser] = role;
-    _activeTime[newUser] = block.timestamp + lockDuration;
+    role[newUser] = currentRole;
+    activeTime[newUser] = block.timestamp + lockDuration;
     // Replace old user in user list
-    _userList[_reversedUserList[msg.sender]] = newUser;
-    emit TransferRole(msg.sender, newUser, role);
+    user[reversedUserMap[msg.sender]] = newUser;
+    emit TransferRole(msg.sender, newUser, currentRole);
   }
 
   // Packing adderss and uint96 to a single bytes32
@@ -104,12 +104,12 @@ contract Permissioned {
 
   // Is an address a user
   function _isUser(address checkAddress) internal view returns (bool) {
-    return _userRole[checkAddress] > PERMISSION_NONE && block.timestamp > _activeTime[checkAddress];
+    return role[checkAddress] > PERMISSION_NONE && block.timestamp > activeTime[checkAddress];
   }
 
   // Check a permission is granted to user
   function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return _isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+    return _isUser(checkAddress) && ((role[checkAddress] & requiredPermission) == requiredPermission);
   }
 
   /*******************************************************
@@ -118,12 +118,12 @@ contract Permissioned {
 
   // Read role of an user
   function getRole(address checkAddress) external view returns (uint256) {
-    return _userRole[checkAddress];
+    return role[checkAddress];
   }
 
   // Get active time of user
   function getActiveTime(address checkAddress) external view returns (uint256) {
-    return _activeTime[checkAddress];
+    return activeTime[checkAddress];
   }
 
   // Is an address a user
@@ -137,16 +137,16 @@ contract Permissioned {
   }
 
   // Get list of users include its permission
-  function getAllUser() external view returns (uint256[] memory userList) {
-    userList = new uint256[](_totalUser);
-    for (uint256 i = 0; i < _totalUser; i += 1) {
-      address currentUser = _userList[i];
-      userList[i] = uint256(_packing(uint96(_userRole[currentUser]), currentUser));
+  function getAllUser() external view returns (uint256[] memory allUser) {
+    allUser = new uint256[](totalUser);
+    for (uint256 i = 0; i < totalUser; i += 1) {
+      address currentUser = user[i];
+      allUser[i] = uint256(_packing(uint96(role[currentUser]), currentUser));
     }
   }
 
   // Get total number of user
   function getTotalUser() external view returns (uint256) {
-    return _totalUser;
+    return totalUser;
   }
 }

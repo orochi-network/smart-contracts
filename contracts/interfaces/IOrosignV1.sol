@@ -2,7 +2,7 @@
 pragma solidity >=0.8.4 <0.9.0;
 
 // Invalid threshold
-error InvalidThreshold(uint256 threshold, uint256 totalSignature);
+error InvalidThreshold(uint256 threshold, uint256 totalSigner);
 // Invalid permission
 error InvalidPermission(uint256 totalSinger, uint256 totalExecutor, uint256 totalCreator);
 // Voting process was not pass the threshold
@@ -21,10 +21,10 @@ error InsecuredTimeout(uint256 duration);
 interface IOrosignV1 {
   // Packed transaction
   struct PackedTransaction {
-    uint256 chainId;
-    uint256 currentBlockTime;
-    uint256 votingDeadline;
-    uint256 nonce;
+    uint64 chainId;
+    uint64 votingDeadline;
+    uint128 nonce;
+    uint96 currentBlockTime;
     address target;
     uint256 value;
     bytes data;
