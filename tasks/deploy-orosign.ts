@@ -2,19 +2,35 @@
 import fs from 'fs';
 import '@nomiclabs/hardhat-ethers';
 import { task } from 'hardhat/config';
+import { ethers } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Deployer } from '../helpers';
+import { Deployer, NATIVE_UNIT } from '../helpers';
 import { OrosignMasterV1, OrosignV1 } from '../typechain-types';
+import { env } from '../env';
 
-task('deploy:orosign', 'Deploy multi signature v1 contract').setAction(
+async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.Wallet> {
+  let { chainId, name } = await hre.ethers.provider.getNetwork();
+  if (chainId === 911) chainId = 0;
+  console.log(`Network: ${name} ChainID: ${chainId} Path: m/44'/60'/0'/0/${chainId}`);
+  return hre.ethers.Wallet.fromMnemonic(env.OROCHI_MNEMONIC, `m/44'/60'/0'/0/${chainId}`).connect(hre.ethers.provider);
+}
+
+task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
-    const accounts = await hre.ethers.getSigners();
+    const account = await getWallet(hre);
     const networkName = hre.network.name;
     const deploymentRecord = `${__dirname}/deployed.json`;
-    const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
+    const deployer: Deployer = Deployer.getInstance(hre).connect(account);
     let deploymentJson;
     let orosignV1;
     let orosignMasterV1;
+    const balance = await account.getBalance();
+
+    console.log(`Address: ${account.address} Balance: ${balance.div(NATIVE_UNIT).toString()}`);
+
+    if (balance.eq(0)) {
+      throw new Error('Insufficient balance');
+    }
 
     if (fs.existsSync(deploymentRecord)) {
       deploymentJson = JSON.parse(fs.readFileSync(`${__dirname}/deployed.json`).toString());
