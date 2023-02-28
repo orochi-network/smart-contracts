@@ -40,9 +40,9 @@ interface IOrosignV1 {
   }
 
   function init(
-    uint256 chainId_,
-    address[] memory users_,
-    uint256[] memory roles_,
-    uint256 threshold_
+    uint256 chainId,
+    address[] memory userList,
+    uint256[] memory roleList,
+    uint256 threshold
   ) external returns (bool);
 }

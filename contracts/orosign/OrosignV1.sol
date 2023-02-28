@@ -202,8 +202,9 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       // ChainId 64 bits ++ votingDeadline 64 bits ++ Nonce 128 bits
       chainId: uint64(packagedNonce >> 192),
       votingDeadline: uint64(packagedNonce >> 128),
-      currentBlockTime: uint96(block.timestamp),
       nonce: uint128(packagedNonce),
+      // This value isn't actuall existing in the proof
+      currentBlockTime: uint96(block.timestamp),
       // Transaction detail
       target: txData.readAddress(32),
       value: txData.readUint256(52),

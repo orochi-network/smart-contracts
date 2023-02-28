@@ -924,10 +924,10 @@ interface IOrosignV1 {
   }
 
   function init(
-    uint256 chainId_,
-    address[] memory users_,
-    uint256[] memory roles_,
-    uint256 threshold_
+    uint256 chainId,
+    address[] memory userList,
+    uint256[] memory roleList,
+    uint256 threshold
   ) external returns (bool);
 }
 
@@ -1007,16 +1007,17 @@ contract Permissioned {
   // Permission constants
   uint256 internal constant PERMISSION_NONE = 0;
 
-  // Multi user data
-  mapping(address => uint256) private role;
-
-  // Active time of user
-  mapping(address => uint256) private activeTime;
+  // User record
+  struct UserRecord {
+    uint96 role;
+    address userAddress;
+    uint256 activeTime;
+  }
 
   // User list
-  mapping(uint256 => address) private user;
+  mapping(uint256 => UserRecord) private user;
 
-  // Reversed map
+  // Maping user to Id
   mapping(address => uint256) private reversedUserMap;
 
   // Total number of users
@@ -1056,9 +1057,8 @@ contract Permissioned {
       revert RecordLengthMismatch();
     }
     for (uint256 i = 0; i < userList.length; i += 1) {
-      user[i] = userList[i];
+      user[i] = UserRecord({ role: uint96(roleList[i]), activeTime: 0, userAddress: userList[i] });
       reversedUserMap[userList[i]] = i;
-      role[userList[i]] = roleList[i];
       emit TransferRole(address(0), userList[i], roleList[i]);
     }
     totalUser = userList.length;
@@ -1070,15 +1070,13 @@ contract Permissioned {
     if (newUser == address(0)) {
       revert InvalidAddress();
     }
-    uint256 currentRole = role[msg.sender];
+    uint256 userId = reversedUserMap[msg.sender];
+    UserRecord memory currentUser = user[userId];
     // Remove user
-    role[msg.sender] = PERMISSION_NONE;
-    // Assign role for new user
-    role[newUser] = currentRole;
-    activeTime[newUser] = block.timestamp + lockDuration;
-    // Replace old user in user list
-    user[reversedUserMap[msg.sender]] = newUser;
-    emit TransferRole(msg.sender, newUser, currentRole);
+    currentUser.activeTime = block.timestamp + lockDuration;
+    currentUser.userAddress = msg.sender;
+    user[userId] = currentUser;
+    emit TransferRole(msg.sender, newUser, currentUser.role);
   }
 
   // Packing adderss and uint96 to a single bytes32
@@ -1093,28 +1091,28 @@ contract Permissioned {
    * Internal View section
    ********************************************************/
 
+  // Get user by address
+  function _getUser(address checkAddress) internal view returns (UserRecord memory userRecord) {
+    return user[reversedUserMap[checkAddress]];
+  }
+
   // Is an address a user
   function _isUser(address checkAddress) internal view returns (bool) {
-    return role[checkAddress] > PERMISSION_NONE && block.timestamp > activeTime[checkAddress];
+    return _getUser(checkAddress).role > PERMISSION_NONE && block.timestamp > _getUser(checkAddress).activeTime;
   }
 
   // Check a permission is granted to user
   function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return _isUser(checkAddress) && ((role[checkAddress] & requiredPermission) == requiredPermission);
+    return _isUser(checkAddress) && ((_getUser(checkAddress).role & requiredPermission) == requiredPermission);
   }
 
   /*******************************************************
    * View section
    ********************************************************/
 
-  // Read role of an user
-  function getRole(address checkAddress) external view returns (uint256) {
-    return role[checkAddress];
-  }
-
-  // Get active time of user
-  function getActiveTime(address checkAddress) external view returns (uint256) {
-    return activeTime[checkAddress];
+  // Get user by address
+  function getUser(address checkAddress) external view returns (UserRecord memory userRecord) {
+    return _getUser(checkAddress);
   }
 
   // Is an address a user
@@ -1131,8 +1129,8 @@ contract Permissioned {
   function getAllUser() external view returns (uint256[] memory allUser) {
     allUser = new uint256[](totalUser);
     for (uint256 i = 0; i < totalUser; i += 1) {
-      address currentUser = user[i];
-      allUser[i] = uint256(_packing(uint96(role[currentUser]), currentUser));
+      UserRecord memory currentUser = user[i];
+      allUser[i] = uint256(_packing(uint96(currentUser.role), currentUser.userAddress));
     }
   }
 
@@ -1347,8 +1345,9 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       // ChainId 64 bits ++ votingDeadline 64 bits ++ Nonce 128 bits
       chainId: uint64(packagedNonce >> 192),
       votingDeadline: uint64(packagedNonce >> 128),
-      currentBlockTime: uint96(block.timestamp),
       nonce: uint128(packagedNonce),
+      // This value isn't actuall existing in the proof
+      currentBlockTime: uint96(block.timestamp),
       // Transaction detail
       target: txData.readAddress(32),
       value: txData.readUint256(52),
