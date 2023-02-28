@@ -11,22 +11,23 @@ error OnlyAbleToInitOnce();
 error RecordLengthMismatch();
 // Invalid address
 error InvalidAddress();
+// Invalid address
+error InvalidReceiver(address userAddress);
 
 contract Permissioned {
   // Permission constants
   uint256 internal constant PERMISSION_NONE = 0;
 
-  // User record
-  struct UserRecord {
-    uint96 role;
-    address userAddress;
-    uint256 activeTime;
-  }
+  // Multi user data
+  mapping(address => uint256) private role;
+
+  // Active time of user
+  mapping(address => uint256) private activeTime;
 
   // User list
-  mapping(uint256 => UserRecord) private user;
+  mapping(uint256 => address) private user;
 
-  // Maping user to Id
+  // Reversed map
   mapping(address => uint256) private reversedUserMap;
 
   // Total number of users
@@ -44,8 +45,8 @@ contract Permissioned {
   }
 
   // Only allow listed users to trigger smart contract
-  modifier onlyUser() {
-    if (!_isUser(msg.sender)) {
+  modifier onlyActiveUser() {
+    if (!_isActiveUser(msg.sender)) {
       revert OnlyUserAllowed();
     }
     _;
@@ -66,27 +67,47 @@ contract Permissioned {
       revert RecordLengthMismatch();
     }
     for (uint256 i = 0; i < userList.length; i += 1) {
-      user[i] = UserRecord({ role: uint96(roleList[i]), activeTime: 0, userAddress: userList[i] });
+      // Store user's address -> user list
+      user[i] = userList[i];
+      // Mapping user address -> role
+      role[userList[i]] = roleList[i];
+      // Reversed mapp from address -> user's index
       reversedUserMap[userList[i]] = i;
       emit TransferRole(address(0), userList[i], roleList[i]);
     }
     totalUser = userList.length;
   }
 
-  // Transfer role to new user
+  // Transfer role fro msg.sender -> new user
   function _transferRole(address newUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (newUser == address(0)) {
       revert InvalidAddress();
     }
-    uint256 userId = reversedUserMap[msg.sender];
-    UserRecord memory currentUser = user[userId];
-    // Remove user
-    currentUser.activeTime = block.timestamp + lockDuration;
-    currentUser.userAddress = msg.sender;
-    user[userId] = currentUser;
-    emit TransferRole(msg.sender, newUser, currentUser.role);
+    // New user should not has any permissions
+    if (_hasPermission(newUser)) {
+      revert InvalidReceiver(newUser);
+    }
+    // Get user index
+    uint256 currentIndex = reversedUserMap[msg.sender];
+    // Get role of current user
+    uint256 currentRole = role[msg.sender];
+    // Set permission of current user to PERMISSION_NONE
+    role[msg.sender] = PERMISSION_NONE;
+    // Assign current role -> new user
+    role[newUser] = currentRole;
+    // Set lock time for new user
+    activeTime[newUser] = block.timestamp + lockDuration;
+    // Replace old user in user list
+    user[currentIndex] = newUser;
+    // Update reverse map
+    reversedUserMap[newUser] = currentIndex;
+    emit TransferRole(msg.sender, newUser, currentRole);
   }
+
+  /*******************************************************
+   * Internal View section
+   ********************************************************/
 
   // Packing adderss and uint96 to a single bytes32
   // 96 bits a ++ 160 bits b
@@ -96,37 +117,38 @@ contract Permissioned {
     }
   }
 
-  /*******************************************************
-   * Internal View section
-   ********************************************************/
-
-  // Get user by address
-  function _getUser(address checkAddress) internal view returns (UserRecord memory userRecord) {
-    return user[reversedUserMap[checkAddress]];
+  // Do this account has any permission?
+  function _hasPermission(address checkAddress) internal view returns (bool) {
+    return role[checkAddress] > PERMISSION_NONE;
   }
 
-  // Is an address a user
-  function _isUser(address checkAddress) internal view returns (bool) {
-    return _getUser(checkAddress).role > PERMISSION_NONE && block.timestamp > _getUser(checkAddress).activeTime;
+  // Is an address a active user
+  function _isActiveUser(address checkAddress) internal view returns (bool) {
+    return _hasPermission(checkAddress) && block.timestamp > activeTime[checkAddress];
   }
 
   // Check a permission is granted to user
   function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return _isUser(checkAddress) && ((_getUser(checkAddress).role & requiredPermission) == requiredPermission);
+    return _isActiveUser(checkAddress) && ((role[checkAddress] & requiredPermission) == requiredPermission);
   }
 
   /*******************************************************
-   * View section
+   * External View section
    ********************************************************/
 
-  // Get user by address
-  function getUser(address checkAddress) external view returns (UserRecord memory userRecord) {
-    return _getUser(checkAddress);
+  // Read role of an user
+  function getRole(address checkAddress) external view returns (uint256) {
+    return role[checkAddress];
   }
 
-  // Is an address a user
-  function isUser(address checkAddress) external view returns (bool) {
-    return _isUser(checkAddress);
+  // Get active time of user
+  function getActiveTime(address checkAddress) external view returns (uint256) {
+    return activeTime[checkAddress];
+  }
+
+  // Is an address a active user
+  function isActiveUser(address checkAddress) external view returns (bool) {
+    return _isActiveUser(checkAddress);
   }
 
   // Check a permission is granted to user
@@ -138,8 +160,8 @@ contract Permissioned {
   function getAllUser() external view returns (uint256[] memory allUser) {
     allUser = new uint256[](totalUser);
     for (uint256 i = 0; i < totalUser; i += 1) {
-      UserRecord memory currentUser = user[i];
-      allUser[i] = uint256(_packing(uint96(currentUser.role), currentUser.userAddress));
+      address currentUser = user[i];
+      allUser[i] = uint256(_packing(uint96(role[currentUser]), currentUser));
     }
   }
 

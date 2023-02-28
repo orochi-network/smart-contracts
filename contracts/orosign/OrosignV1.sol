@@ -4,9 +4,9 @@ pragma abicoder v2;
 
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-import '../interfaces/IOrosignV1.sol';
 import '../libraries/Bytes.sol';
 import '../libraries/Permissioned.sol';
+import '../interfaces/IOrosignV1.sol';
 
 /**
  * Orosign V1
@@ -25,13 +25,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
 
   // Permission constants
   // View permission only
-  uint256 private constant PERMISSION_OBSERVER = 1;
+  uint256 private constant PERMISSION_OBSERVER = 1; // 0001
   // Allowed to sign ECDSA proof
-  uint256 private constant PERMISSION_SIGN = 2;
+  uint256 private constant PERMISSION_SIGN = 2; // 0010
   // Permission to execute transaction
-  uint256 private constant PERMISSION_EXECUTE = 4;
+  uint256 private constant PERMISSION_EXECUTE = 4; // 0100
   // Allowed to propose a new transfer
-  uint256 private constant PERMISSION_CREATE = 8;
+  uint256 private constant PERMISSION_CREATE = 8; // 1000
 
   // Secure timeout
   uint256 private constant SECURED_TIMEOUT = 3 days;
@@ -62,8 +62,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 votingThreshold
   ) external override returns (bool) {
     uint256 countingSigner = 0;
-    uint256 totalExecutor = 0;
-    uint256 totalCreator = 0;
+    uint256 countingExecutor = 0;
+    uint256 countingCreator = 0;
     // These values can be set once
     chainId = inputChainId;
     // We should able to init
@@ -75,26 +75,28 @@ contract OrosignV1 is IOrosignV1, Permissioned {
         countingSigner += 1;
       }
       if ((roleList[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
-        totalExecutor += 1;
+        countingExecutor += 1;
       }
       if ((roleList[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
-        totalCreator += 1;
+        countingCreator += 1;
       }
     }
-    // Threshold <= totalSigner
-    // Theshold > 0
+    // Required: 0 < Threshold <= totalSigner
     if (0 == votingThreshold || votingThreshold > countingSigner) {
       revert InvalidThreshold(votingThreshold, countingSigner);
     }
 
-    // totalSigner > 0
-    // totalExecutor > 0
-    // totalCreator > 0
-    if (0 == countingSigner || 0 == totalExecutor || 0 == totalCreator) {
-      revert InvalidPermission(countingSigner, totalExecutor, totalCreator);
+    // Required:
+    // Total Signer > 0
+    // Total Executor > 0
+    // Total Creator > 0
+    if (0 == countingSigner || 0 == countingExecutor || 0 == countingCreator) {
+      revert InvalidPermission(countingSigner, countingExecutor, countingCreator);
     }
 
+    // Store voting threshold
     threshold = votingThreshold;
+    // Store total signer
     totalSigner = countingSigner;
     return true;
   }
@@ -104,7 +106,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
    ********************************************************/
 
   // Transfer role to new user
-  function transferRole(address newUser) external onlyUser returns (bool) {
+  function transferRole(address newUser) external onlyActiveUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT
     // We prevent them to vote and transfer permission to the other
     // and vote again
@@ -136,7 +138,9 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       // Each signer only able to be counted once
       if (_isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
+        // Add signer -> signed address
         signedAddresses[totalSigned] = recoveredSigner;
+        // Increase signed 1
         totalSigned += 1;
       }
     }
@@ -161,7 +165,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert ProofExpired(packedTransaction.votingDeadline, packedTransaction.currentBlockTime);
     }
 
-    // Increasing nonce
+    // Increasing nonce, prevent replay attack
     nonce = packedTransaction.nonce + 1;
 
     // If contract then use CALL otherwise do normal transfer
@@ -196,13 +200,17 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   function _decodePackedTransaction(
     bytes memory txData
   ) internal view returns (PackedTransaction memory decodedTransaction) {
-    uint256 packagedNonce = txData.readUint256(0);
+    // Transaction can't be smaller than 84 bytes
+    if (txData.length < 84) {
+      revert InvalidProofLength(txData.length);
+    }
+    uint256 packedNonce = txData.readUint256(0);
     decodedTransaction = PackedTransaction({
       // Packed nonce
       // ChainId 64 bits ++ votingDeadline 64 bits ++ Nonce 128 bits
-      chainId: uint64(packagedNonce >> 192),
-      votingDeadline: uint64(packagedNonce >> 128),
-      nonce: uint128(packagedNonce),
+      chainId: uint64(packedNonce >> 192),
+      votingDeadline: uint64(packedNonce >> 128),
+      nonce: uint128(packedNonce),
       // This value isn't actuall existing in the proof
       currentBlockTime: uint96(block.timestamp),
       // Transaction detail

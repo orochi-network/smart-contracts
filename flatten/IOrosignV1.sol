@@ -3,6 +3,8 @@ pragma solidity >=0.8.4 <0.9.0;
 
 // Invalid threshold
 error InvalidThreshold(uint256 threshold, uint256 totalSigner);
+// Invalid Proof Length
+error InvalidProofLength(uint256 length);
 // Invalid permission
 error InvalidPermission(uint256 totalSinger, uint256 totalExecutor, uint256 totalCreator);
 // Voting process was not pass the threshold

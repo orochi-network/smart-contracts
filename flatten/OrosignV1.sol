@@ -881,12 +881,245 @@ library ECDSA {
 }
 
 
+// Dependency file: contracts/libraries/Bytes.sol
+
+// pragma solidity >=0.8.4 <0.9.0;
+
+// Invalid length of data
+error InvalidInputLength();
+// Index is out of range
+error OutOfRange();
+
+library Bytes {
+  // Read address from input bytes buffer
+  function readAddress(bytes memory input, uint256 offset) internal pure returns (address result) {
+    if (offset + 20 > input.length) {
+      revert OutOfRange();
+    }
+    assembly {
+      result := shr(96, mload(add(add(input, 0x20), offset)))
+    }
+  }
+
+  // Read uint256 from input bytes buffer
+  function readUint256(bytes memory input, uint256 offset) internal pure returns (uint256 result) {
+    if (offset + 32 > input.length) {
+      revert OutOfRange();
+    }
+    assembly {
+      result := mload(add(add(input, 0x20), offset))
+    }
+  }
+
+  // Read a sub bytes array from input bytes buffer
+  function readBytes(bytes memory input, uint256 offset, uint256 length) internal pure returns (bytes memory) {
+    if (offset + length > input.length) {
+      revert OutOfRange();
+    }
+    bytes memory result = new bytes(length);
+    assembly {
+      // Seek offset to the beginning
+      let seek := add(add(input, 0x20), offset)
+
+      // Next is size of data
+      let resultOffset := add(result, 0x20)
+
+      for {
+        let i := 0
+      } lt(i, length) {
+        i := add(i, 0x20)
+      } {
+        mstore(add(resultOffset, i), mload(add(seek, i)))
+      }
+    }
+    return result;
+  }
+}
+
+
+// Dependency file: contracts/libraries/Permissioned.sol
+
+// pragma solidity >=0.8.4 <0.9.0;
+
+// Top sender to process further
+error AccessDenied();
+// Only allow registered users
+error OnlyUserAllowed();
+// Prevent contract to be reinit
+error OnlyAbleToInitOnce();
+// Data length mismatch between two arrays
+error RecordLengthMismatch();
+// Invalid address
+error InvalidAddress();
+// Invalid address
+error InvalidReceiver(address userAddress);
+
+contract Permissioned {
+  // Permission constants
+  uint256 internal constant PERMISSION_NONE = 0;
+
+  // Multi user data
+  mapping(address => uint256) private role;
+
+  // Active time of user
+  mapping(address => uint256) private activeTime;
+
+  // User list
+  mapping(uint256 => address) private user;
+
+  // Reversed map
+  mapping(address => uint256) private reversedUserMap;
+
+  // Total number of users
+  uint256 private totalUser;
+
+  // Transfer role to new user event
+  event TransferRole(address indexed preUser, address indexed newUser, uint256 indexed role);
+
+  // Only allow users who has given role trigger smart contract
+  modifier onlyAllow(uint256 permissions) {
+    if (!_isPermission(msg.sender, permissions)) {
+      revert AccessDenied();
+    }
+    _;
+  }
+
+  // Only allow listed users to trigger smart contract
+  modifier onlyActiveUser() {
+    if (!_isActiveUser(msg.sender)) {
+      revert OnlyUserAllowed();
+    }
+    _;
+  }
+
+  /*******************************************************
+   * Internal section
+   ********************************************************/
+
+  // Init method which can be called once
+  function _init(address[] memory userList, uint256[] memory roleList) internal {
+    // Make sure that we only init this once
+    if (totalUser > 0) {
+      revert OnlyAbleToInitOnce();
+    }
+    // Data length should match
+    if (userList.length != roleList.length) {
+      revert RecordLengthMismatch();
+    }
+    for (uint256 i = 0; i < userList.length; i += 1) {
+      // Store user's address -> user list
+      user[i] = userList[i];
+      // Mapping user address -> role
+      role[userList[i]] = roleList[i];
+      // Reversed mapp from address -> user's index
+      reversedUserMap[userList[i]] = i;
+      emit TransferRole(address(0), userList[i], roleList[i]);
+    }
+    totalUser = userList.length;
+  }
+
+  // Transfer role fro msg.sender -> new user
+  function _transferRole(address newUser, uint256 lockDuration) internal {
+    // Receiver shouldn't be a zero address
+    if (newUser == address(0)) {
+      revert InvalidAddress();
+    }
+    // New user should not has any permissions
+    if (_hasPermission(newUser)) {
+      revert InvalidReceiver(newUser);
+    }
+    // Get user index
+    uint256 currentIndex = reversedUserMap[msg.sender];
+    // Get role of current user
+    uint256 currentRole = role[msg.sender];
+    // Set permission of current user to PERMISSION_NONE
+    role[msg.sender] = PERMISSION_NONE;
+    // Assign current role -> new user
+    role[newUser] = currentRole;
+    // Set lock time for new user
+    activeTime[newUser] = block.timestamp + lockDuration;
+    // Replace old user in user list
+    user[currentIndex] = newUser;
+    // Update reverse map
+    reversedUserMap[newUser] = currentIndex;
+    emit TransferRole(msg.sender, newUser, currentRole);
+  }
+
+  /*******************************************************
+   * Internal View section
+   ********************************************************/
+
+  // Packing adderss and uint96 to a single bytes32
+  // 96 bits a ++ 160 bits b
+  function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
+    assembly {
+      packed := or(shl(160, a), b)
+    }
+  }
+
+  // Do this account has any permission?
+  function _hasPermission(address checkAddress) internal view returns (bool) {
+    return role[checkAddress] > PERMISSION_NONE;
+  }
+
+  // Is an address a active user
+  function _isActiveUser(address checkAddress) internal view returns (bool) {
+    return _hasPermission(checkAddress) && block.timestamp > activeTime[checkAddress];
+  }
+
+  // Check a permission is granted to user
+  function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
+    return _isActiveUser(checkAddress) && ((role[checkAddress] & requiredPermission) == requiredPermission);
+  }
+
+  /*******************************************************
+   * External View section
+   ********************************************************/
+
+  // Read role of an user
+  function getRole(address checkAddress) external view returns (uint256) {
+    return role[checkAddress];
+  }
+
+  // Get active time of user
+  function getActiveTime(address checkAddress) external view returns (uint256) {
+    return activeTime[checkAddress];
+  }
+
+  // Is an address a active user
+  function isActiveUser(address checkAddress) external view returns (bool) {
+    return _isActiveUser(checkAddress);
+  }
+
+  // Check a permission is granted to user
+  function isPermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
+    return _isPermission(checkAddress, requiredPermission);
+  }
+
+  // Get list of users include its permission
+  function getAllUser() external view returns (uint256[] memory allUser) {
+    allUser = new uint256[](totalUser);
+    for (uint256 i = 0; i < totalUser; i += 1) {
+      address currentUser = user[i];
+      allUser[i] = uint256(_packing(uint96(role[currentUser]), currentUser));
+    }
+  }
+
+  // Get total number of user
+  function getTotalUser() external view returns (uint256) {
+    return totalUser;
+  }
+}
+
+
 // Dependency file: contracts/interfaces/IOrosignV1.sol
 
 // pragma solidity >=0.8.4 <0.9.0;
 
 // Invalid threshold
 error InvalidThreshold(uint256 threshold, uint256 totalSigner);
+// Invalid Proof Length
+error InvalidProofLength(uint256 length);
 // Invalid permission
 error InvalidPermission(uint256 totalSinger, uint256 totalExecutor, uint256 totalCreator);
 // Voting process was not pass the threshold
@@ -932,224 +1165,15 @@ interface IOrosignV1 {
 }
 
 
-// Dependency file: contracts/libraries/Bytes.sol
-
-// pragma solidity >=0.8.4 <0.9.0;
-
-// Invalid length of data
-error InvalidInputLength();
-// Index is out of range
-error OutOfRange();
-
-library Bytes {
-  // Read address from input bytes buffer
-  function readAddress(bytes memory input, uint256 offset) internal pure returns (address result) {
-    if (offset + 20 > input.length) {
-      revert OutOfRange();
-    }
-    assembly {
-      result := shr(96, mload(add(add(input, 0x20), offset)))
-    }
-  }
-
-  // Read uint256 from input bytes buffer
-  function readUint256(bytes memory input, uint256 offset) internal pure returns (uint256 result) {
-    if (offset + 32 > input.length) {
-      revert OutOfRange();
-    }
-    assembly {
-      result := mload(add(add(input, 0x20), offset))
-    }
-  }
-
-  // Read bytes from input bytes buffer
-  function readBytes(bytes memory input, uint256 offset, uint256 length) internal pure returns (bytes memory) {
-    if (offset + length > input.length) {
-      revert OutOfRange();
-    }
-    bytes memory result = new bytes(length);
-    assembly {
-      // Seek offset to the beginning
-      let seek := add(add(input, 0x20), offset)
-
-      // Next is size of data
-      let resultOffset := add(result, 0x20)
-
-      for {
-        let i := 0
-      } lt(i, length) {
-        i := add(i, 0x20)
-      } {
-        mstore(add(resultOffset, i), mload(add(seek, i)))
-      }
-    }
-    return result;
-  }
-}
-
-
-// Dependency file: contracts/libraries/Permissioned.sol
-
-// pragma solidity >=0.8.4 <0.9.0;
-
-// Top sender to process further
-error AccessDenied();
-// Only allow registered users
-error OnlyUserAllowed();
-// Prevent contract to be reinit
-error OnlyAbleToInitOnce();
-// Data length mismatch between two arrays
-error RecordLengthMismatch();
-// Invalid address
-error InvalidAddress();
-
-contract Permissioned {
-  // Permission constants
-  uint256 internal constant PERMISSION_NONE = 0;
-
-  // User record
-  struct UserRecord {
-    uint96 role;
-    address userAddress;
-    uint256 activeTime;
-  }
-
-  // User list
-  mapping(uint256 => UserRecord) private user;
-
-  // Maping user to Id
-  mapping(address => uint256) private reversedUserMap;
-
-  // Total number of users
-  uint256 private totalUser;
-
-  // Transfer role to new user event
-  event TransferRole(address indexed preUser, address indexed newUser, uint256 indexed role);
-
-  // Only allow users who has given role trigger smart contract
-  modifier onlyAllow(uint256 permissions) {
-    if (!_isPermission(msg.sender, permissions)) {
-      revert AccessDenied();
-    }
-    _;
-  }
-
-  // Only allow listed users to trigger smart contract
-  modifier onlyUser() {
-    if (!_isUser(msg.sender)) {
-      revert OnlyUserAllowed();
-    }
-    _;
-  }
-
-  /*******************************************************
-   * Internal section
-   ********************************************************/
-
-  // Init method which can be called once
-  function _init(address[] memory userList, uint256[] memory roleList) internal {
-    // Make sure that we only init this once
-    if (totalUser > 0) {
-      revert OnlyAbleToInitOnce();
-    }
-    // Data length should match
-    if (userList.length != roleList.length) {
-      revert RecordLengthMismatch();
-    }
-    for (uint256 i = 0; i < userList.length; i += 1) {
-      user[i] = UserRecord({ role: uint96(roleList[i]), activeTime: 0, userAddress: userList[i] });
-      reversedUserMap[userList[i]] = i;
-      emit TransferRole(address(0), userList[i], roleList[i]);
-    }
-    totalUser = userList.length;
-  }
-
-  // Transfer role to new user
-  function _transferRole(address newUser, uint256 lockDuration) internal {
-    // Receiver shouldn't be a zero address
-    if (newUser == address(0)) {
-      revert InvalidAddress();
-    }
-    uint256 userId = reversedUserMap[msg.sender];
-    UserRecord memory currentUser = user[userId];
-    // Remove user
-    currentUser.activeTime = block.timestamp + lockDuration;
-    currentUser.userAddress = msg.sender;
-    user[userId] = currentUser;
-    emit TransferRole(msg.sender, newUser, currentUser.role);
-  }
-
-  // Packing adderss and uint96 to a single bytes32
-  // 96 bits a ++ 160 bits b
-  function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
-    assembly {
-      packed := or(shl(160, a), b)
-    }
-  }
-
-  /*******************************************************
-   * Internal View section
-   ********************************************************/
-
-  // Get user by address
-  function _getUser(address checkAddress) internal view returns (UserRecord memory userRecord) {
-    return user[reversedUserMap[checkAddress]];
-  }
-
-  // Is an address a user
-  function _isUser(address checkAddress) internal view returns (bool) {
-    return _getUser(checkAddress).role > PERMISSION_NONE && block.timestamp > _getUser(checkAddress).activeTime;
-  }
-
-  // Check a permission is granted to user
-  function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return _isUser(checkAddress) && ((_getUser(checkAddress).role & requiredPermission) == requiredPermission);
-  }
-
-  /*******************************************************
-   * View section
-   ********************************************************/
-
-  // Get user by address
-  function getUser(address checkAddress) external view returns (UserRecord memory userRecord) {
-    return _getUser(checkAddress);
-  }
-
-  // Is an address a user
-  function isUser(address checkAddress) external view returns (bool) {
-    return _isUser(checkAddress);
-  }
-
-  // Check a permission is granted to user
-  function isPermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
-    return _isPermission(checkAddress, requiredPermission);
-  }
-
-  // Get list of users include its permission
-  function getAllUser() external view returns (uint256[] memory allUser) {
-    allUser = new uint256[](totalUser);
-    for (uint256 i = 0; i < totalUser; i += 1) {
-      UserRecord memory currentUser = user[i];
-      allUser[i] = uint256(_packing(uint96(currentUser.role), currentUser.userAddress));
-    }
-  }
-
-  // Get total number of user
-  function getTotalUser() external view returns (uint256) {
-    return totalUser;
-  }
-}
-
-
 // Root file: contracts/orosign/OrosignV1.sol
 
 pragma solidity >=0.8.4 <0.9.0;
 
 // import '/Users/chiro/GitHub/orosign-contracts/node_modules/@openzeppelin/contracts/utils/Address.sol';
 // import '/Users/chiro/GitHub/orosign-contracts/node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-// import 'contracts/interfaces/IOrosignV1.sol';
 // import 'contracts/libraries/Bytes.sol';
 // import 'contracts/libraries/Permissioned.sol';
+// import 'contracts/interfaces/IOrosignV1.sol';
 
 /**
  * Orosign V1
@@ -1168,13 +1192,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
 
   // Permission constants
   // View permission only
-  uint256 private constant PERMISSION_OBSERVER = 1;
+  uint256 private constant PERMISSION_OBSERVER = 1; // 0001
   // Allowed to sign ECDSA proof
-  uint256 private constant PERMISSION_SIGN = 2;
+  uint256 private constant PERMISSION_SIGN = 2; // 0010
   // Permission to execute transaction
-  uint256 private constant PERMISSION_EXECUTE = 4;
+  uint256 private constant PERMISSION_EXECUTE = 4; // 0100
   // Allowed to propose a new transfer
-  uint256 private constant PERMISSION_CREATE = 8;
+  uint256 private constant PERMISSION_CREATE = 8; // 1000
 
   // Secure timeout
   uint256 private constant SECURED_TIMEOUT = 3 days;
@@ -1205,8 +1229,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 votingThreshold
   ) external override returns (bool) {
     uint256 countingSigner = 0;
-    uint256 totalExecutor = 0;
-    uint256 totalCreator = 0;
+    uint256 countingExecutor = 0;
+    uint256 countingCreator = 0;
     // These values can be set once
     chainId = inputChainId;
     // We should able to init
@@ -1218,26 +1242,28 @@ contract OrosignV1 is IOrosignV1, Permissioned {
         countingSigner += 1;
       }
       if ((roleList[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
-        totalExecutor += 1;
+        countingExecutor += 1;
       }
       if ((roleList[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
-        totalCreator += 1;
+        countingCreator += 1;
       }
     }
-    // Threshold <= totalSigner
-    // Theshold > 0
+    // Required: 0 < Threshold <= totalSigner
     if (0 == votingThreshold || votingThreshold > countingSigner) {
       revert InvalidThreshold(votingThreshold, countingSigner);
     }
 
-    // totalSigner > 0
-    // totalExecutor > 0
-    // totalCreator > 0
-    if (0 == countingSigner || 0 == totalExecutor || 0 == totalCreator) {
-      revert InvalidPermission(countingSigner, totalExecutor, totalCreator);
+    // Required:
+    // Total Signer > 0
+    // Total Executor > 0
+    // Total Creator > 0
+    if (0 == countingSigner || 0 == countingExecutor || 0 == countingCreator) {
+      revert InvalidPermission(countingSigner, countingExecutor, countingCreator);
     }
 
+    // Store voting threshold
     threshold = votingThreshold;
+    // Store total signer
     totalSigner = countingSigner;
     return true;
   }
@@ -1247,7 +1273,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
    ********************************************************/
 
   // Transfer role to new user
-  function transferRole(address newUser) external onlyUser returns (bool) {
+  function transferRole(address newUser) external onlyActiveUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT
     // We prevent them to vote and transfer permission to the other
     // and vote again
@@ -1279,7 +1305,9 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       // Each signer only able to be counted once
       if (_isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
+        // Add signer -> signed address
         signedAddresses[totalSigned] = recoveredSigner;
+        // Increase signed 1
         totalSigned += 1;
       }
     }
@@ -1304,7 +1332,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert ProofExpired(packedTransaction.votingDeadline, packedTransaction.currentBlockTime);
     }
 
-    // Increasing nonce
+    // Increasing nonce, prevent replay attack
     nonce = packedTransaction.nonce + 1;
 
     // If contract then use CALL otherwise do normal transfer
@@ -1339,13 +1367,17 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   function _decodePackedTransaction(
     bytes memory txData
   ) internal view returns (PackedTransaction memory decodedTransaction) {
-    uint256 packagedNonce = txData.readUint256(0);
+    // Transaction can't be smaller than 84 bytes
+    if (txData.length < 84) {
+      revert InvalidProofLength(txData.length);
+    }
+    uint256 packedNonce = txData.readUint256(0);
     decodedTransaction = PackedTransaction({
       // Packed nonce
       // ChainId 64 bits ++ votingDeadline 64 bits ++ Nonce 128 bits
-      chainId: uint64(packagedNonce >> 192),
-      votingDeadline: uint64(packagedNonce >> 128),
-      nonce: uint128(packagedNonce),
+      chainId: uint64(packedNonce >> 192),
+      votingDeadline: uint64(packedNonce >> 128),
+      nonce: uint128(packedNonce),
       // This value isn't actuall existing in the proof
       currentBlockTime: uint96(block.timestamp),
       // Transaction detail

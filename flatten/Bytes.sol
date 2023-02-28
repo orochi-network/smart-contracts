@@ -27,7 +27,7 @@ library Bytes {
     }
   }
 
-  // Read bytes from input bytes buffer
+  // Read a sub bytes array from input bytes buffer
   function readBytes(bytes memory input, uint256 offset, uint256 length) internal pure returns (bytes memory) {
     if (offset + length > input.length) {
       revert OutOfRange();

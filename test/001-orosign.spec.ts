@@ -83,7 +83,7 @@ describe('OrosignV1', function () {
   });
 
   it('permission should be correct', async () => {
-    expect(await contractMultiSig.isUser(admin3.address)).to.eq(true);
+    expect(await contractMultiSig.isActiveUser(admin3.address)).to.eq(true);
     expect(await contractMultiSig.isPermission(admin3.address, PERMISSION_CREATE | PERMISSION_EXECUTE)).to.eq(true);
     expect(await contractMultiSig.isPermission(admin3.address, PERMISSION_OBSERVER)).to.eq(true);
   });

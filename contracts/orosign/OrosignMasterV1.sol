@@ -6,17 +6,17 @@ import '@openzeppelin/contracts/proxy/Clones.sol';
 import '../libraries/Permissioned.sol';
 import '../interfaces/IOrosignV1.sol';
 
+// It required to pay for fee in native token
+error InvalidFee(uint256 inputAmount, uint256 requireAmount);
+// Unable to init new wallet
+error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
+// Unable to init Orosign master
+error UnableToInitOrosignMaster();
+
 /**
  * Orosign Master V1
  */
 contract OrosignMasterV1 is Permissioned {
-  // It required to pay for fee in native token
-  error InvalidFee(uint256 inputAmount, uint256 requireAmount);
-  // Unable to init new wallet
-  error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
-  // Unable to init Orosign master
-  error UnableToInitOrosignMaster();
-
   // Allow master to clone other multi signature contract
   using Clones for address;
 
@@ -31,7 +31,7 @@ contract OrosignMasterV1 is Permissioned {
   // Wallet implementation
   address private implementation;
 
-  // Price in native token
+  // Creating fee for new multisignature in native token
   uint256 private walletFee;
 
   // Chain id
@@ -65,11 +65,27 @@ contract OrosignMasterV1 is Permissioned {
     address multisigImplementation,
     uint256 createWalletFee
   ) {
+    uint256 countingWithdraw = 0;
+    uint256 countingOperator = 0;
     // We use input chainId instead of EIP-1344
     chainId = inputChainId;
 
     // We will revert if we're failed to init permissioned
     _init(userList, roleList);
+
+    for (uint256 i = 0; i < userList.length; i += 1) {
+      // Equal to isPermission(userList[i], PERMISSION_SIGN)
+      if ((roleList[i] & PERMISSION_WITHDRAW) == PERMISSION_WITHDRAW) {
+        countingWithdraw += 1;
+      }
+      if ((roleList[i] & PERMISSION_OPERATE) == PERMISSION_OPERATE) {
+        countingOperator += 1;
+      }
+    }
+
+    if (countingWithdraw == 0 || countingOperator == 0) {
+      revert UnableToInitOrosignMaster();
+    }
 
     // Set the address of orosign implementation
     implementation = multisigImplementation;
@@ -84,7 +100,7 @@ contract OrosignMasterV1 is Permissioned {
    ********************************************************/
 
   // Transfer existing role to a new user
-  function transferRole(address newUser) external onlyUser returns (bool) {
+  function transferRole(address newUser) external onlyActiveUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT + 1 hours
     _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
     return true;
@@ -96,6 +112,11 @@ contract OrosignMasterV1 is Permissioned {
 
   // Withdraw all of the balance to the fee collector
   function withdraw(address payable receiver) external onlyAllow(PERMISSION_WITHDRAW) returns (bool) {
+    // Receiver should be a valid address
+    if (receiver == address(0)) {
+      revert InvalidAddress();
+    }
+    // Collecting fee to receiver
     receiver.transfer(address(this).balance);
     return true;
   }
@@ -119,7 +140,7 @@ contract OrosignMasterV1 is Permissioned {
   }
 
   /*******************************************************
-   * Public section
+   * External section
    ********************************************************/
 
   // Create new multisig wallet
@@ -138,6 +159,10 @@ contract OrosignMasterV1 is Permissioned {
     emit CreateNewWallet(salt, msg.sender, newWalletAdress);
     return newWalletAdress;
   }
+
+  /*******************************************************
+   * Internal View section
+   ********************************************************/
 
   // Calculate deterministic address
   function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address) {
