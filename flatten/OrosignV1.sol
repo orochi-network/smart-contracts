@@ -885,8 +885,6 @@ library ECDSA {
 
 // pragma solidity >=0.8.4 <0.9.0;
 
-// Unable to init contract
-error UnableToInitContract();
 // Invalid threshold
 error InvalidThreshold(uint256 threshold, uint256 totalSignature);
 // Invalid permission
@@ -1057,7 +1055,7 @@ contract Permissioned {
 
   // Only allow users who has given role trigger smart contract
   modifier onlyAllow(uint256 permissions) {
-    if (!isPermission(msg.sender, permissions)) {
+    if (!_isPermission(msg.sender, permissions)) {
       revert AccessDenied();
     }
     _;
@@ -1065,7 +1063,7 @@ contract Permissioned {
 
   // Only allow listed users to trigger smart contract
   modifier onlyUser() {
-    if (!isUser(msg.sender)) {
+    if (!_isUser(msg.sender)) {
       revert OnlyUserAllowed();
     }
     _;
@@ -1076,7 +1074,7 @@ contract Permissioned {
    ********************************************************/
 
   // Init method which can be called once
-  function _init(address[] memory users_, uint256[] memory roles_) internal returns (bool) {
+  function _init(address[] memory users_, uint256[] memory roles_) internal {
     // Make sure that we only init this once
     if (_totalUser > 0) {
       revert OnlyAbleToInitOnce();
@@ -1092,11 +1090,10 @@ contract Permissioned {
       emit TransferRole(address(0), users_[i], roles_[i]);
     }
     _totalUser = users_.length;
-    return true;
   }
 
   // Transfer role to new user
-  function _transferRole(address newUser, uint256 lockDuration) internal returns (bool) {
+  function _transferRole(address newUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (newUser == address(0)) {
       revert InvalidAddress();
@@ -1110,7 +1107,6 @@ contract Permissioned {
     // Replace old user in user list
     _userList[_reversedUserList[msg.sender]] = newUser;
     emit TransferRole(msg.sender, newUser, role);
-    return true;
   }
 
   // Packing adderss and uint96 to a single bytes32
@@ -1122,31 +1118,45 @@ contract Permissioned {
   }
 
   /*******************************************************
-   * View section
+   * Internal View section
    ********************************************************/
 
-  // Read role of an user
-  function getRole(address checkAddress) public view returns (uint256) {
-    return _userRole[checkAddress];
-  }
-
-  // Get active time of user
-  function getActiveTime(address checkAddress) public view returns (uint256) {
-    return _activeTime[checkAddress];
-  }
-
   // Is an address a user
-  function isUser(address checkAddress) public view returns (bool) {
+  function _isUser(address checkAddress) internal view returns (bool) {
     return _userRole[checkAddress] > PERMISSION_NONE && block.timestamp > _activeTime[checkAddress];
   }
 
   // Check a permission is granted to user
-  function isPermission(address checkAddress, uint256 requiredPermission) public view returns (bool) {
-    return isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+  function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
+    return _isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+  }
+
+  /*******************************************************
+   * View section
+   ********************************************************/
+
+  // Read role of an user
+  function getRole(address checkAddress) external view returns (uint256) {
+    return _userRole[checkAddress];
+  }
+
+  // Get active time of user
+  function getActiveTime(address checkAddress) external view returns (uint256) {
+    return _activeTime[checkAddress];
+  }
+
+  // Is an address a user
+  function isUser(address checkAddress) external view returns (bool) {
+    return _isUser(checkAddress);
+  }
+
+  // Check a permission is granted to user
+  function isPermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
+    return _isPermission(checkAddress, requiredPermission);
   }
 
   // Get list of users include its permission
-  function getAllUser() public view returns (uint256[] memory userList) {
+  function getAllUser() external view returns (uint256[] memory userList) {
     userList = new uint256[](_totalUser);
     for (uint256 i = 0; i < _totalUser; i += 1) {
       address currentUser = _userList[i];
@@ -1155,7 +1165,7 @@ contract Permissioned {
   }
 
   // Get total number of user
-  function getTotalUser() public view returns (uint256) {
+  function getTotalUser() external view returns (uint256) {
     return _totalUser;
   }
 }
@@ -1173,7 +1183,7 @@ pragma solidity >=0.8.4 <0.9.0;
 
 /**
  * Orosign V1
- * Multi Signature Wallet base on off-chain ECDSA Proof
+ * Multi Signature Wallet based on off-chain ECDSA Proof
  */
 contract OrosignV1 is IOrosignV1, Permissioned {
   // Address lib providing safe {call} and {delegatecall}
@@ -1200,16 +1210,16 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   uint256 private constant SECURED_TIMEOUT = 3 days;
 
   // Chain Id
-  uint256 private _chainId;
+  uint256 private chainId;
 
   // Quick transaction nonce
-  uint256 private _nonce = 0;
+  uint256 private nonce = 0;
 
   // Total number of signer
-  uint256 private _totalSigner = 0;
+  uint256 private totalSigner = 0;
 
   // Required threshold for a proposal to be passed
-  uint256 private _threshold;
+  uint256 private threshold;
 
   // Execute transaction event
   event ExecutedTransaction(address indexed target, uint256 indexed value, bytes indexed data);
@@ -1219,64 +1229,66 @@ contract OrosignV1 is IOrosignV1, Permissioned {
 
   // Init method which can be called once
   function init(
-    uint256 chainId_,
-    address[] memory users_,
-    uint256[] memory roles_,
-    uint256 threshold_
+    uint256 inputChainId,
+    address[] memory userList,
+    uint256[] memory roleList,
+    uint256 votingThreshold
   ) external override returns (bool) {
-    uint256 totalSigner = 0;
+    uint256 countingSigner = 0;
     uint256 totalExecutor = 0;
     uint256 totalCreator = 0;
     // These values can be set once
-    _chainId = chainId_;
+    chainId = inputChainId;
     // We should able to init
-    if (!_init(users_, roles_)) {
-      revert UnableToInitContract();
-    }
-    for (uint256 i = 0; i < users_.length; i += 1) {
-      // Equal to isPermission(users_[i], PERMISSION_SIGN)
-      if ((roles_[i] & PERMISSION_SIGN) == PERMISSION_SIGN) {
-        totalSigner += 1;
+    _init(userList, roleList);
+
+    for (uint256 i = 0; i < userList.length; i += 1) {
+      // Equal to isPermission(userList[i], PERMISSION_SIGN)
+      if ((roleList[i] & PERMISSION_SIGN) == PERMISSION_SIGN) {
+        countingSigner += 1;
       }
-      if ((roles_[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
+      if ((roleList[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
         totalExecutor += 1;
       }
-      if ((roles_[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
+      if ((roleList[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
         totalCreator += 1;
       }
     }
     // Threshold <= totalSigner
     // Theshold > 0
-    if (0 == threshold_ || threshold_ > totalSigner) {
-      revert InvalidThreshold(threshold_, totalSigner);
+    if (0 == votingThreshold || votingThreshold > countingSigner) {
+      revert InvalidThreshold(votingThreshold, countingSigner);
     }
 
     // totalSigner > 0
     // totalExecutor > 0
     // totalCreator > 0
-    if (0 == totalSigner || 0 == totalExecutor || 0 == totalCreator) {
-      revert InvalidPermission(totalSigner, totalExecutor, totalCreator);
+    if (0 == countingSigner || 0 == totalExecutor || 0 == totalCreator) {
+      revert InvalidPermission(countingSigner, totalExecutor, totalCreator);
     }
 
-    _threshold = threshold_;
-    _totalSigner = totalSigner;
+    threshold = votingThreshold;
+    totalSigner = countingSigner;
     return true;
   }
 
   /*******************************************************
    * User section
    ********************************************************/
+
   // Transfer role to new user
   function transferRole(address newUser) external onlyUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT
     // We prevent them to vote and transfer permission to the other
     // and vote again
-    return _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    return true;
   }
 
   /*******************************************************
    * Executor section
    ********************************************************/
+
   // Transfer with signed ECDSA proofs instead of on-chain voting
   function executeTransaction(
     bytes memory creatorSignature,
@@ -1288,7 +1300,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     address[] memory signedAddresses = new address[](signatureList.length);
 
     // If there is NO creator proof revert
-    if (!isPermission(creatorAddress, PERMISSION_CREATE)) {
+    if (!_isPermission(creatorAddress, PERMISSION_CREATE)) {
       revert ProofNoCreator();
     }
 
@@ -1296,26 +1308,26 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     for (uint256 i = 0; i < signatureList.length; i += 1) {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       // Each signer only able to be counted once
-      if (isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
+      if (_isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
         signedAddresses[totalSigned] = recoveredSigner;
         totalSigned += 1;
       }
     }
 
     // Number of votes weren't passed the threshold
-    if (totalSigned < _threshold) {
-      revert ThresholdNotPassed(totalSigned, _threshold);
+    if (totalSigned < threshold) {
+      revert ThresholdNotPassed(totalSigned, threshold);
     }
     // Decode packed data from packed transaction
-    PackedTransaction memory packedTransaction = decodePackedTransaction(message);
+    PackedTransaction memory packedTransaction = _decodePackedTransaction(message);
 
     // Chain Id should be the same
-    if (packedTransaction.chainId != _chainId) {
-      revert ProofChainIdMismatch(packedTransaction.chainId, _chainId);
+    if (packedTransaction.chainId != chainId) {
+      revert ProofChainIdMismatch(packedTransaction.chainId, chainId);
     }
     // Nonce should be equal
-    if (packedTransaction.nonce != _nonce) {
-      revert ProofInvalidNonce(packedTransaction.nonce, _nonce);
+    if (packedTransaction.nonce != nonce) {
+      revert ProofInvalidNonce(packedTransaction.nonce, nonce);
     }
     // ECDSA proofs should not expired
     if (packedTransaction.currentBlockTime > packedTransaction.votingDeadline) {
@@ -1323,7 +1335,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     }
 
     // Increasing nonce
-    _nonce = packedTransaction.nonce + 1;
+    nonce = packedTransaction.nonce + 1;
 
     // If contract then use CALL otherwise do normal transfer
     if (packedTransaction.target.code.length > 0) {
@@ -1338,6 +1350,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   /*******************************************************
    * Pure section
    ********************************************************/
+
   // Check if an address is already in the given list
   function _isNotInclude(address[] memory addressList, address checkAddress) private pure returns (bool) {
     for (uint256 i = 0; i < addressList.length; i += 1) {
@@ -1349,12 +1362,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   }
 
   /*******************************************************
-   * View section
+   * Internal View section
    ********************************************************/
+
   // Decode data from packed transaction
-  function decodePackedTransaction(
+  function _decodePackedTransaction(
     bytes memory txData
-  ) public view returns (PackedTransaction memory decodedTransaction) {
+  ) internal view returns (PackedTransaction memory decodedTransaction) {
     uint256 packagedNonce = txData.readUint256(0);
     decodedTransaction = PackedTransaction({
       // Packed nonce
@@ -1372,17 +1386,40 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   }
 
   // Get packed transaction to create raw ECDSA proof
-  function encodePackedTransaction(
-    uint256 chainId,
+  function _encodePackedTransaction(
+    uint256 inputChainId,
     uint256 timeout,
     address target,
     uint256 value,
     bytes memory data
-  ) public view returns (bytes memory) {
+  ) internal view returns (bytes memory) {
     if (timeout > SECURED_TIMEOUT) {
       revert InsecuredTimeout(timeout);
     }
-    return abi.encodePacked(uint64(chainId), uint64(block.timestamp + timeout), uint128(_nonce), target, value, data);
+    return
+      abi.encodePacked(uint64(inputChainId), uint64(block.timestamp + timeout), uint128(nonce), target, value, data);
+  }
+
+  /*******************************************************
+   * External View section
+   ********************************************************/
+
+  // Decode data from packed transaction
+  function decodePackedTransaction(
+    bytes memory txData
+  ) external view returns (PackedTransaction memory decodedTransaction) {
+    return _decodePackedTransaction(txData);
+  }
+
+  // Get packed transaction to create raw ECDSA proof
+  function encodePackedTransaction(
+    uint256 inputChainId,
+    uint256 timeout,
+    address target,
+    uint256 value,
+    bytes memory data
+  ) external view returns (bytes memory) {
+    return _encodePackedTransaction(inputChainId, timeout, target, value, data);
   }
 
   // Get packed transaction to create raw ECDSA proof
@@ -1391,16 +1428,16 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return encodePackedTransaction(_chainId, 1 days, target, value, data);
+    return _encodePackedTransaction(chainId, 1 days, target, value, data);
   }
 
   // Get multisig metadata
   function getMetadata() external view returns (OrosignV1Metadata memory result) {
     result = OrosignV1Metadata({
-      chainId: _chainId,
-      nonce: _nonce,
-      totalSigner: _totalSigner,
-      threshold: _threshold,
+      chainId: chainId,
+      nonce: nonce,
+      totalSigner: totalSigner,
+      threshold: threshold,
       securedTimeout: SECURED_TIMEOUT,
       blockTimestamp: block.timestamp
     });

@@ -128,7 +128,7 @@ contract Permissioned {
 
   // Only allow users who has given role trigger smart contract
   modifier onlyAllow(uint256 permissions) {
-    if (!isPermission(msg.sender, permissions)) {
+    if (!_isPermission(msg.sender, permissions)) {
       revert AccessDenied();
     }
     _;
@@ -136,7 +136,7 @@ contract Permissioned {
 
   // Only allow listed users to trigger smart contract
   modifier onlyUser() {
-    if (!isUser(msg.sender)) {
+    if (!_isUser(msg.sender)) {
       revert OnlyUserAllowed();
     }
     _;
@@ -147,7 +147,7 @@ contract Permissioned {
    ********************************************************/
 
   // Init method which can be called once
-  function _init(address[] memory users_, uint256[] memory roles_) internal returns (bool) {
+  function _init(address[] memory users_, uint256[] memory roles_) internal {
     // Make sure that we only init this once
     if (_totalUser > 0) {
       revert OnlyAbleToInitOnce();
@@ -163,11 +163,10 @@ contract Permissioned {
       emit TransferRole(address(0), users_[i], roles_[i]);
     }
     _totalUser = users_.length;
-    return true;
   }
 
   // Transfer role to new user
-  function _transferRole(address newUser, uint256 lockDuration) internal returns (bool) {
+  function _transferRole(address newUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (newUser == address(0)) {
       revert InvalidAddress();
@@ -181,7 +180,6 @@ contract Permissioned {
     // Replace old user in user list
     _userList[_reversedUserList[msg.sender]] = newUser;
     emit TransferRole(msg.sender, newUser, role);
-    return true;
   }
 
   // Packing adderss and uint96 to a single bytes32
@@ -193,31 +191,45 @@ contract Permissioned {
   }
 
   /*******************************************************
-   * View section
+   * Internal View section
    ********************************************************/
 
-  // Read role of an user
-  function getRole(address checkAddress) public view returns (uint256) {
-    return _userRole[checkAddress];
-  }
-
-  // Get active time of user
-  function getActiveTime(address checkAddress) public view returns (uint256) {
-    return _activeTime[checkAddress];
-  }
-
   // Is an address a user
-  function isUser(address checkAddress) public view returns (bool) {
+  function _isUser(address checkAddress) internal view returns (bool) {
     return _userRole[checkAddress] > PERMISSION_NONE && block.timestamp > _activeTime[checkAddress];
   }
 
   // Check a permission is granted to user
-  function isPermission(address checkAddress, uint256 requiredPermission) public view returns (bool) {
-    return isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+  function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
+    return _isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+  }
+
+  /*******************************************************
+   * View section
+   ********************************************************/
+
+  // Read role of an user
+  function getRole(address checkAddress) external view returns (uint256) {
+    return _userRole[checkAddress];
+  }
+
+  // Get active time of user
+  function getActiveTime(address checkAddress) external view returns (uint256) {
+    return _activeTime[checkAddress];
+  }
+
+  // Is an address a user
+  function isUser(address checkAddress) external view returns (bool) {
+    return _isUser(checkAddress);
+  }
+
+  // Check a permission is granted to user
+  function isPermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
+    return _isPermission(checkAddress, requiredPermission);
   }
 
   // Get list of users include its permission
-  function getAllUser() public view returns (uint256[] memory userList) {
+  function getAllUser() external view returns (uint256[] memory userList) {
     userList = new uint256[](_totalUser);
     for (uint256 i = 0; i < _totalUser; i += 1) {
       address currentUser = _userList[i];
@@ -226,7 +238,7 @@ contract Permissioned {
   }
 
   // Get total number of user
-  function getTotalUser() public view returns (uint256) {
+  function getTotalUser() external view returns (uint256) {
     return _totalUser;
   }
 }
@@ -236,8 +248,6 @@ contract Permissioned {
 
 // pragma solidity >=0.8.4 <0.9.0;
 
-// Unable to init contract
-error UnableToInitContract();
 // Invalid threshold
 error InvalidThreshold(uint256 threshold, uint256 totalSignature);
 // Invalid permission
@@ -316,13 +326,13 @@ contract OrosignMasterV1 is Permissioned {
   uint256 private constant SECURED_TIMEOUT = 3 days;
 
   // Wallet implementation
-  address private _implementation;
+  address private implementation;
 
   // Price in native token
-  uint256 private _walletFee;
+  uint256 private walletFee;
 
   // Chain id
-  uint256 private _chainId;
+  uint256 private chainId;
 
   // Create new wallet
   event CreateNewWallet(uint96 indexed salt, address indexed owner, address indexed walletAddress);
@@ -335,8 +345,8 @@ contract OrosignMasterV1 is Permissioned {
 
   // Request small fee to create new wallet, we prevent people spaming wallet
   modifier requireFee() {
-    if (msg.value != _walletFee) {
-      revert InvalidFee(msg.value, _walletFee);
+    if (msg.value != walletFee) {
+      revert InvalidFee(msg.value, walletFee);
     }
     _;
   }
@@ -346,37 +356,41 @@ contract OrosignMasterV1 is Permissioned {
 
   // Pass parameters to parent contract
   constructor(
-    uint256 chainId_,
-    address[] memory users_,
-    uint256[] memory roles_,
-    address implementation_,
-    uint256 fee_
+    uint256 inputChainId,
+    address[] memory userList,
+    uint256[] memory roleList,
+    address multisigImplementation,
+    uint256 createWalletFee
   ) {
     // We use input chainId instead of EIP-1344
-    _chainId = chainId_;
+    chainId = inputChainId;
+
     // We will revert if we're failed to init permissioned
-    if (!_init(users_, roles_)) {
-      revert UnableToInitOrosignMaster();
-    }
+    _init(userList, roleList);
+
     // Set the address of orosign implementation
-    _implementation = implementation_;
+    implementation = multisigImplementation;
+
     // Set wallet fee
-    _walletFee = fee_;
-    emit UpgradeImplementation(address(0), implementation_);
+    walletFee = createWalletFee;
+    emit UpgradeImplementation(address(0), multisigImplementation);
   }
 
   /*******************************************************
    * User section
    ********************************************************/
+
   // Transfer existing role to a new user
   function transferRole(address newUser) external onlyUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT + 1 hours
-    return _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    return true;
   }
 
   /*******************************************************
    * Withdraw section
    ********************************************************/
+
   // Withdraw all of the balance to the fee collector
   function withdraw(address payable receiver) external onlyAllow(PERMISSION_WITHDRAW) returns (bool) {
     receiver.transfer(address(this).balance);
@@ -386,36 +400,50 @@ contract OrosignMasterV1 is Permissioned {
   /*******************************************************
    * Operator section
    ********************************************************/
+
   // Upgrade new implementation
   function upgradeImplementation(address newImplementation) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
-    emit UpgradeImplementation(_implementation, newImplementation);
-    _implementation = newImplementation;
+    emit UpgradeImplementation(implementation, newImplementation);
+    implementation = newImplementation;
     return true;
   }
 
   // Allow operator to set new fee
   function setFee(uint256 newFee) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
-    emit UpdateFee(block.timestamp, _walletFee, newFee);
-    _walletFee = newFee;
+    emit UpdateFee(block.timestamp, walletFee, newFee);
+    walletFee = newFee;
     return true;
   }
 
   /*******************************************************
    * Public section
    ********************************************************/
+
   // Create new multisig wallet
   function createWallet(
     uint96 salt,
-    address[] memory users_,
-    uint256[] memory roles_,
-    uint256 threshold_
+    address[] memory userList,
+    uint256[] memory roleList,
+    uint256 votingThreshold
   ) external payable requireFee returns (address newWalletAdress) {
-    newWalletAdress = _implementation.cloneDeterministic(_packing(salt, msg.sender));
-    if (newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(_chainId, users_, roles_, threshold_)) {
+    newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
+    if (
+      newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
+    ) {
       revert UnableToInitNewWallet(salt, msg.sender, newWalletAdress);
     }
     emit CreateNewWallet(salt, msg.sender, newWalletAdress);
     return newWalletAdress;
+  }
+
+  // Calculate deterministic address
+  function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address) {
+    return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
+  }
+
+  // Check a Multi Signature Wallet is existed
+  function _isMultiSigExist(address walletAddress) internal view returns (bool) {
+    return walletAddress.code.length > 0;
   }
 
   /*******************************************************
@@ -424,32 +452,32 @@ contract OrosignMasterV1 is Permissioned {
 
   // Get chain id of Orosign Master V1
   function getChainId() external view returns (uint256) {
-    return _chainId;
+    return chainId;
   }
 
   // Get fee to generate a new wallet
   function getFee() external view returns (uint256) {
-    return _walletFee;
+    return walletFee;
   }
 
   // Get implementation address
   function getImplementation() external view returns (address) {
-    return _implementation;
+    return implementation;
   }
 
   // Calculate deterministic address
-  function predictWalletAddress(uint96 salt, address creatorAddress) public view returns (address) {
-    return _implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
+  function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address) {
+    return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
   }
 
   // Check a Multi Signature Wallet is existed
-  function isMultiSigExist(address walletAddress) public view returns (bool) {
+  function isMultiSigExist(address walletAddress) external view returns (bool) {
     return walletAddress.code.length > 0;
   }
 
   // Check a Multi Signature Wallet existing by creator & salt
-  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) public view returns (bool) {
-    return isMultiSigExist(predictWalletAddress(salt, creatorAddress));
+  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool) {
+    return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }
 
   // Calculate deterministic address

@@ -29,13 +29,13 @@ contract OrosignMasterV1 is Permissioned {
   uint256 private constant SECURED_TIMEOUT = 3 days;
 
   // Wallet implementation
-  address private _implementation;
+  address private implementation;
 
   // Price in native token
-  uint256 private _walletFee;
+  uint256 private walletFee;
 
   // Chain id
-  uint256 private _chainId;
+  uint256 private chainId;
 
   // Create new wallet
   event CreateNewWallet(uint96 indexed salt, address indexed owner, address indexed walletAddress);
@@ -48,8 +48,8 @@ contract OrosignMasterV1 is Permissioned {
 
   // Request small fee to create new wallet, we prevent people spaming wallet
   modifier requireFee() {
-    if (msg.value != _walletFee) {
-      revert InvalidFee(msg.value, _walletFee);
+    if (msg.value != walletFee) {
+      revert InvalidFee(msg.value, walletFee);
     }
     _;
   }
@@ -59,37 +59,41 @@ contract OrosignMasterV1 is Permissioned {
 
   // Pass parameters to parent contract
   constructor(
-    uint256 chainId_,
-    address[] memory users_,
-    uint256[] memory roles_,
-    address implementation_,
-    uint256 fee_
+    uint256 inputChainId,
+    address[] memory userList,
+    uint256[] memory roleList,
+    address multisigImplementation,
+    uint256 createWalletFee
   ) {
     // We use input chainId instead of EIP-1344
-    _chainId = chainId_;
+    chainId = inputChainId;
+
     // We will revert if we're failed to init permissioned
-    if (!_init(users_, roles_)) {
-      revert UnableToInitOrosignMaster();
-    }
+    _init(userList, roleList);
+
     // Set the address of orosign implementation
-    _implementation = implementation_;
+    implementation = multisigImplementation;
+
     // Set wallet fee
-    _walletFee = fee_;
-    emit UpgradeImplementation(address(0), implementation_);
+    walletFee = createWalletFee;
+    emit UpgradeImplementation(address(0), multisigImplementation);
   }
 
   /*******************************************************
    * User section
    ********************************************************/
+
   // Transfer existing role to a new user
   function transferRole(address newUser) external onlyUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT + 1 hours
-    return _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
+    return true;
   }
 
   /*******************************************************
    * Withdraw section
    ********************************************************/
+
   // Withdraw all of the balance to the fee collector
   function withdraw(address payable receiver) external onlyAllow(PERMISSION_WITHDRAW) returns (bool) {
     receiver.transfer(address(this).balance);
@@ -99,36 +103,50 @@ contract OrosignMasterV1 is Permissioned {
   /*******************************************************
    * Operator section
    ********************************************************/
+
   // Upgrade new implementation
   function upgradeImplementation(address newImplementation) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
-    emit UpgradeImplementation(_implementation, newImplementation);
-    _implementation = newImplementation;
+    emit UpgradeImplementation(implementation, newImplementation);
+    implementation = newImplementation;
     return true;
   }
 
   // Allow operator to set new fee
   function setFee(uint256 newFee) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
-    emit UpdateFee(block.timestamp, _walletFee, newFee);
-    _walletFee = newFee;
+    emit UpdateFee(block.timestamp, walletFee, newFee);
+    walletFee = newFee;
     return true;
   }
 
   /*******************************************************
    * Public section
    ********************************************************/
+
   // Create new multisig wallet
   function createWallet(
     uint96 salt,
-    address[] memory users_,
-    uint256[] memory roles_,
-    uint256 threshold_
+    address[] memory userList,
+    uint256[] memory roleList,
+    uint256 votingThreshold
   ) external payable requireFee returns (address newWalletAdress) {
-    newWalletAdress = _implementation.cloneDeterministic(_packing(salt, msg.sender));
-    if (newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(_chainId, users_, roles_, threshold_)) {
+    newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
+    if (
+      newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
+    ) {
       revert UnableToInitNewWallet(salt, msg.sender, newWalletAdress);
     }
     emit CreateNewWallet(salt, msg.sender, newWalletAdress);
     return newWalletAdress;
+  }
+
+  // Calculate deterministic address
+  function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address) {
+    return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
+  }
+
+  // Check a Multi Signature Wallet is existed
+  function _isMultiSigExist(address walletAddress) internal view returns (bool) {
+    return walletAddress.code.length > 0;
   }
 
   /*******************************************************
@@ -137,32 +155,32 @@ contract OrosignMasterV1 is Permissioned {
 
   // Get chain id of Orosign Master V1
   function getChainId() external view returns (uint256) {
-    return _chainId;
+    return chainId;
   }
 
   // Get fee to generate a new wallet
   function getFee() external view returns (uint256) {
-    return _walletFee;
+    return walletFee;
   }
 
   // Get implementation address
   function getImplementation() external view returns (address) {
-    return _implementation;
+    return implementation;
   }
 
   // Calculate deterministic address
-  function predictWalletAddress(uint96 salt, address creatorAddress) public view returns (address) {
-    return _implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
+  function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address) {
+    return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
   }
 
   // Check a Multi Signature Wallet is existed
-  function isMultiSigExist(address walletAddress) public view returns (bool) {
+  function isMultiSigExist(address walletAddress) external view returns (bool) {
     return walletAddress.code.length > 0;
   }
 
   // Check a Multi Signature Wallet existing by creator & salt
-  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) public view returns (bool) {
-    return isMultiSigExist(predictWalletAddress(salt, creatorAddress));
+  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool) {
+    return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }
 
   // Calculate deterministic address

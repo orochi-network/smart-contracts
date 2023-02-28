@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.8.4 <0.9.0;
 
-// Unable to init contract
-error UnableToInitContract();
 // Invalid threshold
 error InvalidThreshold(uint256 threshold, uint256 totalSignature);
 // Invalid permission

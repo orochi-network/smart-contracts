@@ -36,7 +36,7 @@ contract Permissioned {
 
   // Only allow users who has given role trigger smart contract
   modifier onlyAllow(uint256 permissions) {
-    if (!isPermission(msg.sender, permissions)) {
+    if (!_isPermission(msg.sender, permissions)) {
       revert AccessDenied();
     }
     _;
@@ -44,7 +44,7 @@ contract Permissioned {
 
   // Only allow listed users to trigger smart contract
   modifier onlyUser() {
-    if (!isUser(msg.sender)) {
+    if (!_isUser(msg.sender)) {
       revert OnlyUserAllowed();
     }
     _;
@@ -55,7 +55,7 @@ contract Permissioned {
    ********************************************************/
 
   // Init method which can be called once
-  function _init(address[] memory users_, uint256[] memory roles_) internal returns (bool) {
+  function _init(address[] memory users_, uint256[] memory roles_) internal {
     // Make sure that we only init this once
     if (_totalUser > 0) {
       revert OnlyAbleToInitOnce();
@@ -71,11 +71,10 @@ contract Permissioned {
       emit TransferRole(address(0), users_[i], roles_[i]);
     }
     _totalUser = users_.length;
-    return true;
   }
 
   // Transfer role to new user
-  function _transferRole(address newUser, uint256 lockDuration) internal returns (bool) {
+  function _transferRole(address newUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (newUser == address(0)) {
       revert InvalidAddress();
@@ -89,7 +88,6 @@ contract Permissioned {
     // Replace old user in user list
     _userList[_reversedUserList[msg.sender]] = newUser;
     emit TransferRole(msg.sender, newUser, role);
-    return true;
   }
 
   // Packing adderss and uint96 to a single bytes32
@@ -101,31 +99,45 @@ contract Permissioned {
   }
 
   /*******************************************************
-   * View section
+   * Internal View section
    ********************************************************/
 
-  // Read role of an user
-  function getRole(address checkAddress) public view returns (uint256) {
-    return _userRole[checkAddress];
-  }
-
-  // Get active time of user
-  function getActiveTime(address checkAddress) public view returns (uint256) {
-    return _activeTime[checkAddress];
-  }
-
   // Is an address a user
-  function isUser(address checkAddress) public view returns (bool) {
+  function _isUser(address checkAddress) internal view returns (bool) {
     return _userRole[checkAddress] > PERMISSION_NONE && block.timestamp > _activeTime[checkAddress];
   }
 
   // Check a permission is granted to user
-  function isPermission(address checkAddress, uint256 requiredPermission) public view returns (bool) {
-    return isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+  function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
+    return _isUser(checkAddress) && ((_userRole[checkAddress] & requiredPermission) == requiredPermission);
+  }
+
+  /*******************************************************
+   * View section
+   ********************************************************/
+
+  // Read role of an user
+  function getRole(address checkAddress) external view returns (uint256) {
+    return _userRole[checkAddress];
+  }
+
+  // Get active time of user
+  function getActiveTime(address checkAddress) external view returns (uint256) {
+    return _activeTime[checkAddress];
+  }
+
+  // Is an address a user
+  function isUser(address checkAddress) external view returns (bool) {
+    return _isUser(checkAddress);
+  }
+
+  // Check a permission is granted to user
+  function isPermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
+    return _isPermission(checkAddress, requiredPermission);
   }
 
   // Get list of users include its permission
-  function getAllUser() public view returns (uint256[] memory userList) {
+  function getAllUser() external view returns (uint256[] memory userList) {
     userList = new uint256[](_totalUser);
     for (uint256 i = 0; i < _totalUser; i += 1) {
       address currentUser = _userList[i];
@@ -134,7 +146,7 @@ contract Permissioned {
   }
 
   // Get total number of user
-  function getTotalUser() public view returns (uint256) {
+  function getTotalUser() external view returns (uint256) {
     return _totalUser;
   }
 }
