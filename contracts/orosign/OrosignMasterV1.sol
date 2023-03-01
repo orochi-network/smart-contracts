@@ -75,10 +75,10 @@ contract OrosignMasterV1 is Permissioned {
 
     for (uint256 i = 0; i < userList.length; i += 1) {
       // Equal to isPermission(userList[i], PERMISSION_SIGN)
-      if ((roleList[i] & PERMISSION_WITHDRAW) == PERMISSION_WITHDRAW) {
+      if (_isSuperset(roleList[i], PERMISSION_WITHDRAW)) {
         countingWithdraw += 1;
       }
-      if ((roleList[i] & PERMISSION_OPERATE) == PERMISSION_OPERATE) {
+      if (_isSuperset(roleList[i], PERMISSION_OPERATE)) {
         countingOperator += 1;
       }
     }
@@ -111,7 +111,7 @@ contract OrosignMasterV1 is Permissioned {
    ********************************************************/
 
   // Withdraw all of the balance to the fee collector
-  function withdraw(address payable receiver) external onlyAllow(PERMISSION_WITHDRAW) returns (bool) {
+  function withdraw(address payable receiver) external onlyActivePermission(PERMISSION_WITHDRAW) returns (bool) {
     // Receiver should be a valid address
     if (receiver == address(0)) {
       revert InvalidAddress();
@@ -126,14 +126,16 @@ contract OrosignMasterV1 is Permissioned {
    ********************************************************/
 
   // Upgrade new implementation
-  function upgradeImplementation(address newImplementation) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
+  function upgradeImplementation(
+    address newImplementation
+  ) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
     emit UpgradeImplementation(implementation, newImplementation);
     implementation = newImplementation;
     return true;
   }
 
   // Allow operator to set new fee
-  function setFee(uint256 newFee) external onlyAllow(PERMISSION_OPERATE) returns (bool) {
+  function setFee(uint256 newFee) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
     emit UpdateFee(block.timestamp, walletFee, newFee);
     walletFee = newFee;
     return true;
@@ -203,7 +205,7 @@ contract OrosignMasterV1 is Permissioned {
     return walletAddress.code.length > 0;
   }
 
-  // Check a Multi Signature Wallet existing by creator & salt
+  // Check a Multi Signature Wallet existing by creator and salt
   function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool) {
     return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }

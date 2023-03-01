@@ -70,14 +70,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     _init(userList, roleList);
 
     for (uint256 i = 0; i < userList.length; i += 1) {
-      // Equal to isPermission(userList[i], PERMISSION_SIGN)
-      if ((roleList[i] & PERMISSION_SIGN) == PERMISSION_SIGN) {
+      if (_isSuperset(roleList[i], PERMISSION_SIGN)) {
         countingSigner += 1;
       }
-      if ((roleList[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
+      if (_isSuperset(roleList[i], PERMISSION_EXECUTE)) {
         countingExecutor += 1;
       }
-      if ((roleList[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
+      if (_isSuperset(roleList[i], PERMISSION_CREATE)) {
         countingCreator += 1;
       }
     }
@@ -123,13 +122,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     bytes memory creatorSignature,
     bytes[] memory signatureList,
     bytes memory message
-  ) external onlyAllow(PERMISSION_EXECUTE) returns (bool) {
+  ) external onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
     address[] memory signedAddresses = new address[](signatureList.length);
 
     // If there is NO creator proof revert
-    if (!_isPermission(creatorAddress, PERMISSION_CREATE)) {
+    if (!_isActivePermission(creatorAddress, PERMISSION_CREATE)) {
       revert ProofNoCreator();
     }
 
@@ -137,7 +136,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     for (uint256 i = 0; i < signatureList.length; i += 1) {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       // Each signer only able to be counted once
-      if (_isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
+      if (_isActivePermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
         // Add signer -> signed address
         signedAddresses[totalSigned] = recoveredSigner;
         // Increase signed 1

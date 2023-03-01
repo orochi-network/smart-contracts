@@ -62,6 +62,7 @@ let deployerSigner: SignerWithAddress,
   admin3: SignerWithAddress,
   nobody: SignerWithAddress;
 let chainId: number;
+let replayAttackParams: any[];
 
 describe('OrosignV1', function () {
   it('OrosignV1 must be deployed correctly', async () => {
@@ -90,8 +91,10 @@ describe('OrosignV1', function () {
 
   it('permission should be correct', async () => {
     expect(await contractMultiSig.isActiveUser(admin3.address)).to.eq(true);
-    expect(await contractMultiSig.isPermission(admin3.address, PERMISSION_CREATE | PERMISSION_EXECUTE)).to.eq(true);
-    expect(await contractMultiSig.isPermission(admin3.address, PERMISSION_OBSERVER)).to.eq(true);
+    expect(await contractMultiSig.isActivePermission(admin3.address, PERMISSION_CREATE | PERMISSION_EXECUTE)).to.eq(
+      true,
+    );
+    expect(await contractMultiSig.isActivePermission(admin3.address, PERMISSION_OBSERVER)).to.eq(true);
   });
 
   it('user list should be correct', async () => {
@@ -176,6 +179,11 @@ describe('OrosignV1', function () {
       0,
       contractBigO.interface.encodeFunctionData('transfer', [admin1.address, amount]),
     );
+    replayAttackParams = [
+      await admin1.signMessage(utils.arrayify(tx)),
+      [await admin1.signMessage(utils.arrayify(tx)), await admin2.signMessage(utils.arrayify(tx))],
+      tx,
+    ];
     printAllEvents(
       await cloneMultiSig
         .connect(admin2)
@@ -187,6 +195,15 @@ describe('OrosignV1', function () {
     );
     const afterBalance = await contractBigO.balanceOf(admin1.address);
     expect(afterBalance.sub(beforeBalance).toNumber()).to.eq(amount);
+  });
+
+  it('multisig should able to prevent replay attack', async () => {
+    expect(
+      await shouldFailed(async () =>
+        // @ts-ignore
+        cloneMultiSig.connect(admin2).executeTransaction(...(replayAttackParams as any[])),
+      ),
+    ).eq(true);
   });
 
   it('init() can not able to be called twice', async () => {
@@ -225,10 +242,10 @@ describe('OrosignV1', function () {
     await timeTravel(dayToSec(4));
     expect(await contractMultiSig.isActiveUser(nobody.address)).eq(true);
     expect(await contractMultiSig.isActiveUser(voter.address)).eq(false);
-    expect(await contractMultiSig.isPermission(nobody.address, ROLE_VOTER)).eq(true);
+    expect(await contractMultiSig.isActivePermission(nobody.address, ROLE_VOTER)).eq(true);
     const roleList = [ROLE_CREATOR, ROLE_EXECUTOR, ROLE_ADMIN];
     for (let i = 0; i < roleList.length; i += 1) {
-      expect(await contractMultiSig.isPermission(nobody.address, roleList[i])).eq(false);
+      expect(await contractMultiSig.isActivePermission(nobody.address, roleList[i])).eq(false);
     }
   });
 
@@ -255,10 +272,10 @@ describe('OrosignV1', function () {
     await timeTravel(dayToSec(4));
     expect(await contractMultiSig.isActiveUser(nobody.address)).eq(false);
     expect(await contractMultiSig.isActiveUser(voter.address)).eq(true);
-    expect(await contractMultiSig.isPermission(voter.address, ROLE_VOTER)).eq(true);
+    expect(await contractMultiSig.isActivePermission(voter.address, ROLE_VOTER)).eq(true);
     const roleList = [ROLE_CREATOR, ROLE_EXECUTOR, ROLE_ADMIN];
     for (let i = 0; i < roleList.length; i += 1) {
-      expect(await contractMultiSig.isPermission(voter.address, roleList[i])).eq(false);
+      expect(await contractMultiSig.isActivePermission(voter.address, roleList[i])).eq(false);
     }
   });
 

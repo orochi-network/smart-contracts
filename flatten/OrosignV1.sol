@@ -977,9 +977,9 @@ contract Permissioned {
   // Transfer role to new user event
   event TransferRole(address indexed preUser, address indexed newUser, uint128 indexed role);
 
-  // Only allow users who has given role trigger smart contract
-  modifier onlyAllow(uint256 permissions) {
-    if (!_isPermission(msg.sender, permissions)) {
+  // Only allow active users who have given role trigger smart contract
+  modifier onlyActivePermission(uint256 permissions) {
+    if (!_isActivePermission(msg.sender, permissions)) {
       revert AccessDenied();
     }
     _;
@@ -1029,7 +1029,7 @@ contract Permissioned {
       revert InvalidAddress();
     }
     // New user should not has any permissions
-    if (_hasPermission(toUser)) {
+    if (_isUser(toUser)) {
       revert InvalidReceiver(toUser);
     }
     // Role owner
@@ -1065,18 +1065,28 @@ contract Permissioned {
   }
 
   // Do this account has any permission?
-  function _hasPermission(address checkAddress) internal view returns (bool) {
+  function _hasPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
+    return ((_getRole(checkAddress).role & requiredPermission) == requiredPermission);
+  }
+
+  // Do this account has any permission?
+  function _isUser(address checkAddress) internal view returns (bool) {
     return _getRole(checkAddress).role > PERMISSION_NONE;
   }
 
   // Is an address a active user
   function _isActiveUser(address checkAddress) internal view returns (bool) {
-    return _hasPermission(checkAddress) && block.timestamp > role[checkAddress].activeTime;
+    return _isUser(checkAddress) && block.timestamp > role[checkAddress].activeTime;
   }
 
   // Check a permission is granted to user
-  function _isPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return _isActiveUser(checkAddress) && ((role[checkAddress].role & requiredPermission) == requiredPermission);
+  function _isActivePermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
+    return _isActiveUser(checkAddress) && _hasPermission(checkAddress, requiredPermission);
+  }
+
+  // Check if permission is a superset of required permission
+  function _isSuperset(uint256 permission, uint256 requiredPermission) internal pure returns (bool) {
+    return (permission & requiredPermission) == requiredPermission;
   }
 
   /*******************************************************
@@ -1094,8 +1104,8 @@ contract Permissioned {
   }
 
   // Check a permission is granted to user
-  function isPermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
-    return _isPermission(checkAddress, requiredPermission);
+  function isActivePermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
+    return _isActivePermission(checkAddress, requiredPermission);
   }
 
   // Get list of users include its permission
@@ -1239,14 +1249,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     _init(userList, roleList);
 
     for (uint256 i = 0; i < userList.length; i += 1) {
-      // Equal to isPermission(userList[i], PERMISSION_SIGN)
-      if ((roleList[i] & PERMISSION_SIGN) == PERMISSION_SIGN) {
+      if (_isSuperset(roleList[i], PERMISSION_SIGN)) {
         countingSigner += 1;
       }
-      if ((roleList[i] & PERMISSION_EXECUTE) == PERMISSION_EXECUTE) {
+      if (_isSuperset(roleList[i], PERMISSION_EXECUTE)) {
         countingExecutor += 1;
       }
-      if ((roleList[i] & PERMISSION_CREATE) == PERMISSION_CREATE) {
+      if (_isSuperset(roleList[i], PERMISSION_CREATE)) {
         countingCreator += 1;
       }
     }
@@ -1292,13 +1301,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     bytes memory creatorSignature,
     bytes[] memory signatureList,
     bytes memory message
-  ) external onlyAllow(PERMISSION_EXECUTE) returns (bool) {
+  ) external onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
     address[] memory signedAddresses = new address[](signatureList.length);
 
     // If there is NO creator proof revert
-    if (!_isPermission(creatorAddress, PERMISSION_CREATE)) {
+    if (!_isActivePermission(creatorAddress, PERMISSION_CREATE)) {
       revert ProofNoCreator();
     }
 
@@ -1306,7 +1315,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     for (uint256 i = 0; i < signatureList.length; i += 1) {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       // Each signer only able to be counted once
-      if (_isPermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
+      if (_isActivePermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
         // Add signer -> signed address
         signedAddresses[totalSigned] = recoveredSigner;
         // Increase signed 1
