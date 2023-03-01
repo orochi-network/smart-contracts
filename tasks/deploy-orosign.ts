@@ -2,7 +2,7 @@
 import fs from 'fs';
 import '@nomiclabs/hardhat-ethers';
 import { task } from 'hardhat/config';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer, NATIVE_UNIT } from '../helpers';
 import { OrosignMasterV1, OrosignV1 } from '../typechain-types';
@@ -15,10 +15,23 @@ async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.Wallet>
   return hre.ethers.Wallet.fromMnemonic(env.OROCHI_MNEMONIC, `m/44'/60'/0'/0/${chainId}`).connect(hre.ethers.provider);
 }
 
+function getFee(chainId: number): BigNumber {
+  switch (chainId) {
+    case 1:
+    case 42161:
+      return BigNumber.from('1000000000000000');
+    case 56:
+      return BigNumber.from('5000000000000000');
+    default:
+      return BigNumber.from('1000000000000000000');
+  }
+}
+
 task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     const account = await getWallet(hre);
     const networkName = hre.network.name;
+    const { chainId } = await hre.ethers.provider.getNetwork();
     const deploymentRecord = `${__dirname}/deployed.json`;
     const deployer: Deployer = Deployer.getInstance(hre).connect(account);
     let deploymentJson;
@@ -27,6 +40,7 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
     const balance = await account.getBalance();
 
     console.log(`Address: ${account.address} Balance: ${balance.div(NATIVE_UNIT).toString()}`);
+    console.log(`Wallet Fee: ${getFee(chainId).mul(1000000).div(NATIVE_UNIT).toNumber() / 1000000}`);
 
     if (balance.eq(0)) {
       throw new Error('Insufficient balance');
@@ -55,14 +69,14 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
       orosignMasterV1 = <OrosignMasterV1>await deployer.contractDeploy(
         'OrosignV1/OrosignMasterV1',
         [],
-        deployer.getChainId(),
+        chainId,
         // Assign roles for corresponding address
         ['0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db', '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db'],
         [1, 2],
         // Implementation
         orosignV1.address,
         // Fee
-        1000000000000000,
+        getFee(chainId),
       );
     } else {
       orosignMasterV1 = <OrosignMasterV1>(
