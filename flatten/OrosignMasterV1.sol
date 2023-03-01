@@ -211,6 +211,11 @@ contract Permissioned {
     }
   }
 
+  // Check if permission is a superset of required permission
+  function _isSuperset(uint256 permission, uint256 requiredPermission) internal pure returns (bool) {
+    return (permission & requiredPermission) == requiredPermission;
+  }
+
   // Read role of an user
   function _getRole(address checkAddress) internal view returns (RoleRecord memory roleRecord) {
     return role[checkAddress];
@@ -218,7 +223,7 @@ contract Permissioned {
 
   // Do this account has any permission?
   function _hasPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return ((_getRole(checkAddress).role & requiredPermission) == requiredPermission);
+    return _isSuperset(_getRole(checkAddress).role, requiredPermission);
   }
 
   // Do this account has any permission?
@@ -234,11 +239,6 @@ contract Permissioned {
   // Check a permission is granted to user
   function _isActivePermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isActiveUser(checkAddress) && _hasPermission(checkAddress, requiredPermission);
-  }
-
-  // Check if permission is a superset of required permission
-  function _isSuperset(uint256 permission, uint256 requiredPermission) internal pure returns (bool) {
-    return (permission & requiredPermission) == requiredPermission;
   }
 
   /*******************************************************
@@ -533,7 +533,7 @@ contract OrosignMasterV1 is Permissioned {
 
   // Check a Multi Signature Wallet is existed
   function isMultiSigExist(address walletAddress) external view returns (bool) {
-    return walletAddress.code.length > 0;
+    return _isMultiSigExist(walletAddress);
   }
 
   // Check a Multi Signature Wallet existing by creator and salt
@@ -541,7 +541,7 @@ contract OrosignMasterV1 is Permissioned {
     return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }
 
-  // Calculate deterministic address
+  // Pacing salt and creator address
   function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256) {
     return uint256(_packing(salt, creatorAddress));
   }

@@ -202,7 +202,7 @@ contract OrosignMasterV1 is Permissioned {
 
   // Check a Multi Signature Wallet is existed
   function isMultiSigExist(address walletAddress) external view returns (bool) {
-    return walletAddress.code.length > 0;
+    return _isMultiSigExist(walletAddress);
   }
 
   // Check a Multi Signature Wallet existing by creator and salt
@@ -210,7 +210,7 @@ contract OrosignMasterV1 is Permissioned {
     return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }
 
-  // Calculate deterministic address
+  // Pacing salt and creator address
   function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256) {
     return uint256(_packing(salt, creatorAddress));
   }

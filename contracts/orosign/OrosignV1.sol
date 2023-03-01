@@ -40,10 +40,10 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   uint256 private chainId;
 
   // Quick transaction nonce
-  uint256 private nonce = 0;
+  uint256 private nonce;
 
   // Total number of signer
-  uint256 private totalSigner = 0;
+  uint256 private totalSigner;
 
   // Required threshold for a proposal to be passed
   uint256 private threshold;

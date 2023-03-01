@@ -119,6 +119,11 @@ contract Permissioned {
     }
   }
 
+  // Check if permission is a superset of required permission
+  function _isSuperset(uint256 permission, uint256 requiredPermission) internal pure returns (bool) {
+    return (permission & requiredPermission) == requiredPermission;
+  }
+
   // Read role of an user
   function _getRole(address checkAddress) internal view returns (RoleRecord memory roleRecord) {
     return role[checkAddress];
@@ -126,7 +131,7 @@ contract Permissioned {
 
   // Do this account has any permission?
   function _hasPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
-    return ((_getRole(checkAddress).role & requiredPermission) == requiredPermission);
+    return _isSuperset(_getRole(checkAddress).role, requiredPermission);
   }
 
   // Do this account has any permission?
@@ -142,11 +147,6 @@ contract Permissioned {
   // Check a permission is granted to user
   function _isActivePermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isActiveUser(checkAddress) && _hasPermission(checkAddress, requiredPermission);
-  }
-
-  // Check if permission is a superset of required permission
-  function _isSuperset(uint256 permission, uint256 requiredPermission) internal pure returns (bool) {
-    return (permission & requiredPermission) == requiredPermission;
   }
 
   /*******************************************************
