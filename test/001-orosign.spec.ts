@@ -12,7 +12,7 @@ const PERMISSION_OBSERVER = 1;
 const PERMISSION_VOTE = 2;
 // Permission to execute the proposal
 const PERMISSION_EXECUTE = 4;
-// Create a new proposal and do qick transfer
+// Create a new proposal and do quick transfer
 const PERMISSION_CREATE = 8;
 
 const UNIT = '1000000000000000000';
@@ -28,13 +28,18 @@ async function timeTravel(secs: number) {
     method: 'evm_increaseTime',
     params: [secs],
   });
+
+  await hre.network.provider.request({
+    method: 'evm_mine',
+    params: [],
+  });
 }
 
 async function shouldFailed(asyncFunction: () => Promise<any>): Promise<boolean> {
   let error = false;
   try {
     await asyncFunction();
-    let error = false;
+    error = false;
   } catch (e) {
     console.log((e as Error).message);
     error = true;
@@ -54,7 +59,8 @@ let deployerSigner: SignerWithAddress,
   viewer: SignerWithAddress,
   admin1: SignerWithAddress,
   admin2: SignerWithAddress,
-  admin3: SignerWithAddress;
+  admin3: SignerWithAddress,
+  nobody: SignerWithAddress;
 let chainId: number;
 
 describe('OrosignV1', function () {
@@ -62,7 +68,7 @@ describe('OrosignV1', function () {
     const network = await hre.ethers.provider.getNetwork();
     chainId = network.chainId;
     accounts = await hre.ethers.getSigners();
-    [deployerSigner, creator, voter, executor, viewer, admin1, admin2, admin3] = accounts;
+    [deployerSigner, creator, voter, executor, viewer, admin1, admin2, admin3, nobody] = accounts;
     const deployer: Deployer = Deployer.getInstance(hre);
     deployer.connect(deployerSigner);
     contractBigO = <BigO>await deployer.contractDeploy('test/BigO', []);
@@ -194,5 +200,73 @@ describe('OrosignV1', function () {
         ),
       ),
     ).to.eq(true);
+  });
+
+  it('user should able to transfer role', async () => {
+    const roleVoter = await contractMultiSig.getRole(voter.address);
+    expect(roleVoter.activeTime).eq(0);
+    expect(roleVoter.role).eq(ROLE_VOTER);
+    expect(roleVoter.index).eq(1);
+    const roleNobody = await contractMultiSig.getRole(nobody.address);
+    expect(roleNobody.activeTime).eq(0);
+    expect(roleNobody.role).eq(0);
+    expect(roleNobody.index).eq(0);
+    await contractMultiSig.connect(voter).transferRole(nobody.address);
+    const oldVoter = await contractMultiSig.getRole(voter.address);
+    expect(oldVoter.activeTime).eq(0);
+    expect(oldVoter.role).eq(0);
+    expect(oldVoter.index).eq(0);
+    const newVoter = await contractMultiSig.getRole(nobody.address);
+    expect(newVoter.activeTime).gt(0);
+    expect(newVoter.role).eq(ROLE_VOTER);
+    expect(newVoter.index).eq(1);
+    expect(await contractMultiSig.isActiveUser(nobody.address)).eq(false);
+    expect(await contractMultiSig.isActiveUser(voter.address)).eq(false);
+    await timeTravel(dayToSec(4));
+    expect(await contractMultiSig.isActiveUser(nobody.address)).eq(true);
+    expect(await contractMultiSig.isActiveUser(voter.address)).eq(false);
+    expect(await contractMultiSig.isPermission(nobody.address, ROLE_VOTER)).eq(true);
+    const roleList = [ROLE_CREATOR, ROLE_EXECUTOR, ROLE_ADMIN];
+    for (let i = 0; i < roleList.length; i += 1) {
+      expect(await contractMultiSig.isPermission(nobody.address, roleList[i])).eq(false);
+    }
+  });
+
+  it('user should able to transfer back the role', async () => {
+    const roleVoter = await contractMultiSig.getRole(voter.address);
+    expect(roleVoter.activeTime).eq(0);
+    expect(roleVoter.role).eq(0);
+    expect(roleVoter.index).eq(0);
+    const roleNobody = await contractMultiSig.getRole(nobody.address);
+    expect(roleNobody.activeTime).gt(0);
+    expect(roleNobody.role).eq(ROLE_VOTER);
+    expect(roleNobody.index).eq(1);
+    await contractMultiSig.connect(nobody).transferRole(voter.address);
+    const oldVoter = await contractMultiSig.getRole(voter.address);
+    expect(oldVoter.activeTime).gt(0);
+    expect(oldVoter.role).eq(ROLE_VOTER);
+    expect(oldVoter.index).eq(1);
+    const newVoter = await contractMultiSig.getRole(nobody.address);
+    expect(newVoter.activeTime).eq(0);
+    expect(newVoter.role).eq(0);
+    expect(newVoter.index).eq(0);
+    expect(await contractMultiSig.isActiveUser(nobody.address)).eq(false);
+    expect(await contractMultiSig.isActiveUser(voter.address)).eq(false);
+    await timeTravel(dayToSec(4));
+    expect(await contractMultiSig.isActiveUser(nobody.address)).eq(false);
+    expect(await contractMultiSig.isActiveUser(voter.address)).eq(true);
+    expect(await contractMultiSig.isPermission(voter.address, ROLE_VOTER)).eq(true);
+    const roleList = [ROLE_CREATOR, ROLE_EXECUTOR, ROLE_ADMIN];
+    for (let i = 0; i < roleList.length; i += 1) {
+      expect(await contractMultiSig.isPermission(voter.address, roleList[i])).eq(false);
+    }
+  });
+
+  it('none user should not able to transfer role', async () => {
+    expect(await shouldFailed(async () => contractMultiSig.connect(nobody).transferRole(nobody.address))).eq(true);
+  });
+
+  it('user should not able to transfer role to another user', async () => {
+    expect(await shouldFailed(async () => contractMultiSig.connect(admin1).transferRole(admin2.address))).eq(true);
   });
 });
