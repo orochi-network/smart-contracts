@@ -529,7 +529,7 @@ contract OrosignMasterV1 is Permissioned {
 
   // Calculate deterministic address
   function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address) {
-    return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
+    return _predictWalletAddress(salt, creatorAddress);
   }
 
   // Check a Multi Signature Wallet is existed
