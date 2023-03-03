@@ -1022,7 +1022,7 @@ contract Permissioned {
     totalUser = userList.length;
   }
 
-  // Transfer role fro msg.sender -> new user
+  // Transfer role from msg.sender -> new user
   function _transferRole(address toUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (toUser == address(0)) {
@@ -1057,6 +1057,7 @@ contract Permissioned {
     assembly {
       packed := or(shl(160, a), b)
     }
+    return packed;
   }
 
   // Check if permission is a superset of required permission
@@ -1064,27 +1065,28 @@ contract Permissioned {
     return (permission & requiredPermission) == requiredPermission;
   }
 
-  // Read role of an user
+  // Read role record of an user
   function _getRole(address checkAddress) internal view returns (RoleRecord memory roleRecord) {
     return role[checkAddress];
   }
 
-  // Do this account has any permission?
+  // Do this account has required permission?
   function _hasPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isSuperset(_getRole(checkAddress).role, requiredPermission);
   }
 
-  // Do this account has any permission?
+  // Is an user?
   function _isUser(address checkAddress) internal view returns (bool) {
     return _getRole(checkAddress).role > PERMISSION_NONE;
   }
 
-  // Is an address a active user
+  // Is an active user?
   function _isActiveUser(address checkAddress) internal view returns (bool) {
-    return _isUser(checkAddress) && block.timestamp > role[checkAddress].activeTime;
+    RoleRecord memory roleRecord = _getRole(checkAddress);
+    return roleRecord.role > PERMISSION_NONE && block.timestamp > roleRecord.activeTime;
   }
 
-  // Check a permission is granted to user
+  // Check a subset of required permission was granted to user
   function _isActivePermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isActiveUser(checkAddress) && _hasPermission(checkAddress, requiredPermission);
   }
@@ -1093,17 +1095,17 @@ contract Permissioned {
    * External View section
    ********************************************************/
 
-  // Read role of an user
+  // Read role record of an user
   function getRole(address checkAddress) external view returns (RoleRecord memory roleRecord) {
     return _getRole(checkAddress);
   }
 
-  // Is an address a active user
+  // Is active user?
   function isActiveUser(address checkAddress) external view returns (bool) {
     return _isActiveUser(checkAddress);
   }
 
-  // Check a permission is granted to user
+  // Check a subset of required permission was granted to user
   function isActivePermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
     return _isActivePermission(checkAddress, requiredPermission);
   }
@@ -1117,7 +1119,7 @@ contract Permissioned {
     }
   }
 
-  // Get total number of user
+  // Get total number of users
   function getTotalUser() external view returns (uint256) {
     return totalUser;
   }
@@ -1243,8 +1245,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 countingSigner = 0;
     uint256 countingExecutor = 0;
     uint256 countingCreator = 0;
-    // These values can be set once
-    chainId = inputChainId;
+
     // We should able to init
     _init(userList, roleList);
 
@@ -1272,10 +1273,15 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert InvalidPermission(countingSigner, countingExecutor, countingCreator);
     }
 
+    // These values can be set once
+    chainId = inputChainId;
+
     // Store voting threshold
     threshold = votingThreshold;
+
     // Store total signer
     totalSigner = countingSigner;
+
     return true;
   }
 
@@ -1303,10 +1309,11 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     bytes memory message
   ) external onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
+    // Recover creator address from creator signature
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
     address[] memory signedAddresses = new address[](signatureList.length);
 
-    // If there is NO creator proof revert
+    // If there is NO creator's proof revert
     if (!_isActivePermission(creatorAddress, PERMISSION_CREATE)) {
       revert ProofNoCreator();
     }
@@ -1418,14 +1425,14 @@ contract OrosignV1 is IOrosignV1, Permissioned {
    * External View section
    ********************************************************/
 
-  // Decode data from packed transaction
+  // Decode data from a packed transaction
   function decodePackedTransaction(
     bytes memory txData
   ) external view returns (PackedTransaction memory decodedTransaction) {
     return _decodePackedTransaction(txData);
   }
 
-  // Get packed transaction to create raw ECDSA proof
+  // Packing transaction to create raw ECDSA proof
   function encodePackedTransaction(
     uint256 inputChainId,
     uint256 timeout,
@@ -1436,7 +1443,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     return _encodePackedTransaction(inputChainId, timeout, target, value, data);
   }
 
-  // Get packed transaction to create raw ECDSA proof
+  // Quick packing transaction to create raw ECDSA proof
   function quickEncodePackedTransaction(
     address target,
     uint256 value,

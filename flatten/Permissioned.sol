@@ -82,7 +82,7 @@ contract Permissioned {
     totalUser = userList.length;
   }
 
-  // Transfer role fro msg.sender -> new user
+  // Transfer role from msg.sender -> new user
   function _transferRole(address toUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (toUser == address(0)) {
@@ -117,6 +117,7 @@ contract Permissioned {
     assembly {
       packed := or(shl(160, a), b)
     }
+    return packed;
   }
 
   // Check if permission is a superset of required permission
@@ -124,27 +125,28 @@ contract Permissioned {
     return (permission & requiredPermission) == requiredPermission;
   }
 
-  // Read role of an user
+  // Read role record of an user
   function _getRole(address checkAddress) internal view returns (RoleRecord memory roleRecord) {
     return role[checkAddress];
   }
 
-  // Do this account has any permission?
+  // Do this account has required permission?
   function _hasPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isSuperset(_getRole(checkAddress).role, requiredPermission);
   }
 
-  // Do this account has any permission?
+  // Is an user?
   function _isUser(address checkAddress) internal view returns (bool) {
     return _getRole(checkAddress).role > PERMISSION_NONE;
   }
 
-  // Is an address a active user
+  // Is an active user?
   function _isActiveUser(address checkAddress) internal view returns (bool) {
-    return _isUser(checkAddress) && block.timestamp > role[checkAddress].activeTime;
+    RoleRecord memory roleRecord = _getRole(checkAddress);
+    return roleRecord.role > PERMISSION_NONE && block.timestamp > roleRecord.activeTime;
   }
 
-  // Check a permission is granted to user
+  // Check a subset of required permission was granted to user
   function _isActivePermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isActiveUser(checkAddress) && _hasPermission(checkAddress, requiredPermission);
   }
@@ -153,17 +155,17 @@ contract Permissioned {
    * External View section
    ********************************************************/
 
-  // Read role of an user
+  // Read role record of an user
   function getRole(address checkAddress) external view returns (RoleRecord memory roleRecord) {
     return _getRole(checkAddress);
   }
 
-  // Is an address a active user
+  // Is active user?
   function isActiveUser(address checkAddress) external view returns (bool) {
     return _isActiveUser(checkAddress);
   }
 
-  // Check a permission is granted to user
+  // Check a subset of required permission was granted to user
   function isActivePermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
     return _isActivePermission(checkAddress, requiredPermission);
   }
@@ -177,7 +179,7 @@ contract Permissioned {
     }
   }
 
-  // Get total number of user
+  // Get total number of users
   function getTotalUser() external view returns (uint256) {
     return totalUser;
   }
