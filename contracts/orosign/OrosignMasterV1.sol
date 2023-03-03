@@ -20,6 +20,12 @@ contract OrosignMasterV1 is Permissioned {
   // Allow master to clone other multi signature contract
   using Clones for address;
 
+  struct MasterMetadata {
+    uint256 chainId;
+    uint256 walletFee;
+    address implementation;
+  }
+
   // Permission to manage fund
   uint256 private constant PERMISSION_WITHDRAW = 1;
   // Permission to operate the Orosign Master V1
@@ -67,14 +73,11 @@ contract OrosignMasterV1 is Permissioned {
   ) {
     uint256 countingWithdraw = 0;
     uint256 countingOperator = 0;
-    // We use input chainId instead of EIP-1344
-    chainId = inputChainId;
 
     // We will revert if we're failed to init permissioned
     _init(userList, roleList);
 
     for (uint256 i = 0; i < userList.length; i += 1) {
-      // Equal to isPermission(userList[i], PERMISSION_SIGN)
       if (_isSuperset(roleList[i], PERMISSION_WITHDRAW)) {
         countingWithdraw += 1;
       }
@@ -87,11 +90,15 @@ contract OrosignMasterV1 is Permissioned {
       revert UnableToInitOrosignMaster();
     }
 
+    // We use input chainId instead of EIP-1344
+    chainId = inputChainId;
+
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
     // Set wallet fee
     walletFee = createWalletFee;
+
     emit UpgradeImplementation(address(0), multisigImplementation);
   }
 
@@ -99,7 +106,7 @@ contract OrosignMasterV1 is Permissioned {
    * User section
    ********************************************************/
 
-  // Transfer existing role to a new user
+  // Transfer role to a new user
   function transferRole(address newUser) external onlyActiveUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT + 1 hours
     _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
@@ -110,7 +117,7 @@ contract OrosignMasterV1 is Permissioned {
    * Withdraw section
    ********************************************************/
 
-  // Withdraw all of the balance to the fee collector
+  // Withdraw the balance to the fee collector
   function withdraw(address payable receiver) external onlyActivePermission(PERMISSION_WITHDRAW) returns (bool) {
     // Receiver should be a valid address
     if (receiver == address(0)) {
@@ -129,15 +136,17 @@ contract OrosignMasterV1 is Permissioned {
   function upgradeImplementation(
     address newImplementation
   ) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
-    emit UpgradeImplementation(implementation, newImplementation);
+    // Overwrite current implementation address
     implementation = newImplementation;
+    emit UpgradeImplementation(implementation, newImplementation);
     return true;
   }
 
-  // Allow operator to set new fee
+  // Set new fee
   function setFee(uint256 newFee) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
-    emit UpdateFee(block.timestamp, walletFee, newFee);
+    // Overwrite current wallet fee
     walletFee = newFee;
+    emit UpdateFee(block.timestamp, walletFee, newFee);
     return true;
   }
 
@@ -180,19 +189,9 @@ contract OrosignMasterV1 is Permissioned {
    * View section
    ********************************************************/
 
-  // Get chain id of Orosign Master V1
-  function getChainId() external view returns (uint256) {
-    return chainId;
-  }
-
-  // Get fee to generate a new wallet
-  function getFee() external view returns (uint256) {
-    return walletFee;
-  }
-
-  // Get implementation address
-  function getImplementation() external view returns (address) {
-    return implementation;
+  // Get metadata of Orosign Master V1
+  function getMetadata() external view returns (MasterMetadata memory masterMetadata) {
+    return MasterMetadata({ chainId: chainId, walletFee: walletFee, implementation: implementation });
   }
 
   // Calculate deterministic address

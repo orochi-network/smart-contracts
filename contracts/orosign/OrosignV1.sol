@@ -64,8 +64,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 countingSigner = 0;
     uint256 countingExecutor = 0;
     uint256 countingCreator = 0;
-    // These values can be set once
-    chainId = inputChainId;
+
     // We should able to init
     _init(userList, roleList);
 
@@ -93,10 +92,15 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert InvalidPermission(countingSigner, countingExecutor, countingCreator);
     }
 
+    // These values can be set once
+    chainId = inputChainId;
+
     // Store voting threshold
     threshold = votingThreshold;
+
     // Store total signer
     totalSigner = countingSigner;
+
     return true;
   }
 
@@ -124,10 +128,11 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     bytes memory message
   ) external onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
+    // Recover creator address from creator signature
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
     address[] memory signedAddresses = new address[](signatureList.length);
 
-    // If there is NO creator proof revert
+    // If there is NO creator's proof revert
     if (!_isActivePermission(creatorAddress, PERMISSION_CREATE)) {
       revert ProofNoCreator();
     }
@@ -239,14 +244,14 @@ contract OrosignV1 is IOrosignV1, Permissioned {
    * External View section
    ********************************************************/
 
-  // Decode data from packed transaction
+  // Decode data from a packed transaction
   function decodePackedTransaction(
     bytes memory txData
   ) external view returns (PackedTransaction memory decodedTransaction) {
     return _decodePackedTransaction(txData);
   }
 
-  // Get packed transaction to create raw ECDSA proof
+  // Packing transaction to create raw ECDSA proof
   function encodePackedTransaction(
     uint256 inputChainId,
     uint256 timeout,
@@ -257,7 +262,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     return _encodePackedTransaction(inputChainId, timeout, target, value, data);
   }
 
-  // Get packed transaction to create raw ECDSA proof
+  // Quick packing transaction to create raw ECDSA proof
   function quickEncodePackedTransaction(
     address target,
     uint256 value,

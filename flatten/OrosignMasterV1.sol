@@ -174,7 +174,7 @@ contract Permissioned {
     totalUser = userList.length;
   }
 
-  // Transfer role fro msg.sender -> new user
+  // Transfer role from msg.sender -> new user
   function _transferRole(address toUser, uint256 lockDuration) internal {
     // Receiver shouldn't be a zero address
     if (toUser == address(0)) {
@@ -209,6 +209,7 @@ contract Permissioned {
     assembly {
       packed := or(shl(160, a), b)
     }
+    return packed;
   }
 
   // Check if permission is a superset of required permission
@@ -216,27 +217,28 @@ contract Permissioned {
     return (permission & requiredPermission) == requiredPermission;
   }
 
-  // Read role of an user
+  // Read role record of an user
   function _getRole(address checkAddress) internal view returns (RoleRecord memory roleRecord) {
     return role[checkAddress];
   }
 
-  // Do this account has any permission?
+  // Do this account has required permission?
   function _hasPermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isSuperset(_getRole(checkAddress).role, requiredPermission);
   }
 
-  // Do this account has any permission?
+  // Is an user?
   function _isUser(address checkAddress) internal view returns (bool) {
     return _getRole(checkAddress).role > PERMISSION_NONE;
   }
 
-  // Is an address a active user
+  // Is an active user?
   function _isActiveUser(address checkAddress) internal view returns (bool) {
-    return _isUser(checkAddress) && block.timestamp > role[checkAddress].activeTime;
+    RoleRecord memory roleRecord = _getRole(checkAddress);
+    return roleRecord.role > PERMISSION_NONE && block.timestamp > roleRecord.activeTime;
   }
 
-  // Check a permission is granted to user
+  // Check a subset of required permission was granted to user
   function _isActivePermission(address checkAddress, uint256 requiredPermission) internal view returns (bool) {
     return _isActiveUser(checkAddress) && _hasPermission(checkAddress, requiredPermission);
   }
@@ -245,17 +247,17 @@ contract Permissioned {
    * External View section
    ********************************************************/
 
-  // Read role of an user
+  // Read role record of an user
   function getRole(address checkAddress) external view returns (RoleRecord memory roleRecord) {
     return _getRole(checkAddress);
   }
 
-  // Is an address a active user
+  // Is active user?
   function isActiveUser(address checkAddress) external view returns (bool) {
     return _isActiveUser(checkAddress);
   }
 
-  // Check a permission is granted to user
+  // Check a subset of required permission was granted to user
   function isActivePermission(address checkAddress, uint256 requiredPermission) external view returns (bool) {
     return _isActivePermission(checkAddress, requiredPermission);
   }
@@ -269,7 +271,7 @@ contract Permissioned {
     }
   }
 
-  // Get total number of user
+  // Get total number of users
   function getTotalUser() external view returns (uint256) {
     return totalUser;
   }
@@ -351,6 +353,12 @@ contract OrosignMasterV1 is Permissioned {
   // Allow master to clone other multi signature contract
   using Clones for address;
 
+  struct MasterMetadata {
+    uint256 chainId;
+    uint256 walletFee;
+    address implementation;
+  }
+
   // Permission to manage fund
   uint256 private constant PERMISSION_WITHDRAW = 1;
   // Permission to operate the Orosign Master V1
@@ -398,14 +406,11 @@ contract OrosignMasterV1 is Permissioned {
   ) {
     uint256 countingWithdraw = 0;
     uint256 countingOperator = 0;
-    // We use input chainId instead of EIP-1344
-    chainId = inputChainId;
 
     // We will revert if we're failed to init permissioned
     _init(userList, roleList);
 
     for (uint256 i = 0; i < userList.length; i += 1) {
-      // Equal to isPermission(userList[i], PERMISSION_SIGN)
       if (_isSuperset(roleList[i], PERMISSION_WITHDRAW)) {
         countingWithdraw += 1;
       }
@@ -418,11 +423,15 @@ contract OrosignMasterV1 is Permissioned {
       revert UnableToInitOrosignMaster();
     }
 
+    // We use input chainId instead of EIP-1344
+    chainId = inputChainId;
+
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
     // Set wallet fee
     walletFee = createWalletFee;
+
     emit UpgradeImplementation(address(0), multisigImplementation);
   }
 
@@ -430,7 +439,7 @@ contract OrosignMasterV1 is Permissioned {
    * User section
    ********************************************************/
 
-  // Transfer existing role to a new user
+  // Transfer role to a new user
   function transferRole(address newUser) external onlyActiveUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT + 1 hours
     _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
@@ -441,7 +450,7 @@ contract OrosignMasterV1 is Permissioned {
    * Withdraw section
    ********************************************************/
 
-  // Withdraw all of the balance to the fee collector
+  // Withdraw the balance to the fee collector
   function withdraw(address payable receiver) external onlyActivePermission(PERMISSION_WITHDRAW) returns (bool) {
     // Receiver should be a valid address
     if (receiver == address(0)) {
@@ -460,15 +469,17 @@ contract OrosignMasterV1 is Permissioned {
   function upgradeImplementation(
     address newImplementation
   ) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
-    emit UpgradeImplementation(implementation, newImplementation);
+    // Overwrite current implementation address
     implementation = newImplementation;
+    emit UpgradeImplementation(implementation, newImplementation);
     return true;
   }
 
-  // Allow operator to set new fee
+  // Set new fee
   function setFee(uint256 newFee) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
-    emit UpdateFee(block.timestamp, walletFee, newFee);
+    // Overwrite current wallet fee
     walletFee = newFee;
+    emit UpdateFee(block.timestamp, walletFee, newFee);
     return true;
   }
 
@@ -511,19 +522,9 @@ contract OrosignMasterV1 is Permissioned {
    * View section
    ********************************************************/
 
-  // Get chain id of Orosign Master V1
-  function getChainId() external view returns (uint256) {
-    return chainId;
-  }
-
-  // Get fee to generate a new wallet
-  function getFee() external view returns (uint256) {
-    return walletFee;
-  }
-
-  // Get implementation address
-  function getImplementation() external view returns (address) {
-    return implementation;
+  // Get metadata of Orosign Master V1
+  function getMetadata() external view returns (MasterMetadata memory masterMetadata) {
+    return MasterMetadata({ chainId: chainId, walletFee: walletFee, implementation: implementation });
   }
 
   // Calculate deterministic address
