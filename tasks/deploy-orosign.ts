@@ -10,7 +10,7 @@ import { env } from '../env';
 
 async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.Wallet> {
   let { chainId, name } = await hre.ethers.provider.getNetwork();
-  if (chainId === 911) chainId = 0;
+  if (chainId === 911 || chainId === 97) chainId = 0;
   console.log(`Network: ${name} ChainID: ${chainId} Path: m/44'/60'/0'/0/${chainId}`);
   return hre.ethers.Wallet.fromMnemonic(env.OROCHI_MNEMONIC, `m/44'/60'/0'/0/${chainId}`).connect(hre.ethers.provider);
 }

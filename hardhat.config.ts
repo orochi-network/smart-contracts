@@ -32,25 +32,43 @@ const config: HardhatUserConfig = {
     ethereum: {
       url: 'https://eth-mainnet.public.blastapi.io',
       chainId: 1,
-      accounts: {
-        mnemonic: env.OROCHI_MNEMONIC,
-        path: "m/44'/60'/0'/0",
-      },
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
-    bnbChain: {
-      url: 'https://bsc-dataseed3.binance.org',
+    binance: {
+      url: 'https://bnb.api.onfinality.io/public',
       chainId: 56,
-      accounts: {
-        mnemonic: env.OROCHI_MNEMONIC,
-        path: "m/44'/60'/0'/0",
-      },
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
+    arbitrum: {
+      url: 'https://arbitrum.blockpi.network/v1/rpc/public',
+      chainId: 42161,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
+    polygon: {
+      url: 'https://rpc-mainnet.matic.quiknode.pro',
+      chainId: 137,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
+    optimism: {
+      url: 'https://optimism-mainnet.public.blastapi.io',
+      chainId: 10,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
+    fantom: {
+      url: 'https://fantom-mainnet.public.blastapi.io',
+      chainId: 250,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
+    okexchain: {
+      url: 'https://exchainrpc.okex.org',
+      chainId: 66,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
     bnbChainTest: {
       url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       accounts: {
         mnemonic: env.OROCHI_MNEMONIC,
-        path: "m/44'/60'/0'/0",
       },
     },
     // Hard hat network

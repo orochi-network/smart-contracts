@@ -1,14 +1,6 @@
 {
   "bnbChainTest": {
-    "orosign": "0x62CB261fA569ce3dC2b593C807971CedC38315EB",
-    "master": "0xa5B0748EBD64EB2e0C97fea70704C3b6946792B7"
-  },
-  "bnbChain": {
-    "orosign": "0xFa3f00DD545aA3D2Ca07aC704ba28a8B402DaE56",
-    "master": "0x9d979587911428A2780580f2DD2A04ce5c1fc90C"
-  },
-  "ethereum": {
-    "orosign": "0x9d979587911428A2780580f2DD2A04ce5c1fc90C",
-    "master": "0xb8C0C2C2A0d6731d7d2B0CB99E00D894DA5e3abC"
+    "orosign": "0x68971211eb7654abccd5CB23b4e855382f58df4e",
+    "master": "0xC03134C76BAC270B6f921A47A89c9f5d7e8d4d16"
   }
 }
