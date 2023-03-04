@@ -18,10 +18,15 @@ async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.Wallet>
 function getFee(chainId: number): BigNumber {
   switch (chainId) {
     case 1:
+    case 10:
     case 42161:
       return BigNumber.from('1000000000000000');
     case 56:
       return BigNumber.from('5000000000000000');
+    case 250:
+      return BigNumber.from('3000000000000000000');
+    case 66:
+      return BigNumber.from('50000000000000000');
     default:
       return BigNumber.from('1000000000000000000');
   }
@@ -71,8 +76,8 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
         [],
         chainId,
         // Assign roles for corresponding address
-        ['0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db', '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db'],
-        [1, 2],
+        ['0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db'],
+        [3],
         // Implementation
         orosignV1.address,
         // Fee

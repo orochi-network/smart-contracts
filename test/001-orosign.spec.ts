@@ -117,12 +117,18 @@ describe('OrosignV1', function () {
         'test/OrosignMasterV1',
         [],
         chainId,
-        [deployerSigner.address, deployerSigner.address],
-        [1, 2],
+        [deployerSigner.address],
+        [3],
         contractMultiSig.address,
         1000,
       )
     );
+  });
+
+  it('operator should able to set fee', async () => {
+    await contractMultiSigMaster.setFee(10000);
+    const { walletFee } = await contractMultiSigMaster.getMetadata();
+    expect(walletFee.toNumber()).eq(10000);
   });
 
   it('anyone could able to create new signature from multi signature master', async () => {
@@ -140,6 +146,12 @@ describe('OrosignV1', function () {
         await contractMultiSigMaster.predictWalletAddress(1, deployerSigner.address),
       )
     );
+  });
+
+  it('withdraw permission should able to withdraw all charged fee', async () => {
+    await contractMultiSigMaster.withdraw(deployerSigner.address);
+    const balanceOfMaster = await hre.ethers.provider.getBalance(contractMultiSigMaster.address);
+    expect(balanceOfMaster.isZero()).eq(true);
   });
 
   it('operator should able to set fee', async () => {
