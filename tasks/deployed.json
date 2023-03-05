@@ -1,1 +1,30 @@
-{"bnbChainTest":{"orosign":"0xF52047c02FB31CDB70F60008B6DFcE22f36d2555","master":"0x3cBb23AaC7D0d5BB9DC52f65Df9079Dc2041EE41"}}
+{
+  "bnbChainTest": {
+    "orosign": "0xF52047c02FB31CDB70F60008B6DFcE22f36d2555",
+    "master": "0x3cBb23AaC7D0d5BB9DC52f65Df9079Dc2041EE41"
+  },
+  "fantom": {
+    "orosign": "0x217AfbB0c0c500Edc88087D6e09F9d0f72e19467",
+    "master": "0x194015107C7Ca322e4076A10837D344B75138D14"
+  },
+  "okexchain": {
+    "orosign": "0x2f058F4dCa65b7E4b52F674272b8B18bCCEBCA74",
+    "master": "0x75a7512eE677ed2812cB1C66B9426464D214aFb9"
+  },
+  "optimism": {
+    "orosign": "0x92dd1778225C283799D95D85D7a5086f4f9b6Af0",
+    "master": "0x86f9F480E5a89a69DFB779753a0Fa1D2aC764B67"
+  },
+  "arbitrum": {
+    "orosign": "0x21D9805b50A00f1f58D51e5A13cC3F06544CC4ee",
+    "master": "0x1a96452DEc19686BDC101d64c1F6b338271e87c1"
+  },
+  "binance": {
+    "orosign": "0x5161312a16571641Fd965791D9FC467439792763",
+    "master": "0x969256e6e22227AB021900fc9aFa0fc4be6C3aEB"
+  },
+  "ethereum": {
+    "orosign": "0x792F381e6f69C529178098d5438A82990D7F45d4",
+    "master": "0xdEF46bDa80D7997840E6fe82715D0d74D3a53F44"
+  }
+}

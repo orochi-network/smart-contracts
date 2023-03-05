@@ -1,5 +1,5 @@
 // Root file: contracts/interfaces/IOrosignV1.sol
-pragma solidity >=0.8.4 <0.9.0;
+pragma solidity 0.8.17;
 
 // Invalid threshold
 error InvalidThreshold(uint256 threshold, uint256 totalSigner);
