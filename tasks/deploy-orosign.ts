@@ -7,30 +7,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer, NATIVE_UNIT } from '../helpers';
 import { OrosignMasterV1, OrosignV1 } from '../typechain-types';
 import { env } from '../env';
-
-async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.Wallet> {
-  let { chainId, name } = await hre.ethers.provider.getNetwork();
-  if (chainId === 911 || chainId === 97) chainId = 0;
-  console.log(`Network: ${name} ChainID: ${chainId} Path: m/44'/60'/0'/0/${chainId}`);
-  return hre.ethers.Wallet.fromMnemonic(env.OROCHI_MNEMONIC, `m/44'/60'/0'/0/${chainId}`).connect(hre.ethers.provider);
-}
-
-function getFee(chainId: number): BigNumber {
-  switch (chainId) {
-    case 1:
-    case 10:
-    case 42161:
-      return BigNumber.from('1000000000000000');
-    case 56:
-      return BigNumber.from('5000000000000000');
-    case 250:
-      return BigNumber.from('3000000000000000000');
-    case 66:
-      return BigNumber.from('50000000000000000');
-    default:
-      return BigNumber.from('1000000000000000000');
-  }
-}
+import { getFee, getWallet } from '../helpers/wallet';
 
 task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -71,18 +48,33 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
     }
 
     if (typeof deploymentJson[networkName]['master'] === 'undefined') {
-      orosignMasterV1 = <OrosignMasterV1>await deployer.contractDeploy(
-        'OrosignV1/OrosignMasterV1',
-        [],
-        chainId,
-        // Assign roles for corresponding address
-        ['0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db'],
-        [3],
-        // Implementation
-        orosignV1.address,
-        // Fee
-        getFee(chainId),
-      );
+      if (chainId !== 97) {
+        orosignMasterV1 = <OrosignMasterV1>await deployer.contractDeploy(
+          'OrosignV1/OrosignMasterV1',
+          [],
+          chainId,
+          // Assign roles for corresponding address
+          ['0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db'],
+          [3],
+          // Implementation
+          orosignV1.address,
+          // Fee
+          getFee(chainId),
+        );
+      } else {
+        orosignMasterV1 = <OrosignMasterV1>await deployer.contractDeploy(
+          'OrosignV1/OrosignMasterV1',
+          [],
+          chainId,
+          // Assign roles for corresponding address
+          [account.address],
+          [3],
+          // Implementation
+          orosignV1.address,
+          // Fee
+          getFee(chainId),
+        );
+      }
     } else {
       orosignMasterV1 = <OrosignMasterV1>(
         await deployer.contractAttach('OrosignV1/OrosignMasterV1', deploymentJson[networkName]['master'])
