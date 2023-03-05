@@ -883,7 +883,7 @@ library ECDSA {
 
 // Dependency file: contracts/libraries/Bytes.sol
 
-// pragma solidity >=0.8.4 <0.9.0;
+// pragma solidity 0.8.17;
 
 // Index is out of range
 error OutOfRange();
@@ -937,7 +937,7 @@ library Bytes {
 
 // Dependency file: contracts/libraries/Permissioned.sol
 
-// pragma solidity >=0.8.4 <0.9.0;
+// pragma solidity 0.8.17;
 
 // Top sender to process further
 error AccessDenied();
@@ -1179,7 +1179,7 @@ interface IOrosignV1 {
 
 // Root file: contracts/orosign/OrosignV1.sol
 
-pragma solidity >=0.8.4 <0.9.0;
+pragma solidity 0.8.17;
 
 // import '/Users/chiro/GitHub/orosign-contracts/node_modules/@openzeppelin/contracts/utils/Address.sol';
 // import '/Users/chiro/GitHub/orosign-contracts/node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol';

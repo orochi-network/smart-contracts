@@ -534,7 +534,8 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 // Root file: contracts/test/BigO.sol
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
+
 // import '/Users/chiro/GitHub/orosign-contracts/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
 // An ambition is hiding in the bush

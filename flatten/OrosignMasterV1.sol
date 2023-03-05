@@ -91,7 +91,7 @@ library Clones {
 
 // Dependency file: contracts/libraries/Permissioned.sol
 
-// pragma solidity >=0.8.4 <0.9.0;
+// pragma solidity 0.8.17;
 
 // Top sender to process further
 error AccessDenied();
@@ -333,7 +333,7 @@ interface IOrosignV1 {
 
 // Root file: contracts/orosign/OrosignMasterV1.sol
 
-pragma solidity >=0.8.4 <0.9.0;
+pragma solidity 0.8.17;
 
 // import '/Users/chiro/GitHub/orosign-contracts/node_modules/@openzeppelin/contracts/proxy/Clones.sol';
 // import 'contracts/libraries/Permissioned.sol';

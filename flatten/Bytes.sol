@@ -1,5 +1,5 @@
 // Root file: contracts/libraries/Bytes.sol
-pragma solidity >=0.8.4 <0.9.0;
+pragma solidity 0.8.17;
 
 // Index is out of range
 error OutOfRange();
