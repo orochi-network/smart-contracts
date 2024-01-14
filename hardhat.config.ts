@@ -13,7 +13,7 @@ if (fs.existsSync('./typechain-types')) {
   }
 }
 
-const compilers = ['0.8.17'].map((item: string) => ({
+const compilers = ['0.8.19'].map((item: string) => ({
   version: item,
   settings: {
     optimizer: {

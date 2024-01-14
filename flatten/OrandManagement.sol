@@ -1,5 +1,5 @@
 // Dependency file: contracts/libraries/Bytes.sol
-// pragma solidity 0.8.17;
+// pragma solidity 0.8.19;
 
 // Index is out of range
 error OutOfRange();
@@ -50,10 +50,10 @@ library Bytes {
   }
 }
 
-
 // Root file: contracts/orand/OrandManagement.sol
 
 pragma solidity ^0.8.0;
+
 // import 'contracts/libraries/Bytes.sol';
 
 contract OrandManagement {

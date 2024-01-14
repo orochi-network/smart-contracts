@@ -18,7 +18,7 @@ describe('ExampleValidityDice', function () {
     [deployerSigner, player] = await hre.ethers.getSigners();
     deployer = Deployer.getInstance(hre).connect(deployerSigner);
     exampleDice = <ExampleValidityProofDice>(
-      await deployer.contractDeploy('test/ExampleValidityProofDice', [], deployerSigner.address)
+      await deployer.contractDeploy('test/ExampleValidityProofDice', [], deployerSigner.address, 50)
     );
   });
 
