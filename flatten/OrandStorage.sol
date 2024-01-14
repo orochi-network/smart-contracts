@@ -17,7 +17,6 @@ interface IOrandStorage {
   }
 }
 
-
 // Dependency file: contracts/interfaces/IOrandECDSA.sol
 
 // pragma solidity ^0.8.0;
@@ -36,10 +35,9 @@ interface IOrandECDSA {
   }
 }
 
-
 // Dependency file: contracts/libraries/Bytes.sol
 
-// pragma solidity 0.8.17;
+// pragma solidity 0.8.19;
 
 // Index is out of range
 error OutOfRange();
@@ -90,10 +88,10 @@ library Bytes {
   }
 }
 
-
 // Root file: contracts/orand/OrandStorage.sol
 
 pragma solidity ^0.8.0;
+
 // import 'contracts/interfaces/IOrandStorage.sol';
 // import 'contracts/interfaces/IOrandECDSA.sol';
 // import 'contracts/libraries/Bytes.sol';

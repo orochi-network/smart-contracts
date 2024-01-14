@@ -1,5 +1,5 @@
 // Root file: contracts/libraries/Permissioned.sol
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 // Top sender to process further
 error AccessDenied();
