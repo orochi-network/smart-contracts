@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import '@nomiclabs/hardhat-ethers';
+import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer } from '../helpers';

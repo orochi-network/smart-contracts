@@ -1,10 +1,10 @@
-import { Signer } from '@ethersproject/abstract-signer';
 import crypto, { randomBytes } from 'crypto';
 import { keccak256 } from 'js-sha3';
-import { BigNumber, ContractTransaction } from 'ethers';
+import { ContractTransactionResponse } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 
-export async function unlockSigner(hre: HardhatRuntimeEnvironment, address: string): Promise<Signer> {
+export async function unlockSigner(hre: HardhatRuntimeEnvironment, address: string): Promise<HardhatEthersSigner> {
   await hre.network.provider.request({
     method: 'hardhat_impersonateAccount',
     params: [address],
@@ -31,8 +31,8 @@ export async function timeTravel(hre: HardhatRuntimeEnvironment, secs: number) {
   });
 }
 
-export function bigNumberToBytes32(b: BigNumber): Buffer {
-  return Buffer.from(`${b.toHexString().replace(/^0x/i, '').padStart(64, '0')}`, 'hex');
+export function bigNumberToBytes32(b: bigint): Buffer {
+  return Buffer.from(`${b.toString(16).replace(/^0x/i, '').padStart(64, '0')}`, 'hex');
 }
 
 export function getUint128Random(): string {
@@ -79,8 +79,8 @@ export function randInt(start: number, end: number) {
   return start + ((Math.random() * (end - start)) >>> 0);
 }
 
-export async function getGasCost(tx: ContractTransaction) {
-  console.log('\tGas cost:', (await tx.wait()).gasUsed.toString());
+export async function getGasCost(tx: ContractTransactionResponse) {
+  console.log('\tGas cost:', ((await tx.wait()) || { gasUsed: Infinity }).gasUsed.toString());
 }
 
 function rTrim(value: string, trim: string): string {
@@ -101,15 +101,17 @@ function argumentTransform(eventName: string, arg: string) {
   return arg;
 }
 
-export async function printAllEvents(tx: ContractTransaction) {
+export async function printAllEvents(tx: ContractTransactionResponse) {
   const result = await tx.wait();
+  console.log(result);
+  /*
   console.log(
     result.events
       ?.map((e) => `\t${e.event}(${e.args?.map((i) => argumentTransform(e.event || '', i)).join(', ')})`)
       .join('\n'),
-  );
+  );*/
 }
 
 export async function getCurrentBlockTimestamp(hre: HardhatRuntimeEnvironment): Promise<number> {
-  return (await hre.ethers.provider.getBlock('latest')).timestamp;
+  return ((await hre.ethers.provider.getBlock('latest')) || { timestamp: 0 }).timestamp;
 }

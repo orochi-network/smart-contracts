@@ -223,7 +223,7 @@ contract VRFDebug {
   }
 
   // Hash x uniformly into {0, ..., FIELD_SIZE-1}.
-  function fieldHash(bytes memory b) internal view returns (uint256 x_) {
+  function fieldHash(bytes memory b) internal pure returns (uint256 x_) {
     uint256 c = 0;
     x_ = uint256(keccak256(b));
     // Rejecting if x >= FIELD_SIZE corresponds to step 2.1 in section 2.3.4 of
@@ -380,15 +380,7 @@ contract VRFDebug {
     uint256 py,
     uint256 qx,
     uint256 qy
-  )
-    internal
-    pure
-    returns (
-      uint256 sx,
-      uint256 sy,
-      uint256 sz
-    )
-  {
+  ) internal pure returns (uint256 sx, uint256 sy, uint256 sz) {
     unchecked {
       // See "Group law for E/K : y^2 = x^3 + ax + b", in section 3.1.2, p. 80,
       // "Guide to Elliptic Curve Cryptography" by Hankerson, Menezes and Vanstone

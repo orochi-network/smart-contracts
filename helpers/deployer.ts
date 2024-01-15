@@ -1,7 +1,8 @@
-import { Signer, Contract } from 'ethers';
+import { Signer, Contract, BaseContract } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { stringToBytes32, ZERO_ADDRESS } from './const';
 import { Singleton } from './singleton';
+import { deployContract } from '@nomicfoundation/hardhat-ethers/types';
 
 export class Deployer {
   private _hre: HardhatRuntimeEnvironment;
@@ -10,7 +11,7 @@ export class Deployer {
 
   private _signer: Signer;
 
-  private _contractCache: { [contractPath: string]: Contract } = {};
+  private _contractCache: { [contractPath: string]: any } = {};
 
   private _executed: boolean = false;
 
@@ -50,7 +51,7 @@ export class Deployer {
     return this;
   }
 
-  public async contractDeploy(contractPath: string, librariesLink: string[], ...params: any[]): Promise<Contract> {
+  public async contractDeploy<T>(contractPath: string, librariesLink: string[], ...params: any[]): Promise<T> {
     const [domain, contractName] = contractPath.split('/');
     const entries = Object.entries(this._libraries);
     const linking = Object.fromEntries(entries.filter(([v, _k]: [string, string]) => librariesLink.includes(v)));
@@ -60,12 +61,8 @@ export class Deployer {
           signer: this._signer,
           libraries: linking,
         });
-        this._contractCache[contractPath] = await instanceFactory.deploy(...params);
+        this._contractCache[contractPath] = (await instanceFactory.deploy(...params)).waitForDeployment();
         console.log('> Deploying:', contractPath.padEnd(36, ' '), this._contractCache[contractPath].address);
-        if (this.getChainId() != 911) {
-          // Make sure transaction will be deployed on Binance Smart Chain
-          await this._contractCache[contractPath].deployTransaction.wait(5);
-        }
 
         if (/^libraries$/i.test(domain)) {
           this._libraries[contractName] = this._contractCache[contractPath].address;
@@ -77,12 +74,12 @@ export class Deployer {
     return this._contractCache[contractPath];
   }
 
-  public async contractAttach(contractPath: string, contractAddress: string): Promise<Contract> {
+  public async contractAttach<T>(contractPath: string, contractAddress: string): Promise<T> {
     const [, contractName] = contractPath.split('/');
     const instanceFactory = await this._hre.ethers.getContractFactory(contractName, {
       signer: this._signer,
     });
-    return instanceFactory.attach(contractAddress);
+    return instanceFactory.attach(contractAddress) as any;
   }
 
   public async getTheDivineAt(address: string): Promise<Contract> {

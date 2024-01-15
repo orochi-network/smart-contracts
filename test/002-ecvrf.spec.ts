@@ -1,6 +1,6 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { OrochiVRF, OrochiVRFDebug } from '../typechain-types';
 import { Deployer } from '../helpers';
 
@@ -118,9 +118,9 @@ describe('OrandECVRF', function () {
       ],
       '0xe96c662e45641b3ac9393fb5a7f95b726ee7c5a2619eb24e2bb53f05448317d5',
     );
-    console.log(`\thashToCurvePrefix()\n\t x: ${x.toHexString()}\n\t y: ${y.toHexString()}`);
-    expect(x.toHexString()).to.eq('0x8eb08985a1403ef0eac3e81d264ad57c7705ef40220243f8c875b1f442ca5f94');
-    expect(y.toHexString()).to.eq('0x72179fe0880780354cb355753b779c5ab68d85909521abee629ff64b43578d32');
+    console.log(`\thashToCurvePrefix()\n\t x: ${x}\n\t y: ${y}`);
+    expect(x).to.eq(BigInt('0x8eb08985a1403ef0eac3e81d264ad57c7705ef40220243f8c875b1f442ca5f94'));
+    expect(y).to.eq(BigInt('0x72179fe0880780354cb355753b779c5ab68d85909521abee629ff64b43578d32'));
   });
 
   it('special case must passed', async () => {
@@ -146,9 +146,9 @@ describe('OrandECVRF', function () {
       ],
       '0x897eef82f83faea38e28d29e883a74c926b80c5b6e4867b6fe1d67880916e4f8',
     );
-    console.log(`\thashToCurvePrefix()\n\t x: ${x.toHexString()}\n\t y: ${y.toHexString()}`);
-    expect(x.toHexString()).to.eq('0xc144742e3f3d055b547be327eaf4bf8170bab15ceae4d58fee23ece70e9f83be');
-    expect(y.toHexString()).to.eq('0xa63fb387153859f83b1c30d292e662649f6a74a166706faa3a10f7464d68879a');
+    console.log(`\thashToCurvePrefix()\n\t x: ${x}\n\t y: ${y}`);
+    expect(x).to.eq(BigInt('0xc144742e3f3d055b547be327eaf4bf8170bab15ceae4d58fee23ece70e9f83be'));
+    expect(y).to.eq(BigInt('0xa63fb387153859f83b1c30d292e662649f6a74a166706faa3a10f7464d68879a'));
   });
 
   it('elliptic curve multiple must be correct', async () => {
@@ -158,15 +158,16 @@ describe('OrandECVRF', function () {
 
   it('should able to verify the proof', async () => {
     const output = await orochiECVRF.verifyProof(optimus as any, optimus.seed);
-    console.log(`\tverifyProof() -> output: ${await output.toHexString()}`);
+    console.log(`\tverifyProof() -> output: ${output}`);
+    console.log(`\t y -> output: ${BigInt(`0x${record.y}`)}`);
   });
 
   it('should able to verify multiple epochs', async () => {
     for (let i = 0; i < epochs.length; i += 1) {
       const optimus = converOrandV1Record(epochs[i]);
       const output = await orochiECVRF.verifyProof(optimus as any, optimus.seed);
-      console.log(`\tverifyProof() -> output: ${await output.toHexString()}`);
-      console.log(`\t y -> output: ${epochs[i].y}`);
+      console.log(`\tverifyProof() -> output: ${output}`);
+      console.log(`\t y -> output: ${BigInt(`0x${epochs[i].y}`)}`);
     }
   });
 });

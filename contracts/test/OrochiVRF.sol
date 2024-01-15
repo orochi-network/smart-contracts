@@ -27,6 +27,6 @@ contract OrochiVRF is VRF {
       proof.sHashWitness,
       proof.zInv
     );
-    output = uint256(keccak256(abi.encode('Orochi Network', proof.gamma)));
+    output = uint256(keccak256(abi.encode(proof.gamma)));
   }
 }

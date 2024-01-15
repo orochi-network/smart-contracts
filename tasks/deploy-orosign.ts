@@ -1,8 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import fs from 'fs';
-import '@nomiclabs/hardhat-ethers';
+import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
-import { BigNumber, ethers } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer, NATIVE_UNIT } from '../helpers';
 import { OrosignMasterV1, OrosignV1 } from '../typechain-types';
@@ -17,14 +16,15 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
     const deploymentRecord = `${__dirname}/deployed.json`;
     const deployer: Deployer = Deployer.getInstance(hre).connect(account);
     let deploymentJson;
-    let orosignV1;
-    let orosignMasterV1;
-    const balance = await account.getBalance();
+    let orosignV1: OrosignV1;
+    let orosignMasterV1: OrosignMasterV1;
 
-    console.log(`Address: ${account.address} Balance: ${balance.div(NATIVE_UNIT).toString()}`);
-    console.log(`Wallet Fee: ${getFee(chainId).mul(1000000).div(NATIVE_UNIT).toNumber() / 1000000}`);
+    const balance = await hre.ethers.provider.getBalance(account);
 
-    if (balance.eq(0)) {
+    console.log(`Address: ${account.address} Balance: ${NATIVE_UNIT.toString()}`);
+    console.log(`Wallet Fee: ${(getFee(chainId) * 1000000n) / NATIVE_UNIT / 1000000n}`);
+
+    if (balance === 0n) {
       throw new Error('Insufficient balance');
     }
 
@@ -39,16 +39,16 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
     }
 
     if (typeof deploymentJson[networkName]['orosign'] === 'undefined') {
-      orosignV1 = <OrosignV1>await deployer.contractDeploy('OrosignV1/OrosignV1', []);
+      orosignV1 = await deployer.contractDeploy<OrosignV1>('OrosignV1/OrosignV1', []);
     } else {
       orosignV1 = <OrosignV1>(
         await deployer.contractAttach('OrosignV1/OrosignV1', deploymentJson[networkName]['orosign'])
       );
-      console.log(`OrosignV1 was deployed at ${orosignV1.address}`);
+      console.log(`OrosignV1 was deployed at ${await orosignV1.getAddress()}`);
     }
 
     if (typeof deploymentJson[networkName]['master'] === 'undefined') {
-      if (chainId !== 97) {
+      if (chainId !== 97n) {
         orosignMasterV1 = <OrosignMasterV1>await deployer.contractDeploy(
           'OrosignV1/OrosignMasterV1',
           [],
@@ -57,7 +57,7 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
           ['0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db'],
           [3],
           // Implementation
-          orosignV1.address,
+          await orosignV1.getAddress(),
           // Fee
           getFee(chainId),
         );
@@ -70,7 +70,7 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
           [account.address],
           [3],
           // Implementation
-          orosignV1.address,
+          await orosignV1.getAddress(),
           // Fee
           getFee(chainId),
         );
@@ -79,12 +79,12 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
       orosignMasterV1 = <OrosignMasterV1>(
         await deployer.contractAttach('OrosignV1/OrosignMasterV1', deploymentJson[networkName]['master'])
       );
-      console.log(`OrosignMasterV1 was deployed at ${orosignMasterV1.address}`);
+      console.log(`OrosignMasterV1 was deployed at ${await orosignMasterV1.getAddress()}`);
     }
 
     deploymentJson[networkName] = {
-      orosign: orosignV1.address,
-      master: orosignMasterV1.address,
+      orosign: await orosignV1.getAddress(),
+      master: await orosignMasterV1.getAddress(),
     };
     if (networkName !== 'hardhat') {
       fs.writeFileSync(deploymentRecord, JSON.stringify(deploymentJson));

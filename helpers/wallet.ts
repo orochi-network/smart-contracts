@@ -1,43 +1,42 @@
 /* eslint-disable no-await-in-loop */
-import '@nomiclabs/hardhat-ethers';
-import { BigNumber, ethers } from 'ethers';
+import '@nomicfoundation/hardhat-ethers';
+import { ethers } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { env } from '../env';
 import { NATIVE_UNIT } from './const';
 
-export async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.Wallet> {
+export async function getWallet(hre: HardhatRuntimeEnvironment): Promise<ethers.HDNodeWallet> {
   let { chainId, name } = await hre.ethers.provider.getNetwork();
-  if (chainId === 911 || chainId === 97) chainId = 0;
   console.log(`Network: ${name} ChainID: ${chainId} Path: m/44'/60'/0'/0/${chainId}`);
-  return hre.ethers.Wallet.fromMnemonic(env.OROCHI_MNEMONIC, `m/44'/60'/0'/0/${chainId}`).connect(hre.ethers.provider);
+  return hre.ethers.Wallet.fromPhrase(env.OROCHI_MNEMONIC, hre.ethers.provider).derivePath(`m/44'/60'/0'/0/${chainId}`);
 }
 
-export function getFee(chainId: number): BigNumber {
+export function getFee(chainId: bigint): bigint {
   switch (chainId) {
-    case 1:
-    case 10:
-    case 42161:
+    case 1n:
+    case 10n:
+    case 42161n:
       // Ethereum and its side chains
       // 0.001 ETH
-      return BigNumber.from(NATIVE_UNIT).div(1000);
-    case 56:
+      return NATIVE_UNIT / 1000n;
+    case 56n:
       // BNB Chain
       // 0.005 BNB
-      return BigNumber.from(NATIVE_UNIT).div(200);
-    case 250:
+      return NATIVE_UNIT / 200n;
+    case 250n:
       // Fantom Chain
       // 3 FTM
-      return BigNumber.from(NATIVE_UNIT).mul(3);
-    case 66:
+      return NATIVE_UNIT / 3n;
+    case 66n:
       // OKX Chain
       // 0.05 OKT
-      return BigNumber.from(NATIVE_UNIT).div(20);
-    case 97:
+      return NATIVE_UNIT / 20n;
+    case 97n:
       // BNB Testnet
-      return BigNumber.from(NATIVE_UNIT).div(1000000000);
+      return NATIVE_UNIT / 1000000000n;
     default:
       // Other chain
       // 1
-      return BigNumber.from(NATIVE_UNIT);
+      return NATIVE_UNIT;
   }
 }

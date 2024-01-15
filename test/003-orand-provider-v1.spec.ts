@@ -1,10 +1,10 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { OrandECVRF } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { OrandProviderV1 } from '../typechain-types/';
-import { utils } from 'ethers';
+import { getAddress, getBytes, keccak256 } from 'ethers';
 
 let deployerSigner: SignerWithAddress;
 let orandECVRF: OrandECVRF;
@@ -130,8 +130,8 @@ describe('OrandProviderV1', function () {
       x: pk.substring(2, 66),
       y: pk.substring(66, 130),
     };
-    let correspondingAddress = utils.getAddress(
-      `0x${utils.keccak256(utils.arrayify(`0x${rawPubKey.x}${rawPubKey.y}`)).substring(26, 66)}`,
+    let correspondingAddress = getAddress(
+      `0x${keccak256(getBytes(`0x${rawPubKey.x}${rawPubKey.y}`)).substring(26, 66)}`,
     );
     console.log(`Corresponding address: ${correspondingAddress}`);
     // const bigOToken = <BigO>await deployer.contractDeploy('test/BigO', []);
@@ -144,26 +144,24 @@ describe('OrandProviderV1', function () {
       `0x${pk.substring(2, 130)}`,
       // Operator address
       correspondingAddress,
-      orandECVRF.address,
+      orandECVRF,
       1000000,
     );
 
     await orandProviderV1.deposit('0x66681298BBbDF30a0B3Ec98caBF41aA7669dc200', { value: 1000000000 });
 
-    expect((await orandProviderV1.collateralBalance('0x66681298BBbDF30a0B3Ec98caBF41aA7669dc200')).toNumber()).eq(
-      1000000000,
-    );
+    expect(await orandProviderV1.collateralBalance('0x66681298BBbDF30a0B3Ec98caBF41aA7669dc200')).eq(1000000000n);
 
-    expect((await orandProviderV1.getPenaltyFee()).toNumber()).eq(1000000);
+    expect(await orandProviderV1.getPenaltyFee()).eq(1000000n);
 
-    const [signer, receiverNonce, receiverAddress, y] = await orandProviderV1.callStatic.checkProofSigner(
+    const [signer, receiverNonce, receiverAddress, y] = await orandProviderV1.checkProofSigner(
       `0x${epochs[0].signatureProof}`,
     );
 
     expect(signer).eq('0x7e9e03a453867a7046B0277f6cD72E1B59f67a0e');
     expect(receiverAddress).eq('0x66681298BBbDF30a0B3Ec98caBF41aA7669dc200');
-    expect(y.toHexString().replace(/^0x/i, '')).eq(epochs[0].y);
-    expect(receiverNonce.toNumber()).eq(0);
+    expect(y).eq(BigInt(`0x${epochs[0].y}`));
+    expect(receiverNonce).eq(0n);
   });
 
   it('anyone should able to publish epoch 0 with a ECDSA + Validity proof', async () => {
@@ -194,8 +192,8 @@ describe('OrandProviderV1', function () {
     const proof1 = toEcvrfProof(epochs[1]);
     const result0 = await orandECVRF.verifyProof(proof0.pk, proof0.alpha, optimus(epochs[0])[1]);
     const result1 = await orandECVRF.verifyProof(proof1.pk, proof1.alpha, optimus(epochs[1])[1]);
-    expect(result0.toHexString()).eq(`0x${epochs[0].y}`);
-    expect(result1.toHexString()).eq(`0x${epochs[1].y}`);
-    expect(result0.toHexString()).eq(`0x${epochs[1].alpha}`);
+    expect(result0).eq(BigInt(`0x${epochs[0].y}`));
+    expect(result1).eq(BigInt(`0x${epochs[1].y}`));
+    expect(result0).eq(BigInt(`0x${epochs[1].alpha}`));
   });
 });
