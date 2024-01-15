@@ -1,10 +1,8 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { OrandECVRF } from '../typechain-types';
 import { Deployer } from '../helpers';
-import { OrandProviderV1 } from '../typechain-types/';
-import { utils } from 'ethers';
 import { ExampleValidityProofDice } from '../typechain-types/';
 
 let deployerSigner: SignerWithAddress;
@@ -31,13 +29,13 @@ describe('ExampleValidityDice', function () {
 
   it('provider should able batching results', async () => {
     let [fulfilled, totalGame] = await exampleDice.getStateOfGame();
-    while (fulfilled.toNumber() < totalGame.toNumber() - 1) {
+    while (fulfilled < totalGame - 1n) {
       await exampleDice
         .connect(deployerSigner)
         .consumeRandomness('0x0e1e7e382020781f47c56cb161fbd088729bbf977792e8c149a496400f07d31f');
       [fulfilled, totalGame] = await exampleDice.getStateOfGame();
     }
 
-    expect(fulfilled.toNumber()).eq(totalGame.toNumber() - 1);
+    expect(fulfilled).eq(totalGame - 1n);
   });
 });
