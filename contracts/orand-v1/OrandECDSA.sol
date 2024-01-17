@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '../libraries/Bytes.sol';
-import '../interfaces/IOrandECDSA.sol';
+import './interfaces/IOrandECDSA.sol';
 
 contract OrandECDSA is IOrandECDSA {
   // Orand operator address

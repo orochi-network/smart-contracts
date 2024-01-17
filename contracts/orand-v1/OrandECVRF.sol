@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 import '../libraries/VRF.sol';
-import '../interfaces/IOrandStorage.sol';
+import './interfaces/IOrandStorage.sol';
 
 contract OrandECVRF is VRF, IOrandStorage {
   //=======================[  External View  ]====================
@@ -12,7 +12,7 @@ contract OrandECVRF is VRF, IOrandStorage {
     uint256 alpha,
     ECVRFEpochProof memory epoch
   ) external view returns (uint256 epochResult) {
-    verifyVRFProof(
+    _verifyVRFProof(
       pk,
       epoch.gamma,
       epoch.c,

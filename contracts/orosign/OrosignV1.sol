@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '../libraries/Bytes.sol';
 import '../libraries/Permissioned.sol';
-import '../interfaces/IOrosignV1.sol';
+import './interfaces/IOrosignV1.sol';
 
 /**
  * Orosign V1
