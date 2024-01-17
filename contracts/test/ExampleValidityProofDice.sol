@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '../interfaces/IOrandConsumerV1.sol';
+import '../orand-v1/interfaces/IOrandConsumerV1.sol';
 
 error WrongGuessingValue(uint128 guessing);
 

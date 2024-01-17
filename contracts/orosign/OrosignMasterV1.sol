@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
 import '../libraries/Permissioned.sol';
-import '../interfaces/IOrosignV1.sol';
+import './interfaces/IOrosignV1.sol';
 
 // It required to pay for fee in native token
 error InvalidFee(uint256 inputAmount, uint256 requireAmount);

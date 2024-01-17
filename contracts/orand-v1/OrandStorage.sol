@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
-import '../interfaces/IOrandStorage.sol';
-import '../interfaces/IOrandECDSA.sol';
+import './interfaces/IOrandStorage.sol';
+import './interfaces/IOrandECDSA.sol';
 import '../libraries/Bytes.sol';
 
 contract OrandStorage is IOrandStorage, IOrandECDSA {

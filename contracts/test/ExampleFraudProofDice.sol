@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
-import '../interfaces/IOrandPenalty.sol';
+import '../orand-v1/interfaces/IOrandPenalty.sol';
 import './ExampleValidityProofDice.sol';
 
 // Fraud proof is the same to

@@ -8,15 +8,15 @@ contract OrochiVRF is VRF {
     uint256 scalar,
     uint256[2] memory product
   ) external pure returns (bool verifies) {
-    return ecmulVerify(multiplicand, scalar, product);
+    return _ecmulVerify(multiplicand, scalar, product);
   }
 
   function hashToCurvePrefix(uint256[2] memory pk, uint256 input) external view returns (uint256[2] memory) {
-    return hashToCurve(pk, input);
+    return _hashToCurve(pk, input);
   }
 
   function verifyProof(Proof memory proof, uint256 alpha) external view returns (uint256 output) {
-    verifyVRFProof(
+    _verifyVRFProof(
       proof.pk,
       proof.gamma,
       proof.c,

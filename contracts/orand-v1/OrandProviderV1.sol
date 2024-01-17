@@ -5,9 +5,9 @@ import './OrandManagement.sol';
 import './OrandStorage.sol';
 import './OrandECDSA.sol';
 import './OrandPenalty.sol';
-import '../interfaces/IOrandECVRF.sol';
-import '../interfaces/IOrandProviderV1.sol';
-import '../interfaces/IOrandConsumerV1.sol';
+import './interfaces/IOrandECVRF.sol';
+import './interfaces/IOrandProviderV1.sol';
+import './interfaces/IOrandConsumerV1.sol';
 
 contract OrandProviderV1 is Ownable, IOrandProviderV1, OrandStorage, OrandManagement, OrandECDSA, OrandPenalty {
   // ECVRF verifier smart contract
