@@ -29,6 +29,11 @@ const config: HardhatUserConfig = {
     enabled: true,
   },
   networks: {
+    a8: {
+      url: 'https://rpcv2-testnet.ancient8.gg/',
+      chainId: 28122024,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
     ethereum: {
       url: 'https://eth-mainnet.public.blastapi.io',
       chainId: 1,

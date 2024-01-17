@@ -7,20 +7,11 @@ contract OrandPenaltyV2 is IOrandPenaltyV2 {
   // Penalty fee
   uint256 private penaltyFee;
 
-  // Active consumer/receiver address
-  mapping(address => bool) activeConsumer;
-
   // Apply penalty
   event ApplyPenalty(address indexed plaintiff, address indexed theAccused, uint256 indexed value);
 
   // Set penalty
   event SetPenalty(address indexed actor, uint256 indexed oldPenaltyFee, uint256 indexed newPenaltyFee);
-
-  // Active new receiver
-  event ActiveConsumer(address indexed actor, address indexed consumser, uint256 indexed activeFee);
-
-  // Deactive receiver
-  event DeactiveConsumer(address indexed actor, address indexed consumser);
 
   // Set penalty fee for consumer
   constructor(uint256 initalFee) {
@@ -48,20 +39,6 @@ contract OrandPenaltyV2 is IOrandPenaltyV2 {
     penaltyFee = newPenaltyFee;
   }
 
-  // Active a receiver by sending the penalty fee amount to this contract
-  function _activeReceiver(address consumerContract) internal returns (bool isSuccess) {
-    emit ActiveConsumer(msg.sender, consumerContract, msg.value);
-    activeConsumer[consumerContract] = true;
-    return true;
-  }
-
-  // Deactive a receiver
-  function _deactiveReceiver(address consumerContract) internal returns (bool isSuccess) {
-    emit DeactiveConsumer(msg.sender, consumerContract);
-    activeConsumer[consumerContract] = false;
-    return true;
-  }
-
   //=======================[  Internal view ]====================
 
   // Get penalty fee
@@ -69,20 +46,10 @@ contract OrandPenaltyV2 is IOrandPenaltyV2 {
     return penaltyFee;
   }
 
-  // Get check consumer active status
-  function _isActiveConsumer(address consumerAddress) internal view returns (bool isActive) {
-    return activeConsumer[consumerAddress];
-  }
-
   //=======================[  External view ]====================
 
   // Get penalty fee
   function getPenaltyFee() external view returns (uint256 fee) {
     return _getPenaltyFee();
-  }
-
-  // Get check consumer active status
-  function isActiveConsumer(address consumerAddress) external view returns (bool isActive) {
-    return _isActiveConsumer(consumerAddress);
   }
 }
