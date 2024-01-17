@@ -61,11 +61,11 @@ export class Deployer {
           signer: this._signer,
           libraries: linking,
         });
-        this._contractCache[contractPath] = (await instanceFactory.deploy(...params)).waitForDeployment();
+        this._contractCache[contractPath] = await (await instanceFactory.deploy(...params)).waitForDeployment();
         console.log('> Deploying:', contractPath.padEnd(36, ' '), this._contractCache[contractPath].address);
 
         if (/^libraries$/i.test(domain)) {
-          this._libraries[contractName] = this._contractCache[contractPath].address;
+          this._libraries[contractName] = await this._contractCache[contractPath].getAddress();
         }
       } catch (error: any) {
         throw new Error(`Failed to deploy contract ${contractPath} issue < ${error.message} >\n${error.stack}`);
@@ -105,7 +105,7 @@ export class Deployer {
     return Singleton('infrastructure', Deployer, hre);
   }
 
-  public printReport() {
+  public async printReport() {
     let entries = Object.entries(this._contractCache);
     this.getDeployerSigner()
       .getAddress()
@@ -116,7 +116,7 @@ export class Deployer {
     );
     for (let i = 0; i < entries.length; i += 1) {
       const [k, v] = entries[i];
-      console.log(`\t${k}:${''.padEnd(48 - k.length, ' ')}${v.address}`);
+      console.log(`\t${k}:${''.padEnd(48 - k.length, ' ')}${await v.getAddress()}`);
     }
     console.log(
       `[End of Report for network: ${this._hre.network.name}] -------------------------------------------------`,
