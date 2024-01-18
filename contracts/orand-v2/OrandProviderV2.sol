@@ -99,6 +99,11 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     // Verify ECDSA proof
     (OrandECDSAProof memory ecdsaProof, uint256 ecvrfProofDigest) = _decodeFraudProof(fraudProof);
 
+    // Proof signer must be the operator
+    if (_getOperator() != ecdsaProof.signer) {
+      revert InvalidProofSigner(ecdsaProof.signer);
+    }
+
     // Genesis and sued epochs can't be sued
     if (_getEpoch(ecdsaProof.receiverAddress, ecdsaProof.receiverEpoch).epochDigest == 0) {
       revert UnableToSueThisEpoch(ecdsaProof.receiverAddress, ecdsaProof.receiverEpoch);
