@@ -15,9 +15,9 @@ task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
 
     const accounts = await hre.ethers.getSigners();
     const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
-    const orandECVRF = await deployer.contractDeploy<OrandECVRFV2>('OrandV1/OrandECVRF', []);
+    const orandECVRF = await deployer.contractDeploy<OrandECVRFV2>('OrandV2/OrandECVRFV2', []);
     await deployer.contractDeploy<OrandProviderV2>(
-      'OrandV1/OrandProviderV1',
+      'OrandV2/OrandProviderV2',
       [],
       // This public key is corresponding to 0x7e9e03a453867a7046B0277f6cD72E1B59f67a0e
       // We going to skip 0x04 -> Pubkey format from libsecp256k1

@@ -62,7 +62,7 @@ export class Deployer {
           libraries: linking,
         });
         this._contractCache[contractPath] = await (await instanceFactory.deploy(...params)).waitForDeployment();
-        console.log('> Deploying:', contractPath.padEnd(36, ' '), this._contractCache[contractPath].address);
+        console.log('> Deploying:', contractPath.padEnd(36, ' '), await this._contractCache[contractPath].getAddress());
 
         if (/^libraries$/i.test(domain)) {
           this._libraries[contractName] = await this._contractCache[contractPath].getAddress();
@@ -107,9 +107,8 @@ export class Deployer {
 
   public async printReport() {
     let entries = Object.entries(this._contractCache);
-    this.getDeployerSigner()
-      .getAddress()
-      .then((e) => console.log(`Deployer: ${e}`));
+
+    console.log(`Deployer: ${await this.getDeployerSigner().getAddress()}`);
 
     console.log(
       `[Report for network: ${this._hre.network.name}] --------------------------------------------------------`,

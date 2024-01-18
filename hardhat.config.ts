@@ -29,6 +29,11 @@ const config: HardhatUserConfig = {
     enabled: true,
   },
   networks: {
+    ftn: {
+      url: 'https://rpc.testnet.fantom.network/',
+      chainId: 0xfa2,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
     a8: {
       url: 'https://rpcv2-testnet.ancient8.gg/',
       chainId: 28122024,
