@@ -1,25 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
-import './IOrandStorageV2.sol';
-import './IOrandECDSAV2.sol';
 
-error UnableToForwardRandomness(address receiver, uint256 epoch, uint256 y);
-error InvalidEpoch(uint256 requiredAlpha, uint256 submittedAlpha);
-error InvalidECVRFProofDigest(uint256 committedEcvrfProofDigest, uint256 givenEcvrfProofDigest);
-error IncompatibleEra(bytes32 proofPublicKeyDigest, bytes32 givenPublicKeyDigest);
-error UnableToSueThisEpoch(address receiverAddress, uint256 receiverEpoch);
+error UnableToForwardRandomness(address receiver, uint256 y);
+error InvalidAlphaValue(uint256 expectedAlpha, uint256 givenAlpha);
 
-interface IOrandProviderV2 is IOrandStorageV2, IOrandECDSAV2 {
-  // Struc calldata Proof for backup
-  struct CallDataECVRFProof {
-    uint256[2] pk;
-    uint256[2] gamma;
-    uint256 c;
-    uint256 s;
-    uint256 alpha;
-    address uWitness;
-    uint256[2] cGammaWitness;
-    uint256[2] sHashWitness;
-    uint256 zInv;
-  }
+interface IOrandProviderV2 {
+  // Verify a dual proof epoch is valid or not for current era
+  function verifyEpoch(
+    address receiver,
+    uint256[2] calldata gamma,
+    uint256 c,
+    uint256 s,
+    uint256 alpha,
+    address uWitness,
+    uint256[2] calldata cGammaWitness,
+    uint256[2] calldata sHashWitness,
+    uint256 zInv
+  )
+    external
+    view
+    returns (
+      uint96 currentEpochNumber,
+      bool isEpochLinked,
+      uint256 currentEpochResult,
+      uint256 inputAlpha,
+      uint256 verifiedEpochResult
+    );
+
+  // Get address of ECVRF verifier
+  function getECVRFVerifier() external view returns (address ecvrfVerifier);
+
+  // Get address of operator for corresponding public key
+  function getOperator() external view returns (address operator);
 }
