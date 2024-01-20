@@ -10,44 +10,25 @@ contract OrandStorageV2 is IOrandStorageV2 {
   // Event: New Epoch
   event NewEpoch(address indexed receiverAddress, uint96 indexed receiverEpoch, uint256 indexed randomness);
 
-  // Event: New Era, starting a new era allow new public key to be used
-  event NewEra(address indexed receiverAddress);
-
   // Storage of recent epoch's result
   // Map epoch ++ receiver  -> alpha
-  mapping(uint256 => Epoch) private epochStorage;
+  mapping(uint256 => uint256) private epochResult;
 
   // Map receiver -> total epoch
   mapping(address => uint256) private epochMax;
 
   //=======================[  Internal  ]====================
 
-  // Set the sueable to false, it can be a gensesis or sued
-  function _markAsUnableToSue(address receiver, uint96 epoch) internal {
-    epochStorage[_packing(epoch, receiver)].epochDigest = 0;
-  }
-
   // Add validity epoch
-  function _addEpoch(address receiver, uint96 epoch, uint256 epochResult, uint256 epochDigest) internal {
-    if (epoch == epochMax[receiver]) {
-      // Add epoch to storage
-      // epoch != 0 => able to sue == true
-      epochStorage[_packing(epoch, receiver)] = Epoch({
-        epochResult: epochResult,
-        epochDigest: epoch != 0 ? epochDigest : 0
-      });
-      emit NewEpoch(receiver, epoch, epochResult);
-      // If add new epoch we increase the epoch max 1
-      epochMax[receiver] += 1;
-      return;
-    }
-    revert UnableToAddEpoch(receiver, epoch, epochResult);
-  }
-
-  // Reset epoch to zero for given receiver
-  function _newEra(address receiver) internal {
-    epochMax[receiver] = 0;
-    emit NewEra(receiver);
+  function _addEpoch(address receiver, uint256 result) internal {
+    uint96 epoch = uint96(epochMax[receiver]);
+    // Add epoch to storage
+    // epoch != 0 => able to sue == true
+    epochResult[_packing(epoch, receiver)] = result;
+    // If add new epoch we increase the epoch max 1
+    epochMax[receiver] = epoch + 1;
+    // Emit event to outside of EVM
+    emit NewEpoch(receiver, epoch, result);
   }
 
   //=======================[  Internal pure ]====================
@@ -62,45 +43,41 @@ contract OrandStorageV2 is IOrandStorageV2 {
 
   //=======================[  Internal View  ]====================
 
-  // Get epoch record of given epoch
-  function _getEpoch(address receiver, uint96 epoch) internal view returns (Epoch memory epochRecord) {
-    return epochStorage[_packing(epoch, receiver)];
+  // Get result of current epoch
+  function _getCurrentEpoch(address receiver) internal view returns (uint96 epoch) {
+    epoch = uint96(epochMax[receiver]);
+    return (epoch > 0) ? epoch - 1 : epoch;
   }
 
-  // Get epoch record of latest epoch
-  function _getLatestEpoch(address receiver) internal view returns (Epoch memory epochRecord) {
-    return epochStorage[_packing(uint96(epochMax[receiver]) - 1, receiver)];
+  // Get total number of epoch for a given receiver
+  function _getTotalEpoch(address receiver) internal view returns (uint96 epoch) {
+    return uint96(epochMax[receiver]);
   }
 
-  // Get latest alpha
-  function _getLatestResult(address receiver) internal view returns (uint256 epochResult) {
-    return epochStorage[_packing(uint96(epochMax[receiver]) - 1, receiver)].epochResult;
-  }
-
-  // Get total epoch
-  function _getTotalEpoch(address receiver) internal view returns (uint256 totalEpoch) {
-    return epochMax[receiver];
+  // Get result of current epoch
+  function _getCurrentEpochResult(address receiver) internal view returns (uint256 result) {
+    return epochResult[_packing(_getCurrentEpoch(receiver), receiver)];
   }
 
   //=======================[  External View  ]====================
 
-  // Get epoch record of given epoch
-  function getEpoch(address receiver, uint96 epoch) external view returns (Epoch memory epochRecord) {
-    return _getEpoch(receiver, epoch);
+  // Get a given epoch result for a given receiver
+  function getEpochResult(address receiver, uint96 epoch) external view returns (uint256 result) {
+    return epochResult[_packing(epoch, receiver)];
   }
 
-  // Get epoch record of latest epoch
-  function getLatestEpoch(address receiver) external view returns (Epoch memory epochRecord) {
-    return _getLatestEpoch(receiver);
-  }
-
-  // Get latest alpha
-  function getLatestResult(address receiver) external view returns (uint256 epochResult) {
-    return _getLatestResult(receiver);
-  }
-
-  // Get otal epoch
-  function getTotalEpoch(address receiver) external view returns (uint256 totalEpoch) {
+  // Get total number of epochs for a given receiver
+  function getTotalEpoch(address receiver) external view returns (uint96 epoch) {
     return _getTotalEpoch(receiver);
+  }
+
+  // Get current epoch of a given receiver
+  function getCurrentEpoch(address receiver) external view returns (uint96 epoch) {
+    return _getCurrentEpoch(receiver);
+  }
+
+  // Get current epoch of a given receiver
+  function getCurrentEpochResult(address receiver) external view returns (uint256 result) {
+    return _getCurrentEpochResult(receiver);
   }
 }

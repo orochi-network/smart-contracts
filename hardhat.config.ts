@@ -18,7 +18,7 @@ const compilers = ['0.8.19'].map((item: string) => ({
   settings: {
     optimizer: {
       enabled: true,
-      runs: 200,
+      runs: 1000,
     },
   },
 }));

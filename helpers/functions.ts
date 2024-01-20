@@ -103,7 +103,7 @@ function argumentTransform(eventName: string, arg: string) {
 
 export async function printAllEvents(tx: ContractTransactionResponse) {
   const result = await tx.wait();
-  console.log(result);
+  //console.log(result);
   /*
   console.log(
     result.events
