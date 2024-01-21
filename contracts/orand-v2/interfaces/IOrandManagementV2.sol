@@ -5,6 +5,6 @@ interface IOrandManagementV2 {
   // Get public key
   function getPublicKey() external view returns (uint256[2] memory pubKey);
 
-  // Get public key digest
-  function getPublicKeyDigest() external view returns (uint256 pubKeyDigest);
+  // Get operator address
+  function getOperator() external view returns (address operator);
 }

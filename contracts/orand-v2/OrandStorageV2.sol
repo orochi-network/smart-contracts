@@ -66,6 +66,11 @@ contract OrandStorageV2 is IOrandStorageV2 {
     return epochResult[_packing(epoch, receiver)];
   }
 
+  // Get current epoch of a given receiver
+  function getCurrentEpochResult(address receiver) external view returns (uint256 result) {
+    return _getCurrentEpochResult(receiver);
+  }
+
   // Get total number of epochs for a given receiver
   function getTotalEpoch(address receiver) external view returns (uint96 epoch) {
     return _getTotalEpoch(receiver);
@@ -74,10 +79,5 @@ contract OrandStorageV2 is IOrandStorageV2 {
   // Get current epoch of a given receiver
   function getCurrentEpoch(address receiver) external view returns (uint96 epoch) {
     return _getCurrentEpoch(receiver);
-  }
-
-  // Get current epoch of a given receiver
-  function getCurrentEpochResult(address receiver) external view returns (uint256 result) {
-    return _getCurrentEpochResult(receiver);
   }
 }

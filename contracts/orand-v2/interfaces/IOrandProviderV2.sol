@@ -5,7 +5,7 @@ error UnableToForwardRandomness(address receiver, uint256 y);
 error InvalidAlphaValue(uint256 expectedAlpha, uint256 givenAlpha);
 
 interface IOrandProviderV2 {
-  // Verify a dual proof epoch is valid or not for current era
+  // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
     address receiver,
     uint256[2] calldata gamma,
@@ -29,7 +29,4 @@ interface IOrandProviderV2 {
 
   // Get address of ECVRF verifier
   function getECVRFVerifier() external view returns (address ecvrfVerifier);
-
-  // Get address of operator for corresponding public key
-  function getOperator() external view returns (address operator);
 }
