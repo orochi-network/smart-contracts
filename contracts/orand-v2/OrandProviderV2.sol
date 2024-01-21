@@ -16,20 +16,21 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   event SetNewECVRFVerifier(address indexed actor, address indexed ecvrfAddress);
 
   // Provider V2 construct method
-  constructor(bytes memory pk, address ecvrfAddress) OrandManagementV2(pk) {
+  constructor(uint256[2] memory publicKey, address ecvrfAddress) OrandManagementV2(publicKey) {
     ecvrf = IOrandECVRFV2(ecvrfAddress);
   }
 
   //=======================[  Owner  ]====================
 
   // Update new ECVRF verifier
-  function setNewECVRFVerifier(address ecvrfAddress) external onlyOwner {
+  function setNewECVRFVerifier(address ecvrfAddress) external onlyOwner returns (bool) {
     ecvrf = IOrandECVRFV2(ecvrfAddress);
     emit SetNewECVRFVerifier(msg.sender, ecvrfAddress);
+    return true;
   }
 
   // Set new public key to verify proof
-  function setPublicKey(bytes memory pk) external onlyOwner returns (bool) {
+  function setPublicKey(uint256[2] memory pk) external onlyOwner returns (bool) {
     _setPublicKey(pk);
     return true;
   }
@@ -51,7 +52,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     uint256 currentEpochResult = _getCurrentEpochResult(receiver);
 
     // Current alpha must be the result of previous epoch
-    if (currentEpochResult != 0 && alpha != currentEpochResult) {
+    if (currentEpochResult > 0 && alpha != currentEpochResult) {
       revert InvalidAlphaValue(currentEpochResult, alpha);
     }
 
@@ -84,7 +85,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
 
   //=======================[  External View  ]====================
 
-  // Verify a dual proof epoch is valid or not for current era
+  // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
     address receiver,
     uint256[2] calldata gamma,
@@ -129,10 +130,5 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   // Get address of ECVRF verifier
   function getECVRFVerifier() external view returns (address ecvrfVerifier) {
     return address(ecvrf);
-  }
-
-  // Get address of operator for corresponding public key
-  function getOperator() external view returns (address operator) {
-    return address(uint160(_getPublicKeyDigest()));
   }
 }
