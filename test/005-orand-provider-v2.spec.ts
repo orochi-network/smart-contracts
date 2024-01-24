@@ -431,7 +431,7 @@ describe('OrandProviderV2', function () {
     const result = [];
     for (let i = 0; i < epochs.length - 1; i += 1) {
       const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[i]);
-      await orandProviderV2.publish(receiver, gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv),
+      await orandProviderV2.publish(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv}),
         result.push({
           total: await orandProviderV2.getTotalEpoch(receiver),
           current: await orandProviderV2.getCurrentEpoch(receiver),
@@ -444,7 +444,7 @@ describe('OrandProviderV2', function () {
   it('should able to verify unlinked proof proof', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[5]);
     const { currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult } =
-      await orandProviderV2.verifyEpoch(receiver, gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv);
+      await orandProviderV2.verifyEpoch(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv});
     console.log({ currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult });
     expect(isEpochLinked).to.eq(false);
   });
@@ -452,7 +452,7 @@ describe('OrandProviderV2', function () {
   it('should able to verify proof', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[19]);
     const { currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult } =
-      await orandProviderV2.verifyEpoch(receiver, gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv);
+      await orandProviderV2.verifyEpoch(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv});
     console.log({ currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult });
     expect(isEpochLinked).to.eq(true);
   });
@@ -462,15 +462,15 @@ describe('OrandProviderV2', function () {
     await expect(
       orandProviderV2.publish(
         receiver,
-        gamma,
+        {gamma,
         c,
         // Craft a malicious proof
-        scalarToNumberish(epochs[1].s),
+        s:scalarToNumberish(epochs[1].s),
         alpha,
         uWitness,
         cGammaWitness,
         sHashWitness,
-        zInv,
+        zInv,}
       ),
     ).to.revertedWith('addr(c*pk+s*g)!=_uWitness');
   });
@@ -478,14 +478,14 @@ describe('OrandProviderV2', function () {
   it('should not able to publish wrong alpha', async () => {
     const { alpha, gamma, c, s, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[12]);
     await expect(
-      orandProviderV2.publish(receiver, gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv),
+      orandProviderV2.publish(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv}),
     ).to.revertedWithCustomError(orandProviderV2, 'InvalidAlphaValue');
   });
 
   it('should able to publish a linked proof', async () => {
     const { alpha, gamma, c, s, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[19]);
     await expect(
-      orandProviderV2.publish(receiver, gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv),
+      orandProviderV2.publish(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv}),
     ).to.emit(orandProviderV2, 'NewEpoch');
   });
 });

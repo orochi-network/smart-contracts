@@ -38,37 +38,17 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   //=======================[  External  ]====================
 
   // Publish new epoch with ECDSA Proof and Fraud Proof
-  function publish(
-    address receiver,
-    uint256[2] calldata gamma,
-    uint256 c,
-    uint256 s,
-    uint256 alpha,
-    address uWitness,
-    uint256[2] calldata cGammaWitness,
-    uint256[2] calldata sHashWitness,
-    uint256 zInv
-  ) external returns (bool) {
+  function publish(address receiver, ECVRFProof calldata ecvrfProof) external returns (bool) {
     uint256 currentEpochResult = _getCurrentEpochResult(receiver);
 
     // Current alpha must be the result of previous epoch
-    if (currentEpochResult > 0 && alpha != currentEpochResult) {
-      revert InvalidAlphaValue(currentEpochResult, alpha);
+    if (currentEpochResult > 0 && ecvrfProof.alpha != currentEpochResult) {
+      revert InvalidAlphaValue(currentEpochResult, ecvrfProof.alpha);
     }
 
     // y = keccak256(gamma.x, gamma.y)
     // uint256 y = uint256(keccak256(abi.encodePacked(ecvrfProof.gamma)));
-    uint256 result = ecvrf.verifyECVRFProof(
-      _getPublicKey(),
-      gamma,
-      c,
-      s,
-      alpha,
-      uWitness,
-      cGammaWitness,
-      sHashWitness,
-      zInv
-    );
+    uint256 result = ecvrf.verifyStructECVRFProof(_getPublicKey(), ecvrfProof);
 
     // Add epoch to the epoch chain of Orand ECVRF
     _addEpoch(receiver, result);
@@ -88,14 +68,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
     address receiver,
-    uint256[2] calldata gamma,
-    uint256 c,
-    uint256 s,
-    uint256 alpha,
-    address uWitness,
-    uint256[2] calldata cGammaWitness,
-    uint256[2] calldata sHashWitness,
-    uint256 zInv
+    ECVRFProof calldata ecvrfProof
   )
     external
     view
@@ -109,22 +82,12 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   {
     currentEpochNumber = _getCurrentEpoch(receiver);
     currentEpochResult = _getCurrentEpochResult(receiver);
-    inputAlpha = alpha;
-    isEpochLinked = currentEpochResult == alpha;
+    inputAlpha = ecvrfProof.alpha;
+    isEpochLinked = currentEpochResult == ecvrfProof.alpha;
 
     // y = keccak256(gamma.x, gamma.y)
     // uint256 y = uint256(keccak256(abi.encodePacked(ecvrfProof.gamma)));
-    verifiedEpochResult = ecvrf.verifyECVRFProof(
-      _getPublicKey(),
-      gamma,
-      c,
-      s,
-      alpha,
-      uWitness,
-      cGammaWitness,
-      sHashWitness,
-      zInv
-    );
+    verifiedEpochResult = ecvrf.verifyStructECVRFProof(_getPublicKey(), ecvrfProof);
   }
 
   // Get address of ECVRF verifier

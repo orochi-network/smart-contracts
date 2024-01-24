@@ -5,7 +5,7 @@ import '../libraries/VRF.sol';
 import './interfaces/IOrandECVRFV2.sol';
 
 contract OrandECVRFV2 is VRF, IOrandECVRFV2 {
-  // Verify raw session of ECVRF
+  // Verify raw proof of ECVRF
   function verifyECVRFProof(
     uint256[2] memory pk,
     uint256[2] memory gamma,
@@ -19,5 +19,24 @@ contract OrandECVRFV2 is VRF, IOrandECVRFV2 {
   ) external view returns (uint256 y) {
     _verifyVRFProof(pk, gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv);
     return uint256(keccak256(abi.encode(gamma)));
+  }
+
+  // Verify structed proof of ECVRF
+  function verifyStructECVRFProof(
+    uint256[2] memory pk,
+    IOrandProviderV2.ECVRFProof memory ecvrfProof
+  ) external view returns (uint256 y) {
+    _verifyVRFProof(
+      pk,
+      ecvrfProof.gamma,
+      ecvrfProof.c,
+      ecvrfProof.s,
+      ecvrfProof.alpha,
+      ecvrfProof.uWitness,
+      ecvrfProof.cGammaWitness,
+      ecvrfProof.sHashWitness,
+      ecvrfProof.zInv
+    );
+    return uint256(keccak256(abi.encode(ecvrfProof.gamma)));
   }
 }

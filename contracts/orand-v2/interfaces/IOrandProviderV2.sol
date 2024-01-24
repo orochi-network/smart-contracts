@@ -5,17 +5,22 @@ error UnableToForwardRandomness(address receiver, uint256 y);
 error InvalidAlphaValue(uint256 expectedAlpha, uint256 givenAlpha);
 
 interface IOrandProviderV2 {
+  // ECVRF struct
+  struct ECVRFProof {
+    uint256[2] gamma;
+    uint256 c;
+    uint256 s;
+    uint256 alpha;
+    address uWitness;
+    uint256[2] cGammaWitness;
+    uint256[2] sHashWitness;
+    uint256 zInv;
+  }
+
   // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
     address receiver,
-    uint256[2] calldata gamma,
-    uint256 c,
-    uint256 s,
-    uint256 alpha,
-    address uWitness,
-    uint256[2] calldata cGammaWitness,
-    uint256[2] calldata sHashWitness,
-    uint256 zInv
+    ECVRFProof calldata ecvrfProof
   )
     external
     view
