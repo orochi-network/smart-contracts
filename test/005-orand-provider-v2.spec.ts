@@ -1,7 +1,7 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
+import { DiceGame, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { getAddress, keccak256 } from 'ethers';
 
@@ -10,6 +10,7 @@ let orandECVRFV2: OrandECVRFV2;
 let orandProviderV2: OrandProviderV2;
 let deployer: Deployer;
 let somebody: SignerWithAddress;
+let diceGame: DiceGame;
 
 const pk =
   '042296393f4c4bfde812a53ed8bfa841c6251e9891fb0def611331b716a935ec91ad75abb573aada6599df5d3b34fa26853d9f5d89691aef7b811b8463c1561d5a';
@@ -419,7 +420,10 @@ describe('OrandProviderV2', function () {
       [],
       publicKeyToNumberish(pk),
       orandECVRFV2,
+      100,
     );
+    diceGame = await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);
+
     const operatorAddress = await orandProviderV2.getOperator();
     console.log(`\tCorresponding address: ${correspondingAddress}`);
     console.log('\tProvider opeartor:', operatorAddress);
@@ -431,7 +435,7 @@ describe('OrandProviderV2', function () {
     const result = [];
     for (let i = 0; i < epochs.length - 1; i += 1) {
       const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[i]);
-      await orandProviderV2.publish(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv}),
+      await orandProviderV2.publish(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv }),
         result.push({
           total: await orandProviderV2.getTotalEpoch(receiver),
           current: await orandProviderV2.getCurrentEpoch(receiver),
@@ -444,7 +448,7 @@ describe('OrandProviderV2', function () {
   it('should able to verify unlinked proof proof', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[5]);
     const { currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult } =
-      await orandProviderV2.verifyEpoch(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv});
+      await orandProviderV2.verifyEpoch(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv });
     console.log({ currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult });
     expect(isEpochLinked).to.eq(false);
   });
@@ -452,7 +456,7 @@ describe('OrandProviderV2', function () {
   it('should able to verify proof', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[19]);
     const { currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult } =
-      await orandProviderV2.verifyEpoch(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv});
+      await orandProviderV2.verifyEpoch(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv });
     console.log({ currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult });
     expect(isEpochLinked).to.eq(true);
   });
@@ -460,32 +464,67 @@ describe('OrandProviderV2', function () {
   it('should not able to publish wrong proof', async () => {
     const { alpha, gamma, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[19]);
     await expect(
-      orandProviderV2.publish(
-        receiver,
-        {gamma,
+      orandProviderV2.publish(receiver, {
+        gamma,
         c,
         // Craft a malicious proof
-        s:scalarToNumberish(epochs[1].s),
+        s: scalarToNumberish(epochs[1].s),
         alpha,
         uWitness,
         cGammaWitness,
         sHashWitness,
-        zInv,}
-      ),
+        zInv,
+      }),
     ).to.revertedWith('addr(c*pk+s*g)!=_uWitness');
   });
 
   it('should not able to publish wrong alpha', async () => {
     const { alpha, gamma, c, s, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[12]);
     await expect(
-      orandProviderV2.publish(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv}),
+      orandProviderV2.publish(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv }),
     ).to.revertedWithCustomError(orandProviderV2, 'InvalidAlphaValue');
   });
 
   it('should able to publish a linked proof', async () => {
     const { alpha, gamma, c, s, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[19]);
     await expect(
-      orandProviderV2.publish(receiver, {gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv}),
+      orandProviderV2.publish(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv }),
     ).to.emit(orandProviderV2, 'NewEpoch');
+  });
+
+  it('anyone should able to gues result', async () => {
+    for (let i = 0; i < 1500; i += 1) {
+      await expect(diceGame.connect(somebody).guessingDiceNumber(Math.round(Math.random() * 5) + 1)).to.emit(
+        diceGame,
+        'NewGuess',
+      );
+    }
+
+    console.log(await diceGame.getStateOfGame());
+  });
+
+  it('anyone should able to gues result', async () => {
+    for (let i = 0; i < 1500; i += 1) {
+      await expect(diceGame.connect(somebody).guessingDiceNumber(Math.round(Math.random() * 5) + 1)).to.emit(
+        diceGame,
+        'NewGuess',
+      );
+    }
+
+    console.log(await diceGame.getStateOfGame());
+  });
+
+  it('should able to feed randomness to dice game', async () => {
+    const { alpha, gamma, c, s, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[0]);
+    await expect(
+      orandProviderV2.publish(diceGame, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv }),
+    ).to.emit(orandProviderV2, 'NewEpoch');
+
+    const { fulfill } = await diceGame.getStateOfGame();
+    for (let i = 0; i < fulfill; i += 1) {
+      const { result } = await diceGame.getResult(i);
+      expect(result).to.gte(1);
+      expect(result).to.lte(6);
+    }
   });
 });
