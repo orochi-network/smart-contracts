@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
+import './IOrandProviderV2.sol';
+
 interface IOrandECVRFV2 {
-  // Verify raw session of ECVRF
+  // Verify raw proof of ECVRF
   function verifyECVRFProof(
     uint256[2] memory pk,
     uint256[2] memory gamma,
@@ -13,5 +15,11 @@ interface IOrandECVRFV2 {
     uint256[2] memory cGammaWitness,
     uint256[2] memory sHashWitness,
     uint256 zInv
+  ) external view returns (uint256 y);
+
+  // Verify structed proof of ECVRF
+  function verifyStructECVRFProof(
+    uint256[2] memory pk,
+    IOrandProviderV2.ECVRFProof memory ecvrfProof
   ) external view returns (uint256 y);
 }
