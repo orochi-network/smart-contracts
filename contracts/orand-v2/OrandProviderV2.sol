@@ -12,15 +12,33 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   // ECVRF verifier smart contract
   IOrandECVRFV2 ecvrf;
 
+  // We allow max batching is 1000
+  uint256 private maxBatching;
+
   // Event: Set New ECVRF Verifier
   event SetNewECVRFVerifier(address indexed actor, address indexed ecvrfAddress);
 
+  // Event: Set the limit for batching randomness
+  event SetBatchingLimit(address indexed actor, uint256 indexed maxBatching);
+
   // Provider V2 construct method
-  constructor(uint256[2] memory publicKey, address ecvrfAddress) OrandManagementV2(publicKey) {
+  constructor(
+    uint256[2] memory publicKey,
+    address ecvrfAddress,
+    uint256 maxBatchingLimit
+  ) OrandManagementV2(publicKey) {
     ecvrf = IOrandECVRFV2(ecvrfAddress);
+    maxBatching = maxBatchingLimit;
   }
 
   //=======================[  Owner  ]====================
+
+  // Update new ECVRF verifier
+  function setMaxBatching(uint256 maxBatchingLimit) external onlyOwner returns (bool) {
+    maxBatching = maxBatchingLimit;
+    emit SetBatchingLimit(msg.sender, maxBatchingLimit);
+    return true;
+  }
 
   // Update new ECVRF verifier
   function setNewECVRFVerifier(address ecvrfAddress) external onlyOwner returns (bool) {
@@ -55,8 +73,11 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
 
     // Check for the existing smart contract and forward randomness to receiver
     if (receiver.code.length > 0) {
-      if (!IOrandConsumerV2(receiver).consumeRandomness(result)) {
-        revert UnableToForwardRandomness(receiver, result);
+      for (uint256 i = 0; i < maxBatching; i += 1) {
+        if (!IOrandConsumerV2(receiver).consumeRandomness(result)) {
+          break;
+        }
+        result = uint256(keccak256(abi.encodePacked(result)));
       }
     }
 

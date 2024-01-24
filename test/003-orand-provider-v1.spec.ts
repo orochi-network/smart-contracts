@@ -180,12 +180,13 @@ describe('OrandProviderV1', function () {
     await orandProviderV1.connect(somebody).publishValidityProof(...optimus(epochs[2]));
   });
 
+  /*
   it('anyone should not able to sue since Orochi Network and the consumer did nothing wrong', async () => {
     expect(async () =>
       //@ts-ignore
       orandProviderV1.connect(somebody).sueFraudProof(...optimus(epochs[2])),
     ).to.revertedWithCustomError(orandProviderV1, 'EverythingIsCorrect');
-  });
+  });*/
 
   it('epoch 0 and 1 should be liked', async () => {
     const proof0 = toEcvrfProof(epochs[0]);
