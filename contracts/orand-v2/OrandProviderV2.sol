@@ -57,12 +57,110 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
 
   //=======================[  External  ]====================
 
+  // Start new genesis for receiver
+  function genesis(bytes memory fraudProof, ECVRFProof calldata ecvrfProof) external returns (bool) {
+    OrandECDSAProof memory ecdsaProof = _decodeFraudProof(fraudProof);
+    uint256 currentEpochResult = _getCurrentEpochResult(ecdsaProof.receiverAddress);
+
+    // Invalid genesis epoch
+    if (currentEpochResult != 0 || ecdsaProof.receiverEpoch != 0) {
+      revert InvalidGenesisEpoch(currentEpochResult);
+    }
+
+    // ECVRF proof digest must match
+    if (
+      ecdsaProof.ecvrfProofDigest !=
+      uint256(
+        keccak256(
+          abi.encodePacked(
+            _getPublicKey(),
+            ecvrfProof.gamma,
+            ecvrfProof.c,
+            ecvrfProof.s,
+            ecvrfProof.alpha,
+            ecvrfProof.uWitness,
+            ecvrfProof.cGammaWitness,
+            ecvrfProof.sHashWitness,
+            ecvrfProof.zInv
+          )
+        )
+      )
+    ) {
+      revert InvalidECVRFProofDigest();
+    }
+
+    // y = keccak256(gamma.x, gamma.y)
+    // uint256 y = uint256(keccak256(abi.encodePacked(ecvrfProof.gamma)));
+    uint256 result = ecvrf.verifyStructECVRFProof(_getPublicKey(), ecvrfProof);
+
+    // Add epoch to the epoch chain of Orand ECVRF
+    _addEpoch(ecdsaProof.receiverAddress, result);
+
+    return true;
+  }
+
+  // Publish new epoch with Fraud Proof
+  function publishFraudProof(bytes memory fraudProof, ECVRFProof calldata ecvrfProof) external returns (bool) {
+    OrandECDSAProof memory ecdsaProof = _decodeFraudProof(fraudProof);
+    uint256 currentEpochResult = _getCurrentEpochResult(ecdsaProof.receiverAddress);
+
+    // Current alpha must be the result of previous epoch
+    if (ecdsaProof.signer != _getOperator()) {
+      revert InvalidProofSigner(ecdsaProof.signer);
+    }
+
+    // Current alpha must be the result of previous epoch
+    if (ecvrfProof.alpha != currentEpochResult) {
+      revert InvalidAlphaValue(currentEpochResult, ecvrfProof.alpha);
+    }
+
+    // ECVRF proof digest must match
+    if (
+      ecdsaProof.ecvrfProofDigest !=
+      uint256(
+        keccak256(
+          abi.encodePacked(
+            _getPublicKey(),
+            ecvrfProof.gamma,
+            ecvrfProof.c,
+            ecvrfProof.s,
+            ecvrfProof.alpha,
+            ecvrfProof.uWitness,
+            ecvrfProof.cGammaWitness,
+            ecvrfProof.sHashWitness,
+            ecvrfProof.zInv
+          )
+        )
+      )
+    ) {
+      revert InvalidECVRFProofDigest();
+    }
+
+    // y = keccak256(gamma.x, gamma.y)
+    uint256 result = uint256(keccak256(abi.encodePacked(ecvrfProof.gamma)));
+
+    // Add epoch to the epoch chain of Orand ECVRF
+    _addEpoch(ecdsaProof.receiverAddress, result);
+
+    // Check for the existing smart contract and forward randomness to receiver
+    if (ecdsaProof.receiverAddress.code.length > 0) {
+      for (uint256 i = 0; i < maxBatching; i += 1) {
+        if (!IOrandConsumerV2(ecdsaProof.receiverAddress).consumeRandomness(result)) {
+          break;
+        }
+        result = uint256(keccak256(abi.encodePacked(result)));
+      }
+    }
+
+    return true;
+  }
+
   // Publish new epoch with ECDSA Proof and Fraud Proof
   function publish(address receiver, ECVRFProof calldata ecvrfProof) external returns (bool) {
     uint256 currentEpochResult = _getCurrentEpochResult(receiver);
 
     // Current alpha must be the result of previous epoch
-    if (currentEpochResult > 0 && ecvrfProof.alpha != currentEpochResult) {
+    if (ecvrfProof.alpha != currentEpochResult) {
       revert InvalidAlphaValue(currentEpochResult, ecvrfProof.alpha);
     }
 

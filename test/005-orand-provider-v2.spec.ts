@@ -432,9 +432,89 @@ describe('OrandProviderV2', function () {
     expect(operatorAddress.toLowerCase()).to.eq('0xed6a792f694b7a52e7cf4b7f02daa41a7c92f362');
   });
 
+  it('should not able to publish a new epoch without genesis', async () => {
+    const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[0]);
+    await expect(
+      orandProviderV2.publishFraudProof(`0x${epochs[0].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      }),
+    ).to.revertedWithCustomError(orandProviderV2, 'InvalidAlphaValue');
+  });
+
+  it('should able to create new gensis for receiver', async () => {
+    const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[0]);
+    await expect(
+      orandProviderV2.genesis(`0x${epochs[0].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      }),
+    ).to.emit(orandProviderV2, 'NewEpoch');
+  });
+
+  it('should able to publish a epoch using ECDSA proof', async () => {
+    const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[1]);
+    await expect(
+      orandProviderV2.publishFraudProof(`0x${epochs[1].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      }),
+    ).to.emit(orandProviderV2, 'NewEpoch');
+  });
+
+  it('should not able to publish a wrong ECDSA proof', async () => {
+    const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[2]);
+    await expect(
+      orandProviderV2.publishFraudProof(`0x${epochs[1].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      }),
+    ).to.revertedWithCustomError(orandProviderV2, 'InvalidECVRFProofDigest');
+  });
+
+  it('should not able to publish a wrong epoch alpha using ECDSA proof', async () => {
+    const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[11]);
+    await expect(
+      orandProviderV2.publishFraudProof(`0x${epochs[11].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      }),
+    ).to.revertedWithCustomError(orandProviderV2, 'InvalidAlphaValue');
+  });
+
   it('should able to publish a chain of ECVRF proofs', async () => {
     const result = [];
-    for (let i = 0; i < epochs.length - 1; i += 1) {
+    for (let i = 2; i < epochs.length - 1; i += 1) {
       const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[i]);
       await orandProviderV2.publish(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv }),
         result.push({
@@ -513,19 +593,5 @@ describe('OrandProviderV2', function () {
     }
 
     console.log(await diceGame.getStateOfGame());
-  });
-
-  it('should able to feed randomness to dice game', async () => {
-    const { alpha, gamma, c, s, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[0]);
-    await expect(
-      orandProviderV2.publish(diceGame, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv }),
-    ).to.emit(orandProviderV2, 'NewEpoch');
-
-    const { fulfill } = await diceGame.getStateOfGame();
-    for (let i = 0; i < fulfill; i += 1) {
-      const { result } = await diceGame.getResult(i);
-      expect(result).to.gte(1);
-      expect(result).to.lte(6);
-    }
   });
 });

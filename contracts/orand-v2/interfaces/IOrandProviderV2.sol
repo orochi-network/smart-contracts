@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 error UnableToForwardRandomness(address receiver, uint256 y);
 error InvalidAlphaValue(uint256 expectedAlpha, uint256 givenAlpha);
+error InvalidGenesisEpoch(uint256 currentEpoch);
+error InvalidECVRFProofDigest();
 
 interface IOrandProviderV2 {
   // ECVRF struct
@@ -16,6 +18,9 @@ interface IOrandProviderV2 {
     uint256[2] sHashWitness;
     uint256 zInv;
   }
+
+  // Start new genesis for receiver
+  function genesis(bytes memory fraudProof, ECVRFProof calldata ecvrfProof) external returns (bool);
 
   // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
