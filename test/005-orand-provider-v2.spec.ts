@@ -526,19 +526,51 @@ describe('OrandProviderV2', function () {
     console.table(result);
   });
 
-  it('should able to verify unlinked proof proof', async () => {
+  it('should able to verify unlinked proof', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[5]);
-    const { currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult } =
-      await orandProviderV2.verifyEpoch(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv });
-    console.log({ currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult });
+    const { ecdsaProof, currentEpochNumber, isEpochLinked, isValidDualProof, currentEpochResult, verifiedEpochResult } =
+      await orandProviderV2.verifyEpoch(`0x${epochs[5].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      });
+    console.log({
+      ecdsaProof,
+      currentEpochNumber,
+      isEpochLinked,
+      isValidDualProof,
+      currentEpochResult,
+      verifiedEpochResult,
+    });
     expect(isEpochLinked).to.eq(false);
   });
 
   it('should able to verify proof', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[19]);
-    const { currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult } =
-      await orandProviderV2.verifyEpoch(receiver, { gamma, c, s, alpha, uWitness, cGammaWitness, sHashWitness, zInv });
-    console.log({ currentEpochNumber, isEpochLinked, currentEpochResult, inputAlpha, verifiedEpochResult });
+    const { ecdsaProof, currentEpochNumber, isEpochLinked, isValidDualProof, currentEpochResult, verifiedEpochResult } =
+      await orandProviderV2.verifyEpoch(`0x${epochs[19].signatureProof}`, {
+        gamma,
+        c,
+        s,
+        alpha,
+        uWitness,
+        cGammaWitness,
+        sHashWitness,
+        zInv,
+      });
+    console.log({
+      ecdsaProof,
+      currentEpochNumber,
+      isEpochLinked,
+      isValidDualProof,
+      currentEpochResult,
+      verifiedEpochResult,
+    });
     expect(isEpochLinked).to.eq(true);
   });
 

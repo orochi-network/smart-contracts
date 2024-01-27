@@ -188,22 +188,42 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
 
   // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
-    address receiver,
+    bytes memory fraudProof,
     ECVRFProof calldata ecvrfProof
   )
     external
     view
     returns (
+      OrandECDSAProof memory ecdsaProof,
       uint96 currentEpochNumber,
       bool isEpochLinked,
+      bool isValidDualProof,
       uint256 currentEpochResult,
-      uint256 inputAlpha,
       uint256 verifiedEpochResult
     )
   {
-    currentEpochNumber = _getCurrentEpoch(receiver);
-    currentEpochResult = _getCurrentEpochResult(receiver);
-    inputAlpha = ecvrfProof.alpha;
+    ecdsaProof = _decodeFraudProof(fraudProof);
+
+    isValidDualProof =
+      ecdsaProof.ecvrfProofDigest ==
+      uint256(
+        keccak256(
+          abi.encodePacked(
+            _getPublicKey(),
+            ecvrfProof.gamma,
+            ecvrfProof.c,
+            ecvrfProof.s,
+            ecvrfProof.alpha,
+            ecvrfProof.uWitness,
+            ecvrfProof.cGammaWitness,
+            ecvrfProof.sHashWitness,
+            ecvrfProof.zInv
+          )
+        )
+      );
+
+    currentEpochNumber = _getCurrentEpoch(ecdsaProof.receiverAddress);
+    currentEpochResult = _getCurrentEpochResult(ecdsaProof.receiverAddress);
     isEpochLinked = currentEpochResult == ecvrfProof.alpha;
 
     // y = keccak256(gamma.x, gamma.y)
