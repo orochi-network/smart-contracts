@@ -24,6 +24,12 @@ interface IOrandProviderV2 is IOrandECDSAV2 {
   // Start new genesis for receiver
   function genesis(bytes memory fraudProof, ECVRFProof calldata ecvrfProof) external returns (bool);
 
+  // Publish new epoch with Fraud Proof
+  function publishFraudProof(bytes memory fraudProof, ECVRFProof calldata ecvrfProof) external returns (bool);
+
+  // Publish new epoch with ECDSA Proof and Fraud Proof
+  function publish(address receiver, ECVRFProof calldata ecvrfProof) external returns (bool);
+
   // Verify a ECVRF proof epoch is valid or not
   function verifyEpoch(
     bytes memory fraudProof,
