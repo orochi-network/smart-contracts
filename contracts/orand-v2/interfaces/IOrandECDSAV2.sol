@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 // Error
 error InvalidECDSAProofLength(uint256 proofLength);
-error InvalidProofEpoch(uint96 proofEpoch);
 error InvalidProofSigner(address proofSigner);
-error MismatchProofResult(uint256 ecvrfY, uint256 ecdsaY);
 
 interface IOrandECDSAV2 {
   // Struct Orand ECDSA proof
