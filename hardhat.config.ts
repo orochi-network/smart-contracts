@@ -29,9 +29,9 @@ const config: HardhatUserConfig = {
     enabled: true,
   },
   networks: {
-    ftn: {
-      url: 'https://rpc.testnet.fantom.network/',
-      chainId: 0xfa2,
+    sepolia: {
+      url: 'https://eth-sepolia.api.onfinality.io/public',
+      chainId: 11155111,
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
     a8: {
