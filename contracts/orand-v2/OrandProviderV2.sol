@@ -7,8 +7,9 @@ import './interfaces/IOrandECVRFV2.sol';
 import './interfaces/IOrandConsumerV2.sol';
 import './OrandStorageV2.sol';
 import './OrandManagementV2.sol';
+import './OrandECDSAV2.sol';
 
-contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandManagementV2 {
+contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandManagementV2, OrandECDSAV2 {
   // ECVRF verifier smart contract
   IOrandECVRFV2 ecvrf;
 
@@ -24,9 +25,10 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   // Provider V2 construct method
   constructor(
     uint256[2] memory publicKey,
+    address operator,
     address ecvrfAddress,
     uint256 maxBatchingLimit
-  ) OrandManagementV2(publicKey) {
+  ) OrandManagementV2(publicKey) OrandECDSAV2(operator) {
     ecvrf = IOrandECVRFV2(ecvrfAddress);
     maxBatching = maxBatchingLimit;
   }

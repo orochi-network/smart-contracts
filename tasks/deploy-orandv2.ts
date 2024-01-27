@@ -31,6 +31,7 @@ task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
       [],
       // We going to skip 0x04 -> Pubkey format from libsecp256k1
       publicKeyToNumberish(pk),
+      correspondingAddress,
       orandECVRF,
       100,
     );

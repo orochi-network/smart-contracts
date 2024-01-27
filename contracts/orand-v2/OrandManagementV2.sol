@@ -32,8 +32,8 @@ contract OrandManagementV2 is IOrandManagementV2 {
   }
 
   // Get public key digest
-  function _getPublicKeyDigest() internal view returns (uint256 pubKeyDigest) {
-    return uint256(keccak256(abi.encodePacked(publicKey)));
+  function _getPublicKeyDigest() internal view returns (bytes32 pubKeyDigest) {
+    return keccak256(abi.encodePacked(publicKey));
   }
 
   //=======================[  External view  ]====================
@@ -43,8 +43,8 @@ contract OrandManagementV2 is IOrandManagementV2 {
     return _getPublicKey();
   }
 
-  // Get address of operator for corresponding public key
-  function getOperator() external view returns (address operator) {
-    return address(uint160(_getPublicKeyDigest()));
+  // Get digest of corresponding public key
+  function getPublicKeyDigest() external view returns (bytes32 operator) {
+    return _getPublicKeyDigest();
   }
 }

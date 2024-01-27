@@ -419,6 +419,7 @@ describe('OrandProviderV2', function () {
       'OrandV2/OrandProviderV2',
       [],
       publicKeyToNumberish(pk),
+      correspondingAddress,
       orandECVRFV2,
       100,
     );
