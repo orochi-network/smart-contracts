@@ -21,6 +21,18 @@ Smart Contracts is a part of Orosign project, these smart contracts are using to
 Deployer: 0xD62f6bCc528AAb6D21d63102bE4Fdf60C83dCDE5
 ```
 
+## A8 Testnet
+
+```
+Corresponding address: 0xED6A792F694b7a52E7cf4b7f02dAa41a7c92f362 , is valid publicKey?: true
+Deployer: 0x7Ba5A9fA3f3BcCeE36f60F62a6Ef728C3856b8Bb
+[Report for network: a8] --------------------------------------------------------
+        OrandV2/OrandECVRFV2:                            0x55fFD4A70E3D9ceC75364AfBb4FF349436e1D0B7
+        OrandV2/OrandProviderV2:                         0xfB40e49d74b6f00Aad3b055D16b36912051D27EF
+        examples/DiceGame:                               0x3fc4344b63fb1AB35a406Cb90ca7310EC8687585
+[End of Report for network: a8] -------------------------------------------------
+```
+
 ## Deployed Smart Contracts
 
 - [0xdeeAdC11B67d0cDcBF2869E74563d84dd21B4631](https://testnet.bscscan.com/address/0xdeeadc11b67d0cdcbf2869e74563d84dd21b4631#code) BigO Test Token
