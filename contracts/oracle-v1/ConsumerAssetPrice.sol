@@ -3,10 +3,11 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import './interfaces/IOracleAggregatorV1.sol';
+import '../libraries/Bytes.sol';
 
-error OutOfRange();
+contract ConsumerAssetPrice is Ownable {
+  using Bytes for bytes;
 
-contract AssetPrice is Ownable {
   IOracleAggregatorV1 private oracle;
 
   event SetOracle(address indexed oldOracle, address indexed newOracle);
@@ -20,15 +21,6 @@ contract AssetPrice is Ownable {
     oracle = IOracleAggregatorV1(newOracle);
   }
 
-  function _readUint256(bytes memory input, uint256 offset) internal pure returns (uint256 result) {
-    if (offset + 32 > input.length) {
-      revert OutOfRange();
-    }
-    assembly {
-      result := mload(add(add(input, 0x20), offset))
-    }
-  }
-
   /**
    * Get price of an asset
    * @dev Token price will use decimal of the base token
@@ -37,8 +29,7 @@ contract AssetPrice is Ownable {
    * @return price Price
    */
   function _getPrice(bytes20 identifier) internal view returns (uint256) {
-    bytes memory data = oracle.getLatestData(1, identifier);
-    return _readUint256(data, 0);
+    return oracle.getLatestData(1, identifier).readUint256(0);
   }
 
   function setOracle(address newOracle) external onlyOwner returns (bool) {

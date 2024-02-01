@@ -1,13 +1,12 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { OrochiVRF, OrochiVRFDebug } from '../typechain-types';
+import { OrochiVRF } from '../typechain-types';
 import { Deployer } from '../helpers';
 
 let deployerSigner: SignerWithAddress;
 let orochiECVRF: OrochiVRF;
 let deployer;
-// let orochiECVRFDebug: OrochiVRFDebug;
 
 const pk =
   '0446b01e9550b56f3655dbca90cfe6b31dec3ff137f825561c563444096803531e9d4f6e8329d300483a919b63843174f1fca692fc6d2c07b985f72386e4edc846';

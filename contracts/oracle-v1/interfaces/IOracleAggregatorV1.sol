@@ -5,13 +5,20 @@ error ExistedApplication(uint32 appId);
 error InvalidApplication(uint32 appId);
 error InvalidApplicationName(bytes24 appName);
 error InvalidRoundNumber(uint64 round, uint64 requiredRound);
+error UndefinedRound(uint64 round);
 
 interface IOracleAggregatorV1 {
   struct ApplicationMetadata {
     bytes24 name;
     uint64 round;
-    string description;
   }
+
+  /**
+   * Get round of a given application
+   * @param appId Application ID
+   * @return round
+   */
+  function getRound(uint32 appId) external view returns (uint64 round);
 
   /**
    * Get application metadata
@@ -30,17 +37,22 @@ interface IOracleAggregatorV1 {
   function getData(uint32 appId, uint64 round, bytes20 identifier) external view returns (bytes memory data);
 
   /**
-   * Get data of an application by condition
+   * Get data of an application that lower or equal to target round
    * @param appId Application ID
-   * @param requireRound Round number
+   * @param targetRound Round number
    * @param identifier Data identifier
    * @return data Data
    */
-  function getDataByCondition(
-    uint32 appId,
-    uint64 requireRound,
-    bytes20 identifier
-  ) external view returns (bytes memory data);
+  function getDataLte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes memory data);
+
+  /**
+   * Get data of an application that greater or equal to target round
+   * @param appId Application ID
+   * @param targetRound Round number
+   * @param identifier Data identifier
+   * @return data Data
+   */
+  function getDataGte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes memory data);
 
   /**
    * Get latest data of an application
