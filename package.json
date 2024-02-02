@@ -4,8 +4,16 @@
   "description": "Orochi smart contracts for on-chain verification",
   "main": "index.js",
   "type": "commonjs",
+  "files": [
+    "/contracts/**/*.sol",
+    "/contracts/build/contracts/*.json",
+    "!/contracts/test/**/*"
+  ],
   "scripts": {
+    "compile": "hardhat compile",
     "build": "hardhat compile && hardhat typechain",
+    "prepack": "bash ./scripts/prepack.sh",
+    "clean": "hardhat clean && rimraf build contracts/build",
     "release": "yarn build && yarn flatten",
     "coverage": "hardhat compile && hardhat coverage",
     "node:local": "hardhat node",
