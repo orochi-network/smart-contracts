@@ -29,7 +29,7 @@ contract ConsumerAssetPrice is Ownable {
    * @return price Price
    */
   function _getPrice(bytes20 identifier) internal view returns (uint256) {
-    return oracle.getLatestData(1, identifier).readUint256(0);
+    return uint256(oracle.getLatestData(1, identifier));
   }
 
   function setOracle(address newOracle) external onlyOwner returns (bool) {

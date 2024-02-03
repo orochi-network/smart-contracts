@@ -5,12 +5,13 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '../libraries/Bytes.sol';
 import './interfaces/IOracleAggregatorV1.sol';
 import './Operatable.sol';
+import 'hardhat/console.sol';
 
 contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
   using Bytes for bytes;
 
   // Maping unique fingerprint to data
-  mapping(bytes32 => bytes) private database;
+  mapping(bytes32 => bytes32) private database;
 
   // Maping application ID to application metadata
   mapping(uint32 => ApplicationMetadata) private applications;
@@ -19,13 +20,15 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
 
   event UpdateApplication(uint32 indexed application, bytes24 indexed name);
 
-  event PublishData(uint32 indexed application, uint64 indexed round, bytes20 indexed identifier, bytes data);
+  event PublishData(uint32 indexed application, uint64 indexed round, bytes20 indexed identifier, bytes32 data);
 
   /**
    * Create new oracle
    */
-  constructor(address newOperator) {
-    _setOperator(newOperator);
+  constructor(address[] memory operatorList) {
+    for (uint256 i = 0; i < operatorList.length; i += 1) {
+      _addOperator(operatorList[i]);
+    }
   }
 
   //=======================[  Owner  ]====================
@@ -35,9 +38,17 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param newOperator New operator address
    * @return success
    */
-  function setOperator(address newOperator) external onlyOwner returns (bool) {
-    _setOperator(newOperator);
-    return true;
+  function addOperator(address newOperator) external onlyOwner returns (bool) {
+    return _addOperator(newOperator);
+  }
+
+  /**
+   * Remove old operator
+   * @param oldOperator New operator address
+   * @return success
+   */
+  function removeOperator(address oldOperator) external onlyOwner returns (bool) {
+    return _removeOperator(oldOperator);
   }
 
   /**
@@ -46,15 +57,15 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @return success
    */
   function newApplication(uint256 appData) external onlyOwner returns (bool) {
-    uint32 appId = uint32(appData >> 192);
-    bytes24 name = bytes24(uint192(appData));
+    uint32 appId = uint32(appData >> 128);
+    bytes16 name = bytes16(uint128(appData));
     if (applications[appId].name != 0) {
       revert ExistedApplication(appId);
     }
     if (name == 0) {
       revert InvalidApplicationName(name);
     }
-    applications[appId] = ApplicationMetadata(name, 0);
+    applications[appId] = ApplicationMetadata(name, 0, 0);
     emit NewApplication(appId, name);
     return true;
   }
@@ -65,9 +76,8 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @return success
    */
   function updateApplication(uint256 appData) external onlyOwner returns (bool) {
-    // There is 32bit space between them
-    uint32 appId = uint32(appData >> 224);
-    bytes24 name = bytes24(uint192(appData >> 64));
+    uint32 appId = uint32(appData >> 128);
+    bytes16 name = bytes16(uint128(appData));
     if (applications[appId].name == 0) {
       revert InvalidApplication(appId);
     }
@@ -86,23 +96,53 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param packedData packed data
    * @return success
    */
-  function publishData(bytes calldata packedData) external onlyOperator returns (bool) {
-    uint256 header = packedData.readUint256(0);
-    uint32 appId = uint32(header >> 224);
-    bytes20 identifier = bytes20(uint160(header >> 64));
-    bytes memory data = packedData.readBytes(24, packedData.length - 24);
-    uint64 round = applications[appId].round;
-    if (applications[appId].name == 0) {
+  function publishData(uint256 metadata, bytes memory packedData) external onlyOperator returns (bool) {
+    // Decode appId and chunksize
+    uint32 appId = uint32(metadata >> 224);
+    uint256 chunksize = uint256(uint224(metadata));
+    bytes20 identifier;
+    bytes32 data;
+    ApplicationMetadata memory app = applications[appId];
+    if (packedData.length % chunksize != 0) {
+      revert InvalidDataLength(packedData.length);
+    }
+    if (app.name == 0) {
       revert InvalidApplication(appId);
     }
-    round += 1;
-    database[bytes32(abi.encodePacked(appId, round, identifier))] = data;
-    applications[appId].round = round;
+    app.round += 1;
+    for (uint256 i = 0; i < packedData.length; i += chunksize) {
+      identifier = bytes20(uint160(packedData.readUintUnsafe(i, 160)));
+      data = bytes32(uint256(packedData.readUint256(i + 20)));
+      if (!_publish(appId, app.round, identifier, data)) {
+        revert UnableToPublishData(packedData.readBytes(i, chunksize));
+      }
+    }
+    applications[appId].round = app.round;
+    applications[appId].lastUpdate = uint64(block.timestamp);
+    return true;
+  }
+
+  //=======================[  Interal  ]====================
+
+  function _publish(uint32 appId, uint64 round, bytes20 identifier, bytes32 data) internal returns (bool) {
+    // After 255 round, we will reuse the same slot, it saving a lot of gas
+    database[bytes32(abi.encodePacked(appId, uint8(round), identifier))] = data;
     emit PublishData(appId, round, identifier, data);
     return true;
   }
 
   //=======================[  Interal View  ]====================
+
+  /**
+   * Get unique key for data lookup
+   * @param appId Application ID
+   * @param round Round number
+   * @param identifier Data identifier
+   * @param dataKey Data
+   */
+  function _getUniqueLookupKey(uint32 appId, uint64 round, bytes20 identifier) internal pure returns (bytes32 dataKey) {
+    return bytes32(abi.encodePacked(appId, uint8(round), identifier));
+  }
 
   /**
    * Publish data to database
@@ -111,11 +151,12 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param identifier Data identifier
    * @param data Data
    */
-  function _readDatabase(uint32 appId, uint64 round, bytes20 identifier) internal view returns (bytes memory data) {
-    if (round == 0) {
+  function _readDatabase(uint32 appId, uint64 round, bytes20 identifier) internal view returns (bytes32 data) {
+    // Can't get 0 round and round in the past
+    if (round == 0 || round + 255 < applications[appId].round) {
       revert UndefinedRound(round);
     }
-    return database[bytes32(abi.encodePacked(appId, round, identifier))];
+    return database[_getUniqueLookupKey(appId, round, identifier)];
   }
 
   //=======================[  External View  ]====================
@@ -125,8 +166,17 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param appId Application ID
    * @return round
    */
-  function getRound(uint32 appId) external view returns (uint64 round) {
-    return applications[appId].round;
+  function getRound(uint32 appId) external view returns (uint256 round) {
+    return uint256(applications[appId].round);
+  }
+
+  /**
+   * Get last update timestamp of a given application
+   * @param appId Application ID
+   * @return lastUpdate
+   */
+  function getLastUpdate(uint32 appId) external view returns (uint256 lastUpdate) {
+    return uint256(applications[appId].lastUpdate);
   }
 
   /**
@@ -145,7 +195,7 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param identifier Data identifier
    * @return data Data
    */
-  function getData(uint32 appId, uint64 round, bytes20 identifier) external view returns (bytes memory data) {
+  function getData(uint32 appId, uint64 round, bytes20 identifier) external view returns (bytes32 data) {
     return _readDatabase(appId, round, identifier);
   }
 
@@ -156,7 +206,7 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param identifier Data identifier
    * @return data Data
    */
-  function getDataLte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes memory data) {
+  function getDataLte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes32 data) {
     ApplicationMetadata memory app = applications[appId];
     if (app.round <= targetRound) {
       revert InvalidRoundNumber(app.round, targetRound);
@@ -166,12 +216,13 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
 
   /**
    * Get data of an application that greater or equal to target round
+   * Use this if you wan transaction to be happend after crertain round in the future
    * @param appId Application ID
    * @param targetRound Round number
    * @param identifier Data identifier
    * @return data Data
    */
-  function getDataGte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes memory data) {
+  function getDataGte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes32 data) {
     ApplicationMetadata memory app = applications[appId];
     if (app.round >= targetRound) {
       revert InvalidRoundNumber(app.round, targetRound);
@@ -185,7 +236,7 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    * @param identifier Data identifier
    * @return data Data
    */
-  function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes memory data) {
+  function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes32 data) {
     return _readDatabase(appId, applications[appId].round, identifier);
   }
 }
