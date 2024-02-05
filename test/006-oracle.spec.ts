@@ -63,13 +63,12 @@ describe('OracleV1', function () {
   });
 
   it('should not able to read data since operator did not feed', async () => {
-    const identifier = `0x${Buffer.from('BTC/USDT').toString('hex').padEnd(40, '0')}`;
+    const identifier = `0x${Buffer.from('BTC').toString('hex').padEnd(40, '0')}`;
     await expect(oracleV1.getLatestData(1, identifier)).to.revertedWithCustomError(oracleV1, 'UndefinedRound');
   });
 
   it('owner should able to create new application', async () => {
     const appData = `0x${numberToBytes(1, 128)}${stringToBytes('AssetPrice', 16)}`;
-    console.log(appData);
     await oracleV1.newApplication(appData);
 
     await oracleV1.newApplication(`0x${numberToBytes(2, 128)}${stringToBytes('DataStorage', 16)}`);
@@ -83,24 +82,20 @@ describe('OracleV1', function () {
     for (let j = 0; j < 520; j += 1) {
       const data = tokenPricePackedData(1, [
         {
-          pair: 'BTC/USDT',
-          price: 42000n * 10n ** 6n,
+          pair: 'BTC',
+          price: 42000n * 10n ** 18n,
         },
         {
-          pair: 'ETH/USDT',
-          price: 2000n * 10n ** 6n,
+          pair: 'ETH',
+          price: 2000n * 10n ** 18n,
         },
         {
-          pair: 'DOT/USDT',
-          price: 6n * 10n ** 6n,
+          pair: 'DOT',
+          price: 6n * 10n ** 18n,
         },
         {
-          pair: 'DOT/USDT',
-          price: 6n * 10n ** 6n,
-        },
-        {
-          pair: 'MINA/USDT',
-          price: 1n * 10n ** 6n,
+          pair: 'MINA',
+          price: 1n * 10n ** 18n,
         },
       ]);
 
@@ -109,7 +104,7 @@ describe('OracleV1', function () {
   });
 
   it('operator should able to publish data to Oracle', async () => {
-    const identifier = `0x${stringToBytes('BTC/USDT', 20)}`;
+    const identifier = `0x${stringToBytes('BTC', 20)}`;
 
     const tokens = [];
     for (let i = 0; i < 100; i += 1) {
@@ -120,24 +115,21 @@ describe('OracleV1', function () {
     }
     const data = tokenPricePackedData(1, [
       {
-        pair: 'BTC/USDT',
-        price: 42000n * 10n ** 6n,
+        pair: 'BTC',
+        price: 42000n * 10n ** 18n,
       },
       {
-        pair: 'ETH/USDT',
-        price: 2000n * 10n ** 6n,
+        pair: 'ETH',
+        price: 2000n * 10n ** 18n,
       },
       {
-        pair: 'DOT/USDT',
-        price: 6n * 10n ** 6n,
+        pair: 'DOT',
+        price: 6n * 10n ** 18n,
       },
+
       {
-        pair: 'DOT/USDT',
-        price: 6n * 10n ** 6n,
-      },
-      {
-        pair: 'MINA/USDT',
-        price: 1n * 10n ** 6n,
+        pair: 'MINA',
+        price: 1n * 10n ** 18n,
       },
       ...tokens,
     ]);
@@ -169,6 +161,8 @@ describe('OracleV1', function () {
   });
 
   it('should able to use BitcoinSeller', async () => {
-    console.log('\tPrice for 2 BTC:', await bitcoinSeller.estimate(2), 'USDT');
+    console.log('\tPrice for 2 BTC:', (await bitcoinSeller.estimate(2)) / 10n ** 18n, 'USDT');
+    const price = (await bitcoinSeller.ethOverBtc()) / 10n ** 15n;
+    console.log('\tPrice of 1 ETH/BTC:', Number(price) / 1000, 'BTC');
   });
 });
