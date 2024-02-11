@@ -3,11 +3,8 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import './interfaces/IOracleAggregatorV1.sol';
-import '../libraries/Bytes.sol';
 
 contract ConsumerAssetPrice is Ownable {
-  using Bytes for bytes;
-
   IOracleAggregatorV1 private oracle;
 
   event SetOracle(address indexed oldOracle, address indexed newOracle);
@@ -22,14 +19,25 @@ contract ConsumerAssetPrice is Ownable {
   }
 
   /**
-   * Get price of an asset
-   * @dev Token price will use decimal of the base token
-   * Example: BTC/USDT = 50,000 USDT, decimal of USDT is 6 => price = 50,000 * 10^6
-   * @param identifier Asset identifier (e.g. BTC/USDT)
+   * Get price of an asset based USD
+   * @dev Token price will use 18 decimal for all token
+   * @param identifier Asset identifier (e.g. BTC, ETH, USDT)
    * @return price Price
    */
   function _getPrice(bytes20 identifier) internal view returns (uint256) {
     return uint256(oracle.getLatestData(1, identifier));
+  }
+
+  /**
+   * Get price of a pair
+   * @dev Token price will use 18 decimal for all token
+   * (e.g. BTC/ETH => srcToken='BTC' dstToken='src')
+   * @param srcToken Asset identifier of source
+   * @param dstToken Asset identifier of destination
+   * @return price Price
+   */
+  function _getPriceOfPair(bytes20 srcToken, bytes20 dstToken) internal view returns (uint256) {
+    return (_getPrice(srcToken) * 10 ** 18) / (_getPrice(dstToken));
   }
 
   function setOracle(address newOracle) external onlyOwner returns (bool) {
