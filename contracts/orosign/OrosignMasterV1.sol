@@ -2,20 +2,22 @@
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
-import '../libraries/Permissioned.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 import './interfaces/IOrosignV1.sol';
 
-// It required to pay for fee in native token
-error InvalidFee(uint256 inputAmount, uint256 requireAmount);
 // Unable to init new wallet
 error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
 // Unable to init Orosign master
 error UnableToInitOrosignMaster();
+// Only operator
+error OnlyOperatorAllowed(address actor);
+// Invalid operator address
+error InvalidOperator(address operatorAddress);
 
 /**
  * Orosign Master V1
  */
-contract OrosignMasterV1 is Permissioned {
+contract OrosignMasterV1 is Ownable {
   // Allow master to clone other multi signature contract
   using Clones for address;
 
@@ -39,71 +41,77 @@ contract OrosignMasterV1 is Permissioned {
   // Chain id
   uint256 private chainId;
 
+  // Operator list
+  mapping(address => bool) private operator;
+
   // Create new wallet
   event CreateNewWallet(uint96 indexed salt, address indexed owner, address indexed walletAddress);
 
   // Upgrade implementation
   event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
 
+  // Add Operator
+  event AddOperator(address indexed newOperatorAddress);
+
+  // Remove Operator
+  event RemoveOperator(address indexed oldOperatorAddress);
+
+  // We only allow operator
+  modifier onlyOperator() {
+    if (!operator[msg.sender]) {
+      revert OnlyOperatorAllowed(msg.sender);
+    }
+    _;
+  }
+
   // This contract able to receive fund
   receive() external payable {}
 
   // Pass parameters to parent contract
-  constructor(
-    uint256 inputChainId,
-    address[] memory userList,
-    uint256[] memory roleList,
-    address multisigImplementation
-  ) {
-    uint256 countingOwner = 0;
-    uint256 countingOperator = 0;
-
-    // We will revert if we're failed to init permissioned
-    _init(userList, roleList);
-
-    for (uint256 i = 0; i < userList.length; i += 1) {
-      if (_isSuperset(roleList[i], PERMISSION_MANAGE)) {
-        countingOwner += 1;
-      }
-      if (_isSuperset(roleList[i], PERMISSION_OPERATE)) {
-        countingOperator += 1;
-      }
-    }
-
-    if (countingOwner == 0 || countingOperator == 0) {
-      revert UnableToInitOrosignMaster();
-    }
-
+  constructor(uint256 inputChainId, address multisigImplementation, address operatorAddress) {
     // We use input chainId instead of EIP-1344
     chainId = inputChainId;
 
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
+    _addOperator(operatorAddress);
+
     emit UpgradeImplementation(address(0), multisigImplementation);
   }
 
   /*******************************************************
-   * User section
+   * Internal section
    ********************************************************/
 
-  // Transfer role to a new user
-  function transferRole(address newUser) external onlyActiveUser returns (bool) {
-    // New user will be activated after SECURED_TIMEOUT + 1 hours
-    _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
-    return true;
+  // Add new operator
+  function _addOperator(address newOperator) internal {
+    operator[newOperator] = true;
+    emit AddOperator(newOperator);
+  }
+
+  // Remove old operator
+  function _removeOperator(address oldOperator) internal {
+    if (!operator[oldOperator]) {
+      revert InvalidOperator(oldOperator);
+    }
+    operator[oldOperator] = false;
+    emit RemoveOperator(oldOperator);
   }
 
   /*******************************************************
    * Manager section
    ********************************************************/
 
-  // Upgrade new implementation
-  function setPermission(
-    address toUser,
-    uint256 newRole
-  ) external onlyActivePermission(PERMISSION_MANAGE) returns (bool) {
-    _setRole(toUser, uint128(newRole));
+  // Add new operator
+  function addOperator(address newOperator) external onlyOwner returns (bool) {
+    _addOperator(newOperator);
+    return true;
+  }
+
+  // Remove old operator
+  function removeOperator(address oldOperator) external onlyOwner returns (bool) {
+    _removeOperator(oldOperator);
     return true;
   }
 
@@ -112,9 +120,7 @@ contract OrosignMasterV1 is Permissioned {
    ********************************************************/
 
   // Upgrade new implementation
-  function upgradeImplementation(
-    address newImplementation
-  ) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
+  function upgradeImplementation(address newImplementation) external onlyOperator returns (bool) {
     // Overwrite current implementation address
     implementation = newImplementation;
     emit UpgradeImplementation(implementation, newImplementation);
@@ -145,6 +151,14 @@ contract OrosignMasterV1 is Permissioned {
   /*******************************************************
    * Internal View section
    ********************************************************/
+
+  // Packing adderss and uint96 to a single bytes32
+  // 96 bits a ++ 160 bits b
+  function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
+    assembly {
+      packed := or(shl(160, a), b)
+    }
+  }
 
   // Calculate deterministic address
   function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address) {

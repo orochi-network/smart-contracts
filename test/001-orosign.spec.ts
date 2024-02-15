@@ -114,7 +114,7 @@ describe('OrosignV1', function () {
   it('should able to deploy multisig master correctly', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
     contractMultiSigMaster = <OrosignMasterV1>(
-      await deployer.contractDeploy('test/OrosignMasterV1', [], chainId, [deployerSigner], [6], contractMultiSig)
+      await deployer.contractDeploy('test/OrosignMasterV1', [], chainId, contractMultiSig, deployerSigner)
     );
   });
 
