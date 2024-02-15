@@ -21,23 +21,20 @@ contract OrosignMasterV1 is Permissioned {
 
   struct MasterMetadata {
     uint256 chainId;
-    uint256 walletFee;
     address implementation;
   }
 
-  // Permission to manage fund
-  uint256 private constant PERMISSION_WITHDRAW = 1;
   // Permission to operate the Orosign Master V1
   uint256 private constant PERMISSION_OPERATE = 2;
+
+  // Permission to manage the Orosign Master V1
+  uint256 private constant PERMISSION_MANAGE = 4;
 
   // Secured timeout
   uint256 private constant SECURED_TIMEOUT = 3 days;
 
   // Wallet implementation
   address private implementation;
-
-  // Creating fee for new multisignature in native token
-  uint256 private walletFee;
 
   // Chain id
   uint256 private chainId;
@@ -48,17 +45,6 @@ contract OrosignMasterV1 is Permissioned {
   // Upgrade implementation
   event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
 
-  // Set new fee
-  event UpdateFee(uint256 indexed timestamp, uint256 indexed oldFee, uint256 indexed newFee);
-
-  // Request small fee to create new wallet, we prevent people spaming wallet
-  modifier requireFee() {
-    if (msg.value != walletFee) {
-      revert InvalidFee(msg.value, walletFee);
-    }
-    _;
-  }
-
   // This contract able to receive fund
   receive() external payable {}
 
@@ -67,25 +53,24 @@ contract OrosignMasterV1 is Permissioned {
     uint256 inputChainId,
     address[] memory userList,
     uint256[] memory roleList,
-    address multisigImplementation,
-    uint256 createWalletFee
+    address multisigImplementation
   ) {
-    uint256 countingWithdraw = 0;
+    uint256 countingOwner = 0;
     uint256 countingOperator = 0;
 
     // We will revert if we're failed to init permissioned
     _init(userList, roleList);
 
     for (uint256 i = 0; i < userList.length; i += 1) {
-      if (_isSuperset(roleList[i], PERMISSION_WITHDRAW)) {
-        countingWithdraw += 1;
+      if (_isSuperset(roleList[i], PERMISSION_MANAGE)) {
+        countingOwner += 1;
       }
       if (_isSuperset(roleList[i], PERMISSION_OPERATE)) {
         countingOperator += 1;
       }
     }
 
-    if (countingWithdraw == 0 || countingOperator == 0) {
+    if (countingOwner == 0 || countingOperator == 0) {
       revert UnableToInitOrosignMaster();
     }
 
@@ -94,9 +79,6 @@ contract OrosignMasterV1 is Permissioned {
 
     // Set the address of orosign implementation
     implementation = multisigImplementation;
-
-    // Set wallet fee
-    walletFee = createWalletFee;
 
     emit UpgradeImplementation(address(0), multisigImplementation);
   }
@@ -113,17 +95,15 @@ contract OrosignMasterV1 is Permissioned {
   }
 
   /*******************************************************
-   * Withdraw section
+   * Manager section
    ********************************************************/
 
-  // Withdraw the balance to the fee collector
-  function withdraw(address payable receiver) external onlyActivePermission(PERMISSION_WITHDRAW) returns (bool) {
-    // Receiver should be a valid address
-    if (receiver == address(0)) {
-      revert InvalidAddress();
-    }
-    // Collecting fee to receiver
-    receiver.transfer(address(this).balance);
+  // Upgrade new implementation
+  function setPermission(
+    address toUser,
+    uint256 newRole
+  ) external onlyActivePermission(PERMISSION_MANAGE) returns (bool) {
+    _setRole(toUser, uint128(newRole));
     return true;
   }
 
@@ -141,14 +121,6 @@ contract OrosignMasterV1 is Permissioned {
     return true;
   }
 
-  // Set new fee
-  function setFee(uint256 newFee) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
-    // Overwrite current wallet fee
-    walletFee = newFee;
-    emit UpdateFee(block.timestamp, walletFee, newFee);
-    return true;
-  }
-
   /*******************************************************
    * External section
    ********************************************************/
@@ -159,7 +131,7 @@ contract OrosignMasterV1 is Permissioned {
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
-  ) external payable requireFee returns (address newWalletAdress) {
+  ) external payable returns (address newWalletAdress) {
     newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
     if (
       newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
@@ -190,7 +162,7 @@ contract OrosignMasterV1 is Permissioned {
 
   // Get metadata of Orosign Master V1
   function getMetadata() external view returns (MasterMetadata memory masterMetadata) {
-    return MasterMetadata({ chainId: chainId, walletFee: walletFee, implementation: implementation });
+    return MasterMetadata({ chainId: chainId, implementation: implementation });
   }
 
   // Calculate deterministic address

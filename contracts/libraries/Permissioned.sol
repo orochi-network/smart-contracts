@@ -107,6 +107,11 @@ contract Permissioned {
     emit TransferRole(fromUser, toUser, currentRole.role);
   }
 
+  // Set a role to an address
+  function _setRole(address toUser, uint128 newRole) internal {
+    emit TransferRole(address(0), toUser, newRole);
+  }
+
   /*******************************************************
    * Internal View section
    ********************************************************/

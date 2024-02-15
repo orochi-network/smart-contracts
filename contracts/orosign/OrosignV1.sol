@@ -7,6 +7,9 @@ import '../libraries/Bytes.sol';
 import '../libraries/Permissioned.sol';
 import './interfaces/IOrosignV1.sol';
 
+// Duplicated signer
+error DuplicatedSigner(address singed, address recovered);
+
 /**
  * Orosign V1
  * Multi Signature Wallet based on off-chain ECDSA Proof
@@ -23,8 +26,9 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   using ECDSA for bytes32;
 
   // Permission constants
-  // View permission only
-  uint256 private constant PERMISSION_OBSERVER = 1; // 0001
+  // View permission only, it only need on client side
+  // uint256 private constant PERMISSION_OBSERVE = 1; // 0001
+
   // Allowed to sign ECDSA proof
   uint256 private constant PERMISSION_SIGN = 2; // 0010
   // Permission to execute transaction
@@ -129,7 +133,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 totalSigned = 0;
     // Recover creator address from creator signature
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
-    address[] memory signedAddresses = new address[](signatureList.length);
+    address signedAddress = address(0);
 
     // If there is NO creator's proof revert
     if (!_isActivePermission(creatorAddress, PERMISSION_CREATE)) {
@@ -139,10 +143,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     // Couting total signed proof
     for (uint256 i = 0; i < signatureList.length; i += 1) {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
+      if (recoveredSigner <= signedAddress) {
+        revert DuplicatedSigner(signedAddress, recoveredSigner);
+      }
       // Each signer only able to be counted once
-      if (_isActivePermission(recoveredSigner, PERMISSION_SIGN) && _isNotInclude(signedAddresses, recoveredSigner)) {
-        // Add signer -> signed address
-        signedAddresses[totalSigned] = recoveredSigner;
+      if (_isActivePermission(recoveredSigner, PERMISSION_SIGN)) {
+        // The next signer must have the address > signed
+        signedAddress = recoveredSigner;
         // Increase signed 1
         totalSigned += 1;
       }
@@ -178,20 +185,6 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       payable(address(packedTransaction.target)).transfer(packedTransaction.value);
     }
     emit ExecutedTransaction(packedTransaction.target, packedTransaction.value, packedTransaction.data);
-    return true;
-  }
-
-  /*******************************************************
-   * Pure section
-   ********************************************************/
-
-  // Check if an address is already in the given list
-  function _isNotInclude(address[] memory addressList, address checkAddress) private pure returns (bool) {
-    for (uint256 i = 0; i < addressList.length; i += 1) {
-      if (addressList[i] == checkAddress) {
-        return false;
-      }
-    }
     return true;
   }
 

@@ -15,7 +15,7 @@ library Bytes {
     }
   }
 
-  // Read uint80 from input bytes buffer
+  // Read unsafe from input bytes buffer
   function readUintUnsafe(bytes memory input, uint256 offset, uint256 bitLen) internal pure returns (uint256 result) {
     assembly {
       result := shr(sub(256, bitLen), mload(add(add(input, 0x20), offset)))
