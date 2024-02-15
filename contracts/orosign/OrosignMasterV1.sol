@@ -7,8 +7,6 @@ import './interfaces/IOrosignV1.sol';
 
 // Unable to init new wallet
 error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
-// Unable to init Orosign master
-error UnableToInitOrosignMaster();
 // Only operator
 error OnlyOperatorAllowed(address actor);
 // Invalid operator address
@@ -20,20 +18,6 @@ error InvalidOperator(address operatorAddress);
 contract OrosignMasterV1 is Ownable {
   // Allow master to clone other multi signature contract
   using Clones for address;
-
-  struct MasterMetadata {
-    uint256 chainId;
-    address implementation;
-  }
-
-  // Permission to operate the Orosign Master V1
-  uint256 private constant PERMISSION_OPERATE = 2;
-
-  // Permission to manage the Orosign Master V1
-  uint256 private constant PERMISSION_MANAGE = 4;
-
-  // Secured timeout
-  uint256 private constant SECURED_TIMEOUT = 3 days;
 
   // Wallet implementation
   address private implementation;
@@ -63,9 +47,6 @@ contract OrosignMasterV1 is Ownable {
     }
     _;
   }
-
-  // This contract able to receive fund
-  receive() external payable {}
 
   // Pass parameters to parent contract
   constructor(uint256 inputChainId, address multisigImplementation, address operatorAddress) {
@@ -137,7 +118,7 @@ contract OrosignMasterV1 is Ownable {
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
-  ) external payable returns (address newWalletAdress) {
+  ) external returns (address newWalletAdress) {
     newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
     if (
       newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
@@ -161,12 +142,12 @@ contract OrosignMasterV1 is Ownable {
   }
 
   // Calculate deterministic address
-  function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address) {
+  function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address predictedAddress) {
     return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
   }
 
   // Check a Multi Signature Wallet is existed
-  function _isMultiSigExist(address walletAddress) internal view returns (bool) {
+  function _isMultiSigExist(address walletAddress) internal view returns (bool isExist) {
     return walletAddress.code.length > 0;
   }
 
@@ -175,27 +156,28 @@ contract OrosignMasterV1 is Ownable {
    ********************************************************/
 
   // Get metadata of Orosign Master V1
-  function getMetadata() external view returns (MasterMetadata memory masterMetadata) {
-    return MasterMetadata({ chainId: chainId, implementation: implementation });
+  function getMetadata() external view returns (uint256 sChainId, address sImplementation) {
+    sChainId = chainId;
+    sImplementation = implementation;
   }
 
   // Calculate deterministic address
-  function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address) {
+  function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address predictedAddress) {
     return _predictWalletAddress(salt, creatorAddress);
   }
 
   // Check a Multi Signature Wallet is existed
-  function isMultiSigExist(address walletAddress) external view returns (bool) {
+  function isMultiSigExist(address walletAddress) external view returns (bool isExist) {
     return _isMultiSigExist(walletAddress);
   }
 
   // Check a Multi Signature Wallet existing by creator and salt
-  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool) {
+  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool isExist) {
     return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }
 
   // Pacing salt and creator address
-  function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256) {
+  function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256 packedSalt) {
     return uint256(_packing(salt, creatorAddress));
   }
 }
