@@ -125,6 +125,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
    ********************************************************/
 
   // Transfer with signed ECDSA proofs instead of on-chain voting
+  // We used a sorted list of signature to guarantee uniqueness
+  // https://github.com/orochi-network/smart-contracts/issues/2
   function executeTransaction(
     bytes memory creatorSignature,
     bytes[] memory signatureList,
