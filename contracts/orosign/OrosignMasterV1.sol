@@ -2,45 +2,31 @@
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
-import '../libraries/Permissioned.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 import './interfaces/IOrosignV1.sol';
 
-// It required to pay for fee in native token
-error InvalidFee(uint256 inputAmount, uint256 requireAmount);
 // Unable to init new wallet
 error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
-// Unable to init Orosign master
-error UnableToInitOrosignMaster();
+// Only operator
+error OnlyOperatorAllowed(address actor);
+// Invalid operator address
+error InvalidOperator(address operatorAddress);
 
 /**
  * Orosign Master V1
  */
-contract OrosignMasterV1 is Permissioned {
+contract OrosignMasterV1 is Ownable {
   // Allow master to clone other multi signature contract
   using Clones for address;
-
-  struct MasterMetadata {
-    uint256 chainId;
-    uint256 walletFee;
-    address implementation;
-  }
-
-  // Permission to manage fund
-  uint256 private constant PERMISSION_WITHDRAW = 1;
-  // Permission to operate the Orosign Master V1
-  uint256 private constant PERMISSION_OPERATE = 2;
-
-  // Secured timeout
-  uint256 private constant SECURED_TIMEOUT = 3 days;
 
   // Wallet implementation
   address private implementation;
 
-  // Creating fee for new multisignature in native token
-  uint256 private walletFee;
-
   // Chain id
   uint256 private chainId;
+
+  // Operator list
+  mapping(address => bool) private operator;
 
   // Create new wallet
   event CreateNewWallet(uint96 indexed salt, address indexed owner, address indexed walletAddress);
@@ -48,82 +34,65 @@ contract OrosignMasterV1 is Permissioned {
   // Upgrade implementation
   event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
 
-  // Set new fee
-  event UpdateFee(uint256 indexed timestamp, uint256 indexed oldFee, uint256 indexed newFee);
+  // Add Operator
+  event AddOperator(address indexed newOperatorAddress);
 
-  // Request small fee to create new wallet, we prevent people spaming wallet
-  modifier requireFee() {
-    if (msg.value != walletFee) {
-      revert InvalidFee(msg.value, walletFee);
+  // Remove Operator
+  event RemoveOperator(address indexed oldOperatorAddress);
+
+  // We only allow operator
+  modifier onlyOperator() {
+    if (!operator[msg.sender]) {
+      revert OnlyOperatorAllowed(msg.sender);
     }
     _;
   }
 
-  // This contract able to receive fund
-  receive() external payable {}
-
   // Pass parameters to parent contract
-  constructor(
-    uint256 inputChainId,
-    address[] memory userList,
-    uint256[] memory roleList,
-    address multisigImplementation,
-    uint256 createWalletFee
-  ) {
-    uint256 countingWithdraw = 0;
-    uint256 countingOperator = 0;
-
-    // We will revert if we're failed to init permissioned
-    _init(userList, roleList);
-
-    for (uint256 i = 0; i < userList.length; i += 1) {
-      if (_isSuperset(roleList[i], PERMISSION_WITHDRAW)) {
-        countingWithdraw += 1;
-      }
-      if (_isSuperset(roleList[i], PERMISSION_OPERATE)) {
-        countingOperator += 1;
-      }
-    }
-
-    if (countingWithdraw == 0 || countingOperator == 0) {
-      revert UnableToInitOrosignMaster();
-    }
-
+  constructor(uint256 inputChainId, address multisigImplementation, address operatorAddress) {
     // We use input chainId instead of EIP-1344
     chainId = inputChainId;
 
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
-    // Set wallet fee
-    walletFee = createWalletFee;
+    _addOperator(operatorAddress);
 
     emit UpgradeImplementation(address(0), multisigImplementation);
   }
 
   /*******************************************************
-   * User section
+   * Internal section
    ********************************************************/
 
-  // Transfer role to a new user
-  function transferRole(address newUser) external onlyActiveUser returns (bool) {
-    // New user will be activated after SECURED_TIMEOUT + 1 hours
-    _transferRole(newUser, SECURED_TIMEOUT + 1 hours);
-    return true;
+  // Add new operator
+  function _addOperator(address newOperator) internal {
+    operator[newOperator] = true;
+    emit AddOperator(newOperator);
+  }
+
+  // Remove old operator
+  function _removeOperator(address oldOperator) internal {
+    if (!operator[oldOperator]) {
+      revert InvalidOperator(oldOperator);
+    }
+    operator[oldOperator] = false;
+    emit RemoveOperator(oldOperator);
   }
 
   /*******************************************************
-   * Withdraw section
+   * Manager section
    ********************************************************/
 
-  // Withdraw the balance to the fee collector
-  function withdraw(address payable receiver) external onlyActivePermission(PERMISSION_WITHDRAW) returns (bool) {
-    // Receiver should be a valid address
-    if (receiver == address(0)) {
-      revert InvalidAddress();
-    }
-    // Collecting fee to receiver
-    receiver.transfer(address(this).balance);
+  // Add new operator
+  function addOperator(address newOperator) external onlyOwner returns (bool) {
+    _addOperator(newOperator);
+    return true;
+  }
+
+  // Remove old operator
+  function removeOperator(address oldOperator) external onlyOwner returns (bool) {
+    _removeOperator(oldOperator);
     return true;
   }
 
@@ -132,20 +101,10 @@ contract OrosignMasterV1 is Permissioned {
    ********************************************************/
 
   // Upgrade new implementation
-  function upgradeImplementation(
-    address newImplementation
-  ) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
+  function upgradeImplementation(address newImplementation) external onlyOperator returns (bool) {
     // Overwrite current implementation address
     implementation = newImplementation;
     emit UpgradeImplementation(implementation, newImplementation);
-    return true;
-  }
-
-  // Set new fee
-  function setFee(uint256 newFee) external onlyActivePermission(PERMISSION_OPERATE) returns (bool) {
-    // Overwrite current wallet fee
-    walletFee = newFee;
-    emit UpdateFee(block.timestamp, walletFee, newFee);
     return true;
   }
 
@@ -159,7 +118,7 @@ contract OrosignMasterV1 is Permissioned {
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
-  ) external payable requireFee returns (address newWalletAdress) {
+  ) external returns (address newWalletAdress) {
     newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
     if (
       newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
@@ -174,13 +133,21 @@ contract OrosignMasterV1 is Permissioned {
    * Internal View section
    ********************************************************/
 
+  // Packing adderss and uint96 to a single bytes32
+  // 96 bits a ++ 160 bits b
+  function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
+    assembly {
+      packed := or(shl(160, a), b)
+    }
+  }
+
   // Calculate deterministic address
-  function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address) {
+  function _predictWalletAddress(uint96 salt, address creatorAddress) internal view returns (address predictedAddress) {
     return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
   }
 
   // Check a Multi Signature Wallet is existed
-  function _isMultiSigExist(address walletAddress) internal view returns (bool) {
+  function _isMultiSigExist(address walletAddress) internal view returns (bool isExist) {
     return walletAddress.code.length > 0;
   }
 
@@ -189,27 +156,28 @@ contract OrosignMasterV1 is Permissioned {
    ********************************************************/
 
   // Get metadata of Orosign Master V1
-  function getMetadata() external view returns (MasterMetadata memory masterMetadata) {
-    return MasterMetadata({ chainId: chainId, walletFee: walletFee, implementation: implementation });
+  function getMetadata() external view returns (uint256 sChainId, address sImplementation) {
+    sChainId = chainId;
+    sImplementation = implementation;
   }
 
   // Calculate deterministic address
-  function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address) {
+  function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address predictedAddress) {
     return _predictWalletAddress(salt, creatorAddress);
   }
 
   // Check a Multi Signature Wallet is existed
-  function isMultiSigExist(address walletAddress) external view returns (bool) {
+  function isMultiSigExist(address walletAddress) external view returns (bool isExist) {
     return _isMultiSigExist(walletAddress);
   }
 
   // Check a Multi Signature Wallet existing by creator and salt
-  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool) {
+  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool isExist) {
     return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
   }
 
   // Pacing salt and creator address
-  function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256) {
+  function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256 packedSalt) {
     return uint256(_packing(salt, creatorAddress));
   }
 }

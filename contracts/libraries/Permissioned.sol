@@ -117,7 +117,6 @@ contract Permissioned {
     assembly {
       packed := or(shl(160, a), b)
     }
-    return packed;
   }
 
   // Check if permission is a superset of required permission

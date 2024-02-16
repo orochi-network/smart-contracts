@@ -7,7 +7,7 @@ import Deployer from '../helpers/deployer';
 import { dayToSec, printAllEvents } from '../helpers/functions';
 
 // View permission only
-const PERMISSION_OBSERVER = 1;
+const PERMISSION_OBSERVE = 1;
 // Allowed to sign execute transaction message and vote a proposal
 const PERMISSION_VOTE = 2;
 // Permission to execute the proposal
@@ -17,11 +17,11 @@ const PERMISSION_CREATE = 8;
 
 const UNIT = 1000000000000000000n;
 
-const ROLE_CREATOR = PERMISSION_CREATE | PERMISSION_OBSERVER;
-const ROLE_VOTER = PERMISSION_VOTE | PERMISSION_OBSERVER;
-const ROLE_EXECUTOR = PERMISSION_EXECUTE | PERMISSION_OBSERVER;
-const ROLE_VIEWER = PERMISSION_OBSERVER;
-const ROLE_ADMIN = PERMISSION_CREATE | PERMISSION_EXECUTE | PERMISSION_VOTE | PERMISSION_OBSERVER;
+const ROLE_CREATOR = PERMISSION_CREATE | PERMISSION_OBSERVE;
+const ROLE_VOTER = PERMISSION_VOTE | PERMISSION_OBSERVE;
+const ROLE_EXECUTOR = PERMISSION_EXECUTE | PERMISSION_OBSERVE;
+const PERMISSION_OBSERVER = PERMISSION_OBSERVE;
+const ROLE_ADMIN = PERMISSION_CREATE | PERMISSION_EXECUTE | PERMISSION_VOTE | PERMISSION_OBSERVE;
 
 async function timeTravel(secs: number) {
   await hre.network.provider.request({
@@ -33,18 +33,6 @@ async function timeTravel(secs: number) {
     method: 'evm_mine',
     params: [],
   });
-}
-
-async function shouldFailed(asyncFunction: () => Promise<any>): Promise<boolean> {
-  let error = false;
-  try {
-    await asyncFunction();
-    error = false;
-  } catch (e) {
-    console.log((e as Error).message);
-    error = true;
-  }
-  return error;
 }
 
 let accounts: SignerWithAddress[],
@@ -62,7 +50,22 @@ let deployerSigner: SignerWithAddress,
   admin3: SignerWithAddress,
   nobody: SignerWithAddress;
 let chainId: bigint;
-let replayAttackParams: any[];
+let replayAttackParams: any;
+
+function sortByAddress(data: { address: string; signature: string }[]): string[] {
+  return data
+    .sort((a, b) => {
+      const c = BigInt(a.address);
+      const d = BigInt(b.address);
+      if (c > d) {
+        return 1;
+      } else if (c < d) {
+        return -1;
+      }
+      return 0;
+    })
+    .map((e) => e.signature);
+}
 
 describe('OrosignV1', function () {
   it('OrosignV1 must be deployed correctly', async () => {
@@ -81,7 +84,7 @@ describe('OrosignV1', function () {
       await contractMultiSig.init(
         chainId,
         [creator, voter, executor, viewer, admin1, admin2, admin3],
-        [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, ROLE_VIEWER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN],
+        [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, PERMISSION_OBSERVER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN],
         2,
       ),
     );
@@ -92,12 +95,12 @@ describe('OrosignV1', function () {
   it('permission should be correct', async () => {
     expect(await contractMultiSig.isActiveUser(admin3)).to.eq(true);
     expect(await contractMultiSig.isActivePermission(admin3, PERMISSION_CREATE | PERMISSION_EXECUTE)).to.eq(true);
-    expect(await contractMultiSig.isActivePermission(admin3, PERMISSION_OBSERVER)).to.eq(true);
+    expect(await contractMultiSig.isActivePermission(admin3, PERMISSION_OBSERVE)).to.eq(true);
   });
 
   it('user list should be correct', async () => {
     const users = [creator, voter, executor, viewer, admin1, admin2, admin3].map((e) => e);
-    const roles = [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, ROLE_VIEWER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN];
+    const roles = [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, PERMISSION_OBSERVER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN];
     const userList = await contractMultiSig.getAllUser();
     for (let i = 0; i < userList.length; i += 1) {
       let value = userList[i].toString(16).replace(/^0x/gi, '').padStart(64, '0');
@@ -111,24 +114,14 @@ describe('OrosignV1', function () {
   it('should able to deploy multisig master correctly', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
     contractMultiSigMaster = <OrosignMasterV1>(
-      await deployer.contractDeploy('test/OrosignMasterV1', [], chainId, [deployerSigner], [3], contractMultiSig, 1000)
+      await deployer.contractDeploy('test/OrosignMasterV1', [], chainId, contractMultiSig, deployerSigner)
     );
-  });
-
-  it('operator should able to set fee', async () => {
-    await contractMultiSigMaster.setFee(10000);
-    const { walletFee } = await contractMultiSigMaster.getMetadata();
-    expect(walletFee).eq(10000n);
   });
 
   it('anyone could able to create new signature from multi signature master', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
-    const { walletFee } = await contractMultiSigMaster.getMetadata();
-    printAllEvents(
-      await contractMultiSigMaster.createWallet(1, [admin1, admin2], [ROLE_ADMIN, ROLE_ADMIN], 1, {
-        value: walletFee,
-      }),
-    );
+
+    printAllEvents(await contractMultiSigMaster.createWallet(1, [admin1, admin2], [ROLE_ADMIN, ROLE_ADMIN], 1));
 
     cloneMultiSig = <OrosignV1>(
       await deployer.contractAttach(
@@ -136,18 +129,6 @@ describe('OrosignV1', function () {
         await contractMultiSigMaster.predictWalletAddress(1, deployerSigner),
       )
     );
-  });
-
-  it('withdraw permission should able to withdraw all charged fee', async () => {
-    await contractMultiSigMaster.withdraw(deployerSigner);
-    const balanceOfMaster = await hre.ethers.provider.getBalance(contractMultiSigMaster);
-    expect(balanceOfMaster).eq(0n);
-  });
-
-  it('operator should able to set fee', async () => {
-    await contractMultiSigMaster.setFee(0);
-    const { walletFee } = await contractMultiSigMaster.getMetadata();
-    expect(walletFee).to.eq(0n);
   });
 
   it('admin should able to perform execute transaction to transfer native token', async () => {
@@ -160,13 +141,14 @@ describe('OrosignV1', function () {
     const tx = await contractMultiSig.encodePackedTransaction(chainId, 24 * 60 * 60, admin1, amount, '0x');
 
     printAllEvents(
-      await cloneMultiSig
-        .connect(admin2)
-        .executeTransaction(
-          await admin1.signMessage(getBytes(tx)),
-          [await admin1.signMessage(getBytes(tx)), await admin2.signMessage(getBytes(tx))],
-          tx,
-        ),
+      await cloneMultiSig.connect(admin2).executeTransaction(
+        await admin1.signMessage(getBytes(tx)),
+        sortByAddress([
+          { address: admin1.address, signature: await admin1.signMessage(getBytes(tx)) },
+          { address: admin2.address, signature: await admin2.signMessage(getBytes(tx)) },
+        ]),
+        tx,
+      ),
     );
     const afterBalance = await hre.ethers.provider.getBalance(admin1);
     console.log(beforeBalance.toString(), afterBalance.toString());
@@ -177,6 +159,9 @@ describe('OrosignV1', function () {
     const amount = BigInt(Math.round(Math.random() * 1000000));
     await contractBigO.connect(deployerSigner).transfer(cloneMultiSig, amount);
     const beforeBalance = await contractBigO.balanceOf(admin1);
+    const { chainId, nonce, totalSigner, threshold, securedTimeout, blockTimestamp } =
+      await cloneMultiSig.getMetadata();
+    console.log({ chainId, nonce, totalSigner, threshold, securedTimeout, blockTimestamp });
     const tx = await cloneMultiSig.encodePackedTransaction(
       chainId,
       24 * 60 * 60,
@@ -187,43 +172,43 @@ describe('OrosignV1', function () {
 
     replayAttackParams = [
       await admin1.signMessage(getBytes(tx)),
-      [await admin1.signMessage(getBytes(tx)), await admin2.signMessage(getBytes(tx))],
+      sortByAddress([
+        { address: admin1.address, signature: await admin1.signMessage(getBytes(tx)) },
+        { address: admin2.address, signature: await admin2.signMessage(getBytes(tx)) },
+      ]),
       tx,
     ];
 
     printAllEvents(
-      await cloneMultiSig
-        .connect(admin2)
-        .executeTransaction(
-          await admin1.signMessage(getBytes(tx)),
-          [await admin1.signMessage(getBytes(tx)), await admin2.signMessage(getBytes(tx))],
-          tx,
-        ),
+      await cloneMultiSig.connect(admin2).executeTransaction(
+        await admin1.signMessage(getBytes(tx)),
+        sortByAddress([
+          { address: admin1.address, signature: await admin1.signMessage(getBytes(tx)) },
+          { address: admin2.address, signature: await admin2.signMessage(getBytes(tx)) },
+        ]),
+        tx,
+      ),
     );
     const afterBalance = await contractBigO.balanceOf(admin1);
     expect(afterBalance - beforeBalance).to.eq(amount);
   });
 
   it('multisig should able to prevent replay attack', async () => {
-    expect(
-      await shouldFailed(async () =>
-        // @ts-ignore
-        cloneMultiSig.connect(admin2).executeTransaction(...(replayAttackParams as any[])),
-      ),
-    ).eq(true);
+    await expect(cloneMultiSig.connect(admin2).executeTransaction(...replayAttackParams)).to.revertedWithCustomError(
+      cloneMultiSig,
+      'ProofInvalidNonce',
+    );
   });
 
   it('init() can not able to be called twice', async () => {
-    expect(
-      await shouldFailed(async () =>
-        contractMultiSig.connect(deployerSigner).init(
-          chainId,
-          [creator, voter, executor, viewer, admin1, admin2, admin3].map((e) => e),
-          [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, ROLE_VIEWER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN],
-          2,
-        ),
+    await expect(
+      contractMultiSig.connect(deployerSigner).init(
+        chainId,
+        [creator, voter, executor, viewer, admin1, admin2, admin3].map((e) => e),
+        [ROLE_CREATOR, ROLE_VOTER, ROLE_EXECUTOR, PERMISSION_OBSERVER, ROLE_ADMIN, ROLE_ADMIN, ROLE_ADMIN],
+        2,
       ),
-    ).to.eq(true);
+    ).to.revertedWithCustomError(contractMultiSig, 'OnlyAbleToInitOnce');
   });
 
   it('user should able to transfer role', async () => {
@@ -287,10 +272,16 @@ describe('OrosignV1', function () {
   });
 
   it('none user should not able to transfer role', async () => {
-    expect(await shouldFailed(async () => contractMultiSig.connect(nobody).transferRole(nobody))).eq(true);
+    await expect(contractMultiSig.connect(nobody).transferRole(nobody)).to.revertedWithCustomError(
+      contractMultiSig,
+      'OnlyUserAllowed',
+    );
   });
 
   it('user should not able to transfer role to another user', async () => {
-    expect(await shouldFailed(async () => contractMultiSig.connect(admin1).transferRole(admin2))).eq(true);
+    await expect(contractMultiSig.connect(admin1).transferRole(admin2)).to.revertedWithCustomError(
+      contractMultiSig,
+      'InvalidReceiver',
+    );
   });
 });
