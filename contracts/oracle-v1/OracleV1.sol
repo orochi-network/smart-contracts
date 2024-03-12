@@ -22,6 +22,8 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
 
   event PublishData(uint32 indexed application, uint64 indexed round, bytes20 indexed identifier, bytes32 data);
 
+  event Request(address indexed actor, uint256 indexed identifier, bytes indexed data);
+
   /**
    * Create new oracle
    */
@@ -29,6 +31,18 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
     for (uint256 i = 0; i < operatorList.length; i += 1) {
       _addOperator(operatorList[i]);
     }
+  }
+
+  //=======================[  External  ]====================
+
+  /**
+   * Emit event when a new request is created
+   * @param identifier Data identifier
+   * @param data Data
+   */
+  function request(uint256 identifier, bytes calldata data) external returns (bool) {
+    emit Request(msg.sender, identifier, data);
+    return true;
   }
 
   //=======================[  Owner  ]====================

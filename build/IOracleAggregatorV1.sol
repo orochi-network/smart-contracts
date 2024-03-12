@@ -17,6 +17,13 @@ interface IOracleAggregatorV1 {
   }
 
   /**
+   * Emit event when a new request is created
+   * @param identifier Data identifier
+   * @param data Data
+   */
+  function request(uint256 identifier, bytes calldata data) external returns (bool);
+
+  /**
    * Get round of a given application
    * @param appId Application ID
    * @return round
