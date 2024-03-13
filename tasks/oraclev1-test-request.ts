@@ -11,7 +11,7 @@ task('oraclev1:request', 'Add new operator to OracleV1').setAction(
     const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
     const oracleV1 = await deployer.contractAttach<OracleV1>(
       'OracleV1/OracleV1',
-      '0x1b95BCC7828719a4C2Dc74789708b70fE5EEa9Cf',
+      '0x37fe3DeADd810aebea4289E3fC2F2dEf4630d265',
     );
     await oracleV1.request(0, '0x');
   },
