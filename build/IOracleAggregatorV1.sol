@@ -24,6 +24,13 @@ interface IOracleAggregatorV1 {
   function request(uint256 identifier, bytes calldata data) external returns (bool);
 
   /**
+   * Fulfill request
+   * @param identifier Data identifier
+   * @param data Data
+   */
+  function fulfill(uint256 identifier, bytes calldata data) external returns (bool);
+
+  /**
    * Get round of a given application
    * @param appId Application ID
    * @return round

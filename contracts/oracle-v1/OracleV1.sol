@@ -24,6 +24,8 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
 
   event Request(address indexed actor, uint256 indexed identifier, bytes indexed data);
 
+  event FulFill(address indexed actor, uint256 indexed identifier, bytes indexed data);
+
   /**
    * Create new oracle
    */
@@ -42,6 +44,16 @@ contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
    */
   function request(uint256 identifier, bytes calldata data) external returns (bool) {
     emit Request(msg.sender, identifier, data);
+    return true;
+  }
+
+  /**
+   * Fulfill request
+   * @param identifier Data identifier
+   * @param data Data
+   */
+  function fulfill(uint256 identifier, bytes calldata data) external returns (bool) {
+    emit FulFill(msg.sender, identifier, data);
     return true;
   }
 
