@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '../orand-v2/interfaces/IOrandConsumerV2.sol';
+import '@orochi-network/contracts/IOrandConsumerV2.sol';
+import '@orochi-network/contracts/IOracleAggregatorV1.sol';
 
 error WrongGuessingValue(uint128 guessing);
 
-// Application should be an implement of IOrandConsumerV1 interface
+// Application should be an implement of IOrandConsumerV2 interface
 contract DiceGame is IOrandConsumerV2, Ownable {
   // Set new provider
   event SetProvider(address indexed oldProvider, address indexed newProvider);
+
+  // Set new oracle
+  event SetOracle(address indexed oldProvider, address indexed newProvider);
 
   // Fulfill awaiting result
   event Fulfilled(uint256 indexed gameId, uint256 guessed, uint256 indexed result);
@@ -24,6 +28,9 @@ contract DiceGame is IOrandConsumerV2, Ownable {
 
   // Provider address
   address private orandProvider;
+
+  // Orochi Network oracle
+  address private oracle;
 
   // Game result storage
   mapping(uint256 => Game) private gameResult;
@@ -46,11 +53,23 @@ contract DiceGame is IOrandConsumerV2, Ownable {
   }
 
   // Constructor
-  constructor(address provider) {
+  constructor(address provider, address oracleAddress) {
     _setProvider(provider);
+    _setOracle(oracleAddress);
   }
 
   //=======================[  Internal  ]====================
+
+  // Set provider
+  function _setOracle(address oracleAddress) internal {
+    emit SetOracle(oracle, oracleAddress);
+    oracle = oracleAddress;
+  }
+
+  // Set provider
+  function _getOracle() internal view returns (address) {
+    return oracle;
+  }
 
   // Set provider
   function _setProvider(address provider) internal {
@@ -71,9 +90,15 @@ contract DiceGame is IOrandConsumerV2, Ownable {
     return true;
   }
 
-  //=======================[  OrandProviderV1  ]====================
+  // Set oracle
+  function setOralce(address oracleAddress) external onlyOwner returns (bool) {
+    _setOracle(oracleAddress);
+    return true;
+  }
 
-  // Consume the result of Orand V1 with batching feature
+  //=======================[  OrandProviderV2  ]====================
+
+  // Consume the result of Orand V2 with batching feature
   function consumeRandomness(uint256 randomness) external override onlyOrandProvider returns (bool) {
     // We keep batching < maximumBatching
     if (fulfilled < totalGame) {
@@ -84,6 +109,7 @@ contract DiceGame is IOrandConsumerV2, Ownable {
       fulfilled += 1;
       return true;
     }
+    // We will let the provider know that all are fulfilled
     return false;
   }
 
@@ -96,12 +122,26 @@ contract DiceGame is IOrandConsumerV2, Ownable {
       revert WrongGuessingValue(guessing);
     }
     gameResult[totalGame] = Game({ guessed: guessing, result: 0 });
+
+    // Request randomness from Orand
+    IOracleAggregatorV1(oracle).request(0, '0x');
+
     emit NewGuess(msg.sender, totalGame, guessing);
     totalGame += 1;
     return true;
   }
 
   //=======================[  External View  ]====================
+
+  // Get provider
+  function getProvider() external view returns (address) {
+    return _getProvider();
+  }
+
+  // Get oracle
+  function getOracle() external view returns (address) {
+    return _getOracle();
+  }
 
   // Get result from smart contract
   function getResult(uint256 gameId) external view returns (Game memory result) {
