@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '../libraries/Bytes.sol';
 import '../libraries/Permissioned.sol';
 import './interfaces/IOrosignV1.sol';
@@ -14,7 +15,7 @@ error DuplicatedSigner(address singed, address recovered);
  * Orosign V1
  * Multi Signature Wallet based on off-chain ECDSA Proof
  */
-contract OrosignV1 is IOrosignV1, Permissioned {
+contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
   // Address lib providing safe {call} and {delegatecall}
   using Address for address;
 
@@ -131,7 +132,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     bytes memory creatorSignature,
     bytes[] memory signatureList,
     bytes memory message
-  ) external onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
+  ) external nonReentrant onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
     // Recover creator address from creator signature
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
@@ -177,6 +178,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert ProofExpired(packedTransaction.votingDeadline, packedTransaction.currentBlockTime);
     }
 
+    emit ExecutedTransaction(packedTransaction.target, packedTransaction.value, packedTransaction.data);
+
     // Increasing nonce, prevent replay attack
     nonce = packedTransaction.nonce + 1;
 
@@ -186,7 +189,6 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     } else {
       payable(address(packedTransaction.target)).transfer(packedTransaction.value);
     }
-    emit ExecutedTransaction(packedTransaction.target, packedTransaction.value, packedTransaction.data);
     return true;
   }
 
