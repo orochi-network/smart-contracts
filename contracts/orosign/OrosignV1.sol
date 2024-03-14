@@ -143,7 +143,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
       revert ProofNoCreator();
     }
 
-    // Couting total signed proof
+    // Counting total signed proof
     for (uint256 i = 0; i < signatureList.length; i += 1) {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       if (recoveredSigner <= signedAddress) {
@@ -211,7 +211,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
       chainId: uint64(packedNonce >> 192),
       votingDeadline: uint64(packedNonce >> 128),
       nonce: uint128(packedNonce),
-      // This value isn't actuall existing in the proof
+      // This value isn't actually existing in the proof
       currentBlockTime: uint96(block.timestamp),
       // Transaction detail
       target: txData.readAddress(32),
