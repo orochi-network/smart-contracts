@@ -146,8 +146,8 @@ contract OrosignMasterV1 is Ownable {
     return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
   }
 
-  // Check a Multi Signature Wallet is existed
-  function _isMultiSigExist(address walletAddress) internal view returns (bool isExist) {
+  // Check a smart contract is existed
+  function _isContractExist(address walletAddress) internal view returns (bool isExist) {
     return walletAddress.code.length > 0;
   }
 
@@ -167,13 +167,13 @@ contract OrosignMasterV1 is Ownable {
   }
 
   // Check a Multi Signature Wallet is existed
-  function isMultiSigExist(address walletAddress) external view returns (bool isExist) {
-    return _isMultiSigExist(walletAddress);
+  function isContractExist(address walletAddress) external view returns (bool isExist) {
+    return _isContractExist(walletAddress);
   }
 
   // Check a Multi Signature Wallet existing by creator and salt
-  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool isExist) {
-    return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
+  function isMultiSigExist(uint96 salt, address creatorAddress) external view returns (bool isExist) {
+    return _isContractExist(_predictWalletAddress(salt, creatorAddress));
   }
 
   // Pacing salt and creator address
