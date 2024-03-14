@@ -10,6 +10,8 @@ import './interfaces/IOrosignV1.sol';
 
 // Duplicated signer
 error DuplicatedSigner(address singed, address recovered);
+// Invalid Orosign address
+error InvalidOrosignAddress(address orosignAddress);
 
 /**
  * Orosign V1
@@ -165,6 +167,11 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     // Decode packed data from packed transaction
     PackedTransaction memory packedTransaction = _decodePackedTransaction(message);
 
+    // Orosign address should be the same
+    if (packedTransaction.orosignAddress != address(this)) {
+      revert InvalidOrosignAddress(packedTransaction.orosignAddress);
+    }
+
     // Chain Id should be the same
     if (packedTransaction.chainId != chainId) {
       revert ProofChainIdMismatch(packedTransaction.chainId, chainId);
@@ -216,7 +223,8 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
       // Transaction detail
       target: txData.readAddress(32),
       value: txData.readUint256(52),
-      data: txData.readBytes(84, txData.length - 84)
+      orosignAddress: txData.readAddress(84),
+      data: txData.readBytes(104, txData.length - 104)
     });
     return decodedTransaction;
   }
@@ -233,7 +241,16 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
       revert InsecuredTimeout(timeout);
     }
     return
-      abi.encodePacked(uint64(inputChainId), uint64(block.timestamp + timeout), uint128(nonce), target, value, data);
+      abi.encodePacked(
+        uint64(inputChainId),
+        uint64(block.timestamp + timeout),
+        uint128(nonce),
+        target,
+        value,
+        // Add addres of this contract to prevent replay attack
+        address(this),
+        data
+      );
   }
 
   /*******************************************************

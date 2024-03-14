@@ -29,6 +29,7 @@ interface IOrosignV1 {
     uint96 currentBlockTime;
     address target;
     uint256 value;
+    address orosignAddress;
     bytes data;
   }
 
