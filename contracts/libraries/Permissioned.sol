@@ -13,6 +13,8 @@ error RecordLengthMismatch();
 error InvalidAddress();
 // Invalid address
 error InvalidReceiver(address userAddress);
+// Invalid user or role list
+error InvalidUserOrRoleList();
 
 contract Permissioned {
   // Permission constants
@@ -62,6 +64,9 @@ contract Permissioned {
     // Make sure that we only init this once
     if (totalUser > 0) {
       revert OnlyAbleToInitOnce();
+    }
+    if (userList.length == 0 || roleList.length == 0) {
+      revert InvalidUserOrRoleList();
     }
     // Data length should match
     if (userList.length != roleList.length) {
