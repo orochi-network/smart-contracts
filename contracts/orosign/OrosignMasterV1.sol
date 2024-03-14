@@ -166,7 +166,7 @@ contract OrosignMasterV1 is Ownable {
     return _predictWalletAddress(salt, creatorAddress);
   }
 
-  // Check a Multi Signature Wallet is existed
+  // Check a smart contract is existed
   function isContractExist(address walletAddress) external view returns (bool isExist) {
     return _isContractExist(walletAddress);
   }
