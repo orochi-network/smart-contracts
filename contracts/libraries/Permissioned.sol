@@ -15,6 +15,8 @@ error InvalidAddress();
 error InvalidReceiver(address userAddress);
 // Invalid user or role list
 error InvalidUserOrRoleList();
+// Invalid role
+error InlvaidRole(uint256 role);
 
 contract Permissioned {
   // Permission constants
@@ -76,6 +78,11 @@ contract Permissioned {
     RoleRecord memory newRoleRecord;
     newRoleRecord.activeTime = 0;
     for (uint256 i = 0; i < userList.length; i += 1) {
+      // Role should not be composed of 1,2,4,8
+      // PERMISSION_OBSERVE| PERMISSION_SIGN| PERMISSION_EXECUTE | PERMISSION_CREAT == 15
+      if (roleList[i] & 15 == PERMISSION_NONE) {
+        revert InlvaidRole(roleList[i]);
+      }
       // Store user's address -> user list
       user[i] = userList[i];
       // Mapping user address -> role
