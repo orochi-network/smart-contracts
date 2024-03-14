@@ -22,9 +22,6 @@ contract OrosignMasterV1 is Ownable {
   // Wallet implementation
   address private implementation;
 
-  // Chain id
-  uint256 private chainId;
-
   // Operator list
   mapping(address => bool) private operator;
 
@@ -49,10 +46,7 @@ contract OrosignMasterV1 is Ownable {
   }
 
   // Pass parameters to parent contract
-  constructor(uint256 inputChainId, address multisigImplementation, address operatorAddress) {
-    // We use input chainId instead of EIP-1344
-    chainId = inputChainId;
-
+  constructor(address multisigImplementation, address operatorAddress) {
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
@@ -120,9 +114,7 @@ contract OrosignMasterV1 is Ownable {
     uint256 votingThreshold
   ) external returns (address newWalletAdress) {
     newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
-    if (
-      newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
-    ) {
+    if (newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(userList, roleList, votingThreshold)) {
       revert UnableToInitNewWallet(salt, msg.sender, newWalletAdress);
     }
     emit CreateNewWallet(salt, msg.sender, newWalletAdress);
@@ -157,7 +149,7 @@ contract OrosignMasterV1 is Ownable {
 
   // Get metadata of Orosign Master V1
   function getMetadata() external view returns (uint256 sChainId, address sImplementation) {
-    sChainId = chainId;
+    sChainId = block.chainid;
     sImplementation = implementation;
   }
 

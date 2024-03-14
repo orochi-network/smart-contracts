@@ -42,9 +42,6 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
   // Secure timeout
   uint256 private constant SECURED_TIMEOUT = 3 days;
 
-  // Chain Id
-  uint256 private chainId;
-
   // Quick transaction nonce
   uint256 private nonce;
 
@@ -62,7 +59,6 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
 
   // Init method which can be called once
   function init(
-    uint256 inputChainId,
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
@@ -97,9 +93,6 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     if (0 == countingSigner || 0 == countingExecutor || 0 == countingCreator) {
       revert InvalidPermission(countingSigner, countingExecutor, countingCreator);
     }
-
-    // These values can be set once
-    chainId = inputChainId;
 
     // Store voting threshold
     threshold = votingThreshold;
@@ -173,8 +166,8 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     }
 
     // Chain Id should be the same
-    if (packedTransaction.chainId != chainId) {
-      revert ProofChainIdMismatch(packedTransaction.chainId, chainId);
+    if (packedTransaction.chainId != block.chainid) {
+      revert ProofChainIdMismatch(packedTransaction.chainId, block.chainid);
     }
     // Nonce should be equal
     if (packedTransaction.nonce != nonce) {
@@ -231,7 +224,6 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
 
   // Get packed transaction to create raw ECDSA proof
   function _encodePackedTransaction(
-    uint256 inputChainId,
     uint256 timeout,
     address target,
     uint256 value,
@@ -242,7 +234,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     }
     return
       abi.encodePacked(
-        uint64(inputChainId),
+        block.chainid,
         uint64(block.timestamp + timeout),
         uint128(nonce),
         target,
@@ -266,13 +258,12 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
 
   // Packing transaction to create raw ECDSA proof
   function encodePackedTransaction(
-    uint256 inputChainId,
     uint256 timeout,
     address target,
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return _encodePackedTransaction(inputChainId, timeout, target, value, data);
+    return _encodePackedTransaction(timeout, target, value, data);
   }
 
   // Quick packing transaction to create raw ECDSA proof
@@ -281,13 +272,13 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return _encodePackedTransaction(chainId, SECURED_TIMEOUT / 3, target, value, data);
+    return _encodePackedTransaction(SECURED_TIMEOUT / 3, target, value, data);
   }
 
   // Get multisig metadata
   function getMetadata() external view returns (OrosignV1Metadata memory result) {
     result = OrosignV1Metadata({
-      chainId: chainId,
+      chainId: block.chainid,
       nonce: nonce,
       totalSigner: totalSigner,
       threshold: threshold,
