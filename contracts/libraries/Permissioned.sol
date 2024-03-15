@@ -17,6 +17,8 @@ error InvalidReceiver(address userAddress);
 error InvalidUserOrRoleList();
 // Invalid role
 error InlvaidRole(uint256 role);
+// User address must unqiue
+error DuplicatedUser(address userAddress);
 
 contract Permissioned {
   // Permission constants
@@ -63,6 +65,7 @@ contract Permissioned {
 
   // Init method which can be called once
   function _init(address[] memory userList, uint256[] memory roleList) internal {
+    address addedUser = address(0);
     // Make sure that we only init this once
     if (totalUser > 0) {
       revert OnlyAbleToInitOnce();
@@ -83,6 +86,15 @@ contract Permissioned {
       if (roleList[i] & 15 == PERMISSION_NONE) {
         revert InlvaidRole(roleList[i]);
       }
+      // User address must not be a zero address
+      if (address(0) == userList[i]) {
+        revert InvalidAddress();
+      }
+      // User address must be unique
+      if (userList[i] <= addedUser) {
+        revert DuplicatedUser(userList[i]);
+      }
+      addedUser = userList[i];
       // Store user's address -> user list
       user[i] = userList[i];
       // Mapping user address -> role
