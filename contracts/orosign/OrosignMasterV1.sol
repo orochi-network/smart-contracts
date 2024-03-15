@@ -11,6 +11,8 @@ error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
 error OnlyOperatorAllowed(address actor);
 // Invalid operator address
 error InvalidOperator(address operatorAddress);
+// Invalid Address
+error InvalidAddress();
 
 /**
  * Orosign Master V1
@@ -45,8 +47,19 @@ contract OrosignMasterV1 is Ownable {
     _;
   }
 
+  // We only allow valid address
+  modifier onlyValidAddress(address validatingAddress) {
+    if (validatingAddress == address(0)) {
+      revert InvalidAddress();
+    }
+    _;
+  }
+
   // Pass parameters to parent contract
-  constructor(address multisigImplementation, address operatorAddress) {
+  constructor(
+    address multisigImplementation,
+    address operatorAddress
+  ) onlyValidAddress(multisigImplementation) onlyValidAddress(operatorAddress) {
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
@@ -79,7 +92,7 @@ contract OrosignMasterV1 is Ownable {
    ********************************************************/
 
   // Add new operator
-  function addOperator(address newOperator) external onlyOwner returns (bool) {
+  function addOperator(address newOperator) external onlyOwner onlyValidAddress(newOperator) returns (bool) {
     _addOperator(newOperator);
     return true;
   }
@@ -95,7 +108,9 @@ contract OrosignMasterV1 is Ownable {
    ********************************************************/
 
   // Upgrade new implementation
-  function upgradeImplementation(address newImplementation) external onlyOperator returns (bool) {
+  function upgradeImplementation(
+    address newImplementation
+  ) external onlyOperator onlyValidAddress(newImplementation) returns (bool) {
     // Overwrite current implementation address
     implementation = newImplementation;
     emit UpgradeImplementation(implementation, newImplementation);

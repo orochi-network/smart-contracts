@@ -54,6 +54,14 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
   // Execute transaction event
   event ExecutedTransaction(address indexed target, uint256 indexed value, bytes indexed data);
 
+  // We only allow valid address
+  modifier onlyValidAddress(address validatingAddress) {
+    if (validatingAddress == address(0)) {
+      revert InvalidAddress();
+    }
+    _;
+  }
+
   // This contract able to receive fund
   receive() external payable {}
 
@@ -108,7 +116,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
    ********************************************************/
 
   // Transfer role to new user
-  function transferRole(address newUser) external onlyActiveUser returns (bool) {
+  function transferRole(address newUser) external onlyActiveUser onlyValidAddress(newUser) returns (bool) {
     // New user will be activated after SECURED_TIMEOUT
     // We prevent them to vote and transfer permission to the other
     // and vote again
