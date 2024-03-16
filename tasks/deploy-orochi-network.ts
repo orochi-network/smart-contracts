@@ -3,7 +3,7 @@ import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer } from '../helpers';
-import { DiceGame, OracleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
+import { DiceGame, OrocleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { env } from '../env';
 import { getAddress, keccak256 } from 'ethers';
 
@@ -38,9 +38,9 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
     // Deploy ECVRF
     const orandECVRF = await deployer.contractDeploy<OrandECVRFV2>('OrandV2/OrandECVRFV2', []);
-    // Deploy Oracle
-    const oracleV1 = await deployer.contractDeploy<OracleV1>('OracleV1/OracleV1', [], TESTNET_OPERATOR);
-    await oracleV1.newApplication(`0x${numberToBytes(1, 128)}${stringToBytes('AssetPrice', 16)}`);
+    // Deploy Orocle
+    const OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], TESTNET_OPERATOR);
+    await OrocleV1.newApplication(`0x${numberToBytes(1, 128)}${stringToBytes('AssetPrice', 16)}`);
 
     // Deploy Provider
     const orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
@@ -50,7 +50,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       publicKeyToNumberish(pk),
       correspondingAddress,
       orandECVRF,
-      oracleV1,
+      OrocleV1,
       100,
     );
     await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);

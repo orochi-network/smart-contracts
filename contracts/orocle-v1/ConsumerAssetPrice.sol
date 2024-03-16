@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import './interfaces/IOracleAggregatorV1.sol';
+import './interfaces/IOrocleAggregatorV1.sol';
 
 contract ConsumerAssetPrice is Ownable {
-  IOracleAggregatorV1 private oracle;
+  IOrocleAggregatorV1 private oracle;
 
   event SetOracle(address indexed oldOracle, address indexed newOracle);
 
@@ -15,7 +15,7 @@ contract ConsumerAssetPrice is Ownable {
 
   function _setOracle(address newOracle) internal {
     emit SetOracle(address(oracle), newOracle);
-    oracle = IOracleAggregatorV1(newOracle);
+    oracle = IOrocleAggregatorV1(newOracle);
   }
 
   /**

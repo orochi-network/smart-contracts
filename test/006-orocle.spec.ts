@@ -1,14 +1,14 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { BitcoinSeller, OracleV1 } from '../typechain-types';
+import { BitcoinSeller, OrocleV1 } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { randomBytes } from 'crypto';
 
 let owner: SignerWithAddress;
 let operator: SignerWithAddress;
 let somebody: SignerWithAddress;
-let oracleV1: OracleV1;
+let OrocleV1: OrocleV1;
 let bitcoinSeller: BitcoinSeller;
 let deployer: Deployer;
 
@@ -41,41 +41,41 @@ function tokenPricePackedData(appId: number, input: AssetPrice[]): [string, stri
   return [`0x${numberToBytes(appId, 32)}${numberToBytes(chunksize, 224)}`, packedData];
 }
 
-describe('OracleV1', function () {
-  it('oracle v1 must be deployed correctly', async () => {
+describe('OrocleV1', function () {
+  it('Orocle V1 must be deployed correctly', async () => {
     [owner, operator, somebody] = await hre.ethers.getSigners();
     deployer = Deployer.getInstance(hre).connect(owner);
 
-    oracleV1 = await deployer.contractDeploy<OracleV1>('OracleV1/OracleV1', [], [operator]);
-    bitcoinSeller = await deployer.contractDeploy<BitcoinSeller>('example/BitcoinSeller', [], oracleV1);
+    OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], [operator]);
+    bitcoinSeller = await deployer.contractDeploy<BitcoinSeller>('example/BitcoinSeller', [], OrocleV1);
 
-    expect(await oracleV1.isOperator(operator)).to.eq(true);
+    expect(await OrocleV1.isOperator(operator)).to.eq(true);
   });
 
   it('owner should able to add an operator', async () => {
-    await oracleV1.addOperator(somebody);
-    expect(await oracleV1.isOperator(somebody)).to.eq(true);
+    await OrocleV1.addOperator(somebody);
+    expect(await OrocleV1.isOperator(somebody)).to.eq(true);
   });
 
   it('owner should able to remove an operator', async () => {
-    await oracleV1.removeOperator(somebody);
-    expect(await oracleV1.isOperator(somebody)).to.eq(false);
+    await OrocleV1.removeOperator(somebody);
+    expect(await OrocleV1.isOperator(somebody)).to.eq(false);
   });
 
   it('should not able to read data since operator did not feed', async () => {
     const identifier = `0x${Buffer.from('BTC').toString('hex').padEnd(40, '0')}`;
-    await expect(oracleV1.getLatestData(1, identifier)).to.revertedWithCustomError(oracleV1, 'UndefinedRound');
+    await expect(OrocleV1.getLatestData(1, identifier)).to.revertedWithCustomError(OrocleV1, 'UndefinedRound');
   });
 
   it('owner should able to create new application', async () => {
     const appData = `0x${numberToBytes(1, 128)}${stringToBytes('AssetPrice', 16)}`;
-    await oracleV1.newApplication(appData);
+    await OrocleV1.newApplication(appData);
 
-    await oracleV1.newApplication(`0x${numberToBytes(2, 128)}${stringToBytes('DataStorage', 16)}`);
+    await OrocleV1.newApplication(`0x${numberToBytes(2, 128)}${stringToBytes('DataStorage', 16)}`);
 
-    console.log(oracleV1.interface.encodeFunctionData('newApplication', [appData]));
+    console.log(OrocleV1.interface.encodeFunctionData('newApplication', [appData]));
 
-    console.log(await oracleV1.getApplication(1));
+    console.log(await OrocleV1.getApplication(1));
   });
 
   it('operator should able to publish data to Oracle', async () => {
@@ -99,7 +99,7 @@ describe('OracleV1', function () {
         },
       ]);
 
-      await oracleV1.connect(operator).publishData(...data);
+      await OrocleV1.connect(operator).publishData(...data);
     }
   });
 
@@ -134,10 +134,10 @@ describe('OracleV1', function () {
       ...tokens,
     ]);
 
-    await oracleV1.connect(operator).publishData(...data);
+    await OrocleV1.connect(operator).publishData(...data);
     console.log('\tApp Id:', 1, 'identifier:', identifier);
-    console.log('\tLatest data:', await oracleV1.getLatestData(1, identifier));
-    console.log('\tApplication metadata:', await oracleV1.getApplication(1));
+    console.log('\tLatest data:', await OrocleV1.getLatestData(1, identifier));
+    console.log('\tApplication metadata:', await OrocleV1.getApplication(1));
   });
 
   it('data correctness must be guarantee', async () => {
@@ -153,10 +153,10 @@ describe('OracleV1', function () {
       data.push(`0x${dat.toLowerCase()}`);
     }
 
-    await oracleV1.connect(operator).publishData(`0x${numberToBytes(2, 32)}${numberToBytes(52, 224)}`, packedData);
+    await OrocleV1.connect(operator).publishData(`0x${numberToBytes(2, 32)}${numberToBytes(52, 224)}`, packedData);
 
     for (let i = 0; i < 100; i += 1) {
-      expect((await oracleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
+      expect((await OrocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
     }
   });
 

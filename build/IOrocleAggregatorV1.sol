@@ -9,7 +9,7 @@ error UndefinedRound(uint64 round);
 error InvalidDataLength(uint256 length);
 error UnableToPublishData(bytes data);
 
-interface IOracleAggregatorV1 {
+interface IOrocleAggregatorV1 {
   struct ApplicationMetadata {
     bytes16 name;
     uint64 lastUpdate;

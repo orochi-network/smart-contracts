@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '../libraries/Bytes.sol';
-import './interfaces/IOracleAggregatorV1.sol';
+import './interfaces/IOrocleAggregatorV1.sol';
 import './Operatable.sol';
 import 'hardhat/console.sol';
 
-contract OracleV1 is IOracleAggregatorV1, Ownable, Operatable {
+contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   using Bytes for bytes;
 
   // Maping unique fingerprint to data

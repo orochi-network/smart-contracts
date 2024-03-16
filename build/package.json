@@ -1,22 +1,22 @@
 {
-    "name": "@orochi-network/contracts",
-    "version": "1.2.2",
-    "description": "Orochi smart contracts for on-chain verification",
-    "main": "index.js",
-    "type": "commonjs",
-    "files": [
-        "**/*.sol"
-    ],
-    "scripts": {
-        "release": "npm publish --access public"
-    },
-    "keywords": [
-      "smart contract",
-      "oracle",
-      "vrf",
-      "multisig"
-    ],
-    "author": "chiro@orochi.network",
-    "license": "MIT"
+  "name": "@orochi-network/contracts",
+  "version": "1.2.3",
+  "description": "Orochi smart contracts for on-chain verification",
+  "main": "index.js",
+  "type": "commonjs",
+  "files": [
+    "**/*.sol"
+  ],
+  "scripts": {
+    "clean": "rm *.sol && cp ../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol ./ && cp ../contracts/orand-v2/interfaces/IOrandConsumerV2.sol ./",
+    "release": "npm run clean && node ./devel.js && npm publish --access public"
+  },
+  "keywords": [
+    "smart contract",
+    "oracle",
+    "vrf",
+    "multisig"
+  ],
+  "author": "chiro@orochi.network",
+  "license": "MIT"
 }
-  

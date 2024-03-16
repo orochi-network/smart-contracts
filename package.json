@@ -1,5 +1,5 @@
 {
-  "name": "@orochi-network/contracts",
+  "name": "@orochi-network/smart-contracts",
   "version": "1.0.0",
   "description": "Orochi smart contracts for on-chain verification",
   "main": "index.js",
@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.5",
+    "@orochi-network/contracts": "^1.2.3",
     "axios": "^1.6.5",
     "dotenv": "^16.3.1"
   }
