@@ -32,10 +32,16 @@ task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
       // We going to skip 0x04 -> Pubkey format from libsecp256k1
       publicKeyToNumberish(pk),
       correspondingAddress,
+      '0x674305AD68cf9c2F572D06b8b617EF3C6c74503E',
       orandECVRF,
       100,
     );
-    await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);
+    await deployer.contractDeploy<DiceGame>(
+      'examples/DiceGame',
+      [],
+      orandProviderV2,
+      '0x674305AD68cf9c2F572D06b8b617EF3C6c74503E',
+    );
 
     console.log(
       `Corresponding address: ${correspondingAddress} , is valid publicKey?:`,
