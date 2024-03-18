@@ -10,46 +10,12 @@ error InvalidDataLength(uint256 length);
 error UnableToPublishData(bytes data);
 
 interface IOrocleAggregatorV1 {
-  struct ApplicationMetadata {
-    bytes16 name;
-    uint64 lastUpdate;
-    uint64 round;
-  }
-
-  /**
-   * Emit event when a new request is created
-   * @param identifier Data identifier
-   * @param data Data
-   */
-  function request(uint256 identifier, bytes calldata data) external returns (bool);
-
-  /**
-   * Fulfill request
-   * @param identifier Data identifier
-   * @param data Data
-   */
-  function fulfill(uint256 identifier, bytes calldata data) external returns (bool);
-
   /**
    * Get round of a given application
    * @param appId Application ID
    * @return round
    */
-  function getRound(uint32 appId) external view returns (uint256 round);
-
-  /**
-   * Get last update timestamp of a given application
-   * @param appId Application ID
-   * @return lastUpdate
-   */
-  function getLastUpdate(uint32 appId) external view returns (uint256 lastUpdate);
-
-  /**
-   * Get application metadata
-   * @param appId Application ID
-   * @return app Application metadata
-   */
-  function getApplication(uint32 appId) external view returns (ApplicationMetadata memory app);
+  function getMetadata(uint32 appId, bytes20 identifier) external view returns (uint64 round, uint64 lastUpdate);
 
   /**
    * Get data of an application
@@ -61,29 +27,20 @@ interface IOrocleAggregatorV1 {
   function getData(uint32 appId, uint64 round, bytes20 identifier) external view returns (bytes32 data);
 
   /**
-   * Get data of an application that lower or equal to target round
+   * Get latest data of an application
    * @param appId Application ID
-   * @param targetRound Round number
    * @param identifier Data identifier
-   * @return data Data
+   * @return data
    */
-  function getDataLte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes32 data);
-
-  /**
-   * Get data of an application that greater or equal to target round
-   * Use this if you wan transaction to be happend after crertain round in the future
-   * @param appId Application ID
-   * @param targetRound Round number
-   * @param identifier Data identifier
-   * @return data Data
-   */
-  function getDataGte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes32 data);
+  function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes32 data);
 
   /**
    * Get latest data of an application
    * @param appId Application ID
    * @param identifier Data identifier
-   * @return data Data
+   * @return round lastUpdate data
    */
-  function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes32 data);
-}
+  function getLatestRound(
+    uint32 appId,
+    bytes20 identifier
+  ) external view returns (uint64 round, uint64 lastUpdate, bytes32 data);

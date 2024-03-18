@@ -37,9 +37,12 @@ contract ConsumerAssetPrice is Ownable {
    * @return price Price
    */
   function _getPriceOfPair(bytes20 srcToken, bytes20 dstToken) internal view returns (uint256) {
-    return (_getPrice(srcToken) * 10 ** 18) / (_getPrice(dstToken));
+    return (_getPrice(srcToken) * 10 ** 9) / (_getPrice(dstToken));
   }
 
+  /**
+   * Set new oracle
+   */
   function setOracle(address newOracle) external onlyOwner returns (bool) {
     _setOracle(newOracle);
     return true;

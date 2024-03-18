@@ -13,17 +13,16 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   // Maping unique fingerprint to data
   mapping(bytes32 => bytes32) private database;
 
-  // Maping application ID to application metadata
-  mapping(uint32 => ApplicationMetadata) private applications;
+  // Mapping application ID ++ identifier to application metadata
+  mapping(bytes32 => bytes32) private metadata;
 
-  event NewApplication(uint32 indexed application, bytes24 indexed name);
-
-  event UpdateApplication(uint32 indexed application, bytes24 indexed name);
-
+  // Publish new data
   event PublishData(uint32 indexed application, uint64 indexed round, bytes20 indexed identifier, bytes32 data);
 
+  // Request new data
   event Request(address indexed actor, uint256 indexed identifier, bytes indexed data);
 
+  // Fulfill request
   event FulFill(address indexed actor, uint256 indexed identifier, bytes indexed data);
 
   /**
@@ -77,44 +76,6 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
     return _removeOperator(oldOperator);
   }
 
-  /**
-   * Create new application
-   * @param appData Application packed data
-   * @return success
-   */
-  function newApplication(uint256 appData) external onlyOwner returns (bool) {
-    uint32 appId = uint32(appData >> 128);
-    bytes16 name = bytes16(uint128(appData));
-    if (applications[appId].name != 0) {
-      revert ExistedApplication(appId);
-    }
-    if (name == 0) {
-      revert InvalidApplicationName(name);
-    }
-    applications[appId] = ApplicationMetadata(name, 0, 0);
-    emit NewApplication(appId, name);
-    return true;
-  }
-
-  /**
-   * Update application metadata
-   * @param appData Application packed data
-   * @return success
-   */
-  function updateApplication(uint256 appData) external onlyOwner returns (bool) {
-    uint32 appId = uint32(appData >> 128);
-    bytes16 name = bytes16(uint128(appData));
-    if (applications[appId].name == 0) {
-      revert InvalidApplication(appId);
-    }
-    if (name == 0) {
-      revert InvalidApplicationName(name);
-    }
-    applications[appId].name = name;
-    emit UpdateApplication(appId, name);
-    return true;
-  }
-
   //=======================[  Operator View  ]====================
 
   /**
@@ -122,52 +83,94 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    * @param packedData packed data
    * @return success
    */
-  function publishData(uint256 metadata, bytes memory packedData) external onlyOperator returns (bool) {
+  function publishData(uint32 appId, bytes memory packedData) external onlyOperator returns (bool) {
     // Decode appId and chunksize
-    uint32 appId = uint32(metadata >> 224);
-    uint256 chunksize = uint256(uint224(metadata));
     bytes20 identifier;
     bytes32 data;
-    ApplicationMetadata memory app = applications[appId];
-    if (packedData.length % chunksize != 0) {
+    if (packedData.length % 52 != 0) {
       revert InvalidDataLength(packedData.length);
     }
-    if (app.name == 0) {
-      revert InvalidApplication(appId);
-    }
-    app.round += 1;
-    for (uint256 i = 0; i < packedData.length; i += chunksize) {
+    for (uint256 i = 0; i < packedData.length; i += 52) {
       identifier = bytes20(uint160(packedData.readUintUnsafe(i, 160)));
       data = bytes32(uint256(packedData.readUint256(i + 20)));
-      if (!_publish(appId, app.round, identifier, data)) {
-        revert UnableToPublishData(packedData.readBytes(i, chunksize));
+      if (!_publish(appId, identifier, data)) {
+        revert UnableToPublishData(packedData.readBytes(i, 52));
       }
     }
-    applications[appId].round = app.round;
-    applications[appId].lastUpdate = uint64(block.timestamp);
+    return true;
+  }
+
+  // Dedicated function for price
+  function publishPrice(bytes memory packedData) external onlyOperator returns (bool) {
+    // Decode appId and chunksize
+    bytes20 identifier;
+    bytes32 data;
+    if (packedData.length % 16 != 0) {
+      revert InvalidDataLength(packedData.length);
+    }
+    for (uint256 i = 0; i < packedData.length; i += 16) {
+      identifier = bytes20(bytes8(uint64(packedData.readUintUnsafe(i, 64))));
+      data = bytes32(uint256(uint64(packedData.readUintUnsafe(i + 8, 64))));
+      if (!_publish(1, identifier, data)) {
+        revert UnableToPublishData(packedData.readBytes(i, 52));
+      }
+    }
     return true;
   }
 
   //=======================[  Interal  ]====================
 
-  function _publish(uint32 appId, uint64 round, bytes20 identifier, bytes32 data) internal returns (bool) {
+  function _publish(uint32 appId, bytes20 identifier, bytes32 data) internal returns (bool) {
+    (uint64 round, ) = _getMetadata(appId, identifier);
     // After 255 round, we will reuse the same slot, it saving a lot of gas
-    database[bytes32(abi.encodePacked(appId, uint8(round), identifier))] = data;
+    database[_encodeDataKey(appId, round, identifier)] = data;
     emit PublishData(appId, round, identifier, data);
+    _setMetadata(appId, identifier, round + 1);
     return true;
+  }
+
+  // Set application round
+  function _setMetadata(uint32 appId, bytes20 identifier, uint64 round) internal {
+    metadata[_encodeRoundKey(appId, identifier)] = _encodeMetadata(round, uint64(block.timestamp));
   }
 
   //=======================[  Interal View  ]====================
 
-  /**
-   * Get unique key for data lookup
-   * @param appId Application ID
-   * @param round Round number
-   * @param identifier Data identifier
-   * @param dataKey Data
-   */
-  function _getUniqueLookupKey(uint32 appId, uint64 round, bytes20 identifier) internal pure returns (bytes32 dataKey) {
-    return bytes32(abi.encodePacked(appId, uint8(round), identifier));
+  // Encode data key
+  function _encodeDataKey(uint32 appId, uint64 round, bytes20 identifier) internal pure returns (bytes32 dataKey) {
+    assembly {
+      dataKey := identifier
+      dataKey := or(dataKey, shl(160, and(round, 0xff)))
+      dataKey := or(dataKey, shl(224, appId))
+    }
+  }
+
+  // Encode metadata
+  function _encodeMetadata(uint64 round, uint64 lastUpdate) internal pure returns (bytes32 dataKey) {
+    assembly {
+      dataKey := shl(192, round)
+      dataKey := or(dataKey, shl(128, lastUpdate))
+    }
+  }
+
+  // Encode round key
+  function _encodeRoundKey(uint32 appId, bytes20 identifier) internal pure returns (bytes32 roundKey) {
+    assembly {
+      roundKey := identifier
+      roundKey := or(roundKey, shl(224, appId))
+    }
+  }
+
+  function _decodeMetadata(bytes32 metadataRecord) internal pure returns (uint64 round, uint64 lastUpdate) {
+    assembly {
+      round := shr(192, metadataRecord)
+      lastUpdate := shr(128, metadataRecord)
+    }
+  }
+
+  // Get application round
+  function _getMetadata(uint32 appId, bytes20 identifier) internal view returns (uint64 round, uint64 lastUpdate) {
+    return _decodeMetadata(metadata[_encodeRoundKey(appId, identifier)]);
   }
 
   /**
@@ -178,11 +181,12 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    * @param data Data
    */
   function _readDatabase(uint32 appId, uint64 round, bytes20 identifier) internal view returns (bytes32 data) {
+    (uint64 onChainRound, ) = _getMetadata(appId, identifier);
     // Can't get 0 round and round in the past
-    if (round == 0 || round + 255 < applications[appId].round) {
+    if (round == 0 || round + 255 < onChainRound) {
       revert UndefinedRound(round);
     }
-    return database[_getUniqueLookupKey(appId, round, identifier)];
+    return database[_encodeDataKey(appId, round, identifier)];
   }
 
   //=======================[  External View  ]====================
@@ -192,26 +196,8 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    * @param appId Application ID
    * @return round
    */
-  function getRound(uint32 appId) external view returns (uint256 round) {
-    return uint256(applications[appId].round);
-  }
-
-  /**
-   * Get last update timestamp of a given application
-   * @param appId Application ID
-   * @return lastUpdate
-   */
-  function getLastUpdate(uint32 appId) external view returns (uint256 lastUpdate) {
-    return uint256(applications[appId].lastUpdate);
-  }
-
-  /**
-   * Get application metadata
-   * @param appId Application ID
-   * @return app Application metadata
-   */
-  function getApplication(uint32 appId) external view returns (ApplicationMetadata memory app) {
-    return applications[appId];
+  function getMetadata(uint32 appId, bytes20 identifier) external view returns (uint64 round, uint64 lastUpdate) {
+    return _getMetadata(appId, identifier);
   }
 
   /**
@@ -226,43 +212,27 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   }
 
   /**
-   * Get data of an application that lower or equal to target round
-   * @param appId Application ID
-   * @param targetRound Round number
-   * @param identifier Data identifier
-   * @return data Data
-   */
-  function getDataLte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes32 data) {
-    ApplicationMetadata memory app = applications[appId];
-    if (app.round <= targetRound) {
-      revert InvalidRoundNumber(app.round, targetRound);
-    }
-    return _readDatabase(appId, app.round, identifier);
-  }
-
-  /**
-   * Get data of an application that greater or equal to target round
-   * Use this if you wan transaction to be happend after crertain round in the future
-   * @param appId Application ID
-   * @param targetRound Round number
-   * @param identifier Data identifier
-   * @return data Data
-   */
-  function getDataGte(uint32 appId, uint64 targetRound, bytes20 identifier) external view returns (bytes32 data) {
-    ApplicationMetadata memory app = applications[appId];
-    if (app.round >= targetRound) {
-      revert InvalidRoundNumber(app.round, targetRound);
-    }
-    return _readDatabase(appId, app.round, identifier);
-  }
-
-  /**
    * Get latest data of an application
    * @param appId Application ID
    * @param identifier Data identifier
-   * @return data Data
+   * @return data
    */
   function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes32 data) {
-    return _readDatabase(appId, applications[appId].round, identifier);
+    (uint64 round, uint64 lastUpdate) = _getMetadata(appId, identifier);
+    data = _readDatabase(appId, round, identifier);
+  }
+
+  /**
+   * Get latest round and data of an application
+   * @param appId Application ID
+   * @param identifier Data identifier
+   * @return round lastUpdate data
+   */
+  function getLatestRound(
+    uint32 appId,
+    bytes20 identifier
+  ) external view returns (uint64 round, uint64 lastUpdate, bytes32 data) {
+    (round, lastUpdate) = _getMetadata(appId, identifier);
+    data = _readDatabase(appId, round, identifier);
   }
 }
