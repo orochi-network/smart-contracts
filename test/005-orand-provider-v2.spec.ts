@@ -1,14 +1,14 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { DiceGame, OracleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
+import { DiceGame, OrocleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { getAddress, keccak256 } from 'ethers';
 
 let deployerSigner: SignerWithAddress;
 let orandECVRFV2: OrandECVRFV2;
 let orandProviderV2: OrandProviderV2;
-let oracleV1: OracleV1;
+let OrocleV1: OrocleV1;
 let deployer: Deployer;
 let somebody: SignerWithAddress;
 let diceGame: DiceGame;
@@ -416,14 +416,14 @@ describe('OrandProviderV2', function () {
     deployer = Deployer.getInstance(hre).connect(deployerSigner);
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     orandECVRFV2 = await deployer.contractDeploy<OrandECVRFV2>('OrandV2/OrandECVRFV2', []);
-    oracleV1 = await deployer.contractDeploy<OracleV1>('OracleTest/OracleV1', [], [deployerSigner]);
+    OrocleV1 = await deployer.contractDeploy<OrocleV1>('OracleTest/OrocleV1', [], [deployerSigner]);
     orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
       'OrandV2/OrandProviderV2',
       [],
       publicKeyToNumberish(pk),
       correspondingAddress,
       orandECVRFV2,
-      oracleV1,
+      OrocleV1,
       100,
     );
     diceGame = await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);

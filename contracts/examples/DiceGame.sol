@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@orochi-network/contracts/IOrandConsumerV2.sol';
-import '@orochi-network/contracts/IOracleAggregatorV1.sol';
+import '@orochi-network/contracts/IOrocleAggregatorV1.sol';
 
 error WrongGuessingValue(uint128 guessing);
 
@@ -124,7 +124,7 @@ contract DiceGame is IOrandConsumerV2, Ownable {
     gameResult[totalGame] = Game({ guessed: guessing, result: 0 });
 
     // Request randomness from Orand
-    IOracleAggregatorV1(oracle).request(0, '0x');
+    IOrocleAggregatorV1(oracle).request(0, '0x');
 
     emit NewGuess(msg.sender, totalGame, guessing);
     totalGame += 1;

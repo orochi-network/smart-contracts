@@ -8,14 +8,14 @@ import './interfaces/IOrandConsumerV2.sol';
 import './OrandStorageV2.sol';
 import './OrandManagementV2.sol';
 import './OrandECDSAV2.sol';
-import '../oracle-v1/interfaces/IOracleAggregatorV1.sol';
+import '../orocle-v1/interfaces/IOrocleAggregatorV1.sol';
 
 contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandManagementV2, OrandECDSAV2 {
   // ECVRF verifier smart contract
   IOrandECVRFV2 ecvrf;
 
-  // Oracle V1
-  IOracleAggregatorV1 oracle;
+  // Orocle V1
+  IOrocleAggregatorV1 oracle;
 
   // We allow max batching is 1000
   uint256 private maxBatching;
@@ -38,7 +38,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     uint256 maxBatchingLimit
   ) OrandManagementV2(publicKey) OrandECDSAV2(operator) {
     ecvrf = IOrandECVRFV2(ecvrfAddress);
-    oracle = IOracleAggregatorV1(oracleAddress);
+    oracle = IOrocleAggregatorV1(oracleAddress);
     maxBatching = maxBatchingLimit;
   }
 
@@ -53,7 +53,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
 
   // Update new ECVRF verifier
   function setNewOracle(address oracleAddress) external onlyOwner returns (bool) {
-    oracle = IOracleAggregatorV1(oracleAddress);
+    oracle = IOrocleAggregatorV1(oracleAddress);
     emit SetNewOracle(msg.sender, oracleAddress);
     return true;
   }
@@ -162,7 +162,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     if (ecdsaProof.receiverAddress.code.length > 0) {
       for (uint256 i = 0; i < maxBatching; i += 1) {
         if (!IOrandConsumerV2(ecdsaProof.receiverAddress).consumeRandomness(result)) {
-          oracle.request(0, abi.encodePacked(ecdsaProof.receiverAddress));
+          oracle.fulfill(0, abi.encodePacked(ecdsaProof.receiverAddress));
           break;
         }
         result = uint256(keccak256(abi.encodePacked(result)));
@@ -192,7 +192,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     if (receiver.code.length > 0) {
       for (uint256 i = 0; i < maxBatching; i += 1) {
         if (!IOrandConsumerV2(receiver).consumeRandomness(result)) {
-          oracle.request(0, abi.encodePacked(receiver));
+          oracle.fulfill(0, abi.encodePacked(receiver));
           break;
         }
         result = uint256(keccak256(abi.encodePacked(result)));

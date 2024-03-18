@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import '../oracle-v1/ConsumerAssetPrice.sol';
+import '../orocle-v1/ConsumerAssetPrice.sol';
 
 contract BitcoinSeller is ConsumerAssetPrice {
   constructor(address provider) ConsumerAssetPrice(provider) {}
