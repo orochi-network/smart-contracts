@@ -40,7 +40,6 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     const orandECVRF = await deployer.contractDeploy<OrandECVRFV2>('OrandV2/OrandECVRFV2', []);
     // Deploy Orocle
     const OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], TESTNET_OPERATOR);
-    await OrocleV1.newApplication(`0x${numberToBytes(1, 128)}${stringToBytes('AssetPrice', 16)}`);
 
     // Deploy Provider
     const orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
