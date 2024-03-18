@@ -12,10 +12,10 @@ import '../orocle-v1/interfaces/IOrocleAggregatorV1.sol';
 
 contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandManagementV2, OrandECDSAV2 {
   // ECVRF verifier smart contract
-  IOrandECVRFV2 ecvrf;
+  IOrandECVRFV2 private ecvrf;
 
   // Orocle V1
-  IOrocleAggregatorV1 oracle;
+  IOrocleAggregatorV1 private oracle;
 
   // We allow max batching is 1000
   uint256 private maxBatching;
@@ -37,31 +37,28 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     address oracleAddress,
     uint256 maxBatchingLimit
   ) OrandManagementV2(publicKey) OrandECDSAV2(operator) {
-    ecvrf = IOrandECVRFV2(ecvrfAddress);
-    oracle = IOrocleAggregatorV1(oracleAddress);
-    maxBatching = maxBatchingLimit;
+    _setNewECVRFVerifier(ecvrfAddress);
+    _setNewOracle(oracleAddress);
+    _setMaxBatching(maxBatchingLimit);
   }
 
   //=======================[  Owner  ]====================
 
   // Update new ECVRF verifier
   function setMaxBatching(uint256 maxBatchingLimit) external onlyOwner returns (bool) {
-    maxBatching = maxBatchingLimit;
-    emit SetBatchingLimit(msg.sender, maxBatchingLimit);
+    _setMaxBatching(maxBatchingLimit);
     return true;
   }
 
   // Update new ECVRF verifier
   function setNewOracle(address oracleAddress) external onlyOwner returns (bool) {
-    oracle = IOrocleAggregatorV1(oracleAddress);
-    emit SetNewOracle(msg.sender, oracleAddress);
+    _setNewOracle(oracleAddress);
     return true;
   }
 
   // Update new ECVRF verifier
   function setNewECVRFVerifier(address ecvrfAddress) external onlyOwner returns (bool) {
-    ecvrf = IOrandECVRFV2(ecvrfAddress);
-    emit SetNewECVRFVerifier(msg.sender, ecvrfAddress);
+    _setNewECVRFVerifier(ecvrfAddress);
     return true;
   }
 
@@ -69,6 +66,26 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   function setPublicKey(uint256[2] memory pk) external onlyOwner returns (bool) {
     _setPublicKey(pk);
     return true;
+  }
+
+  //=======================[  Internal  ]====================
+
+  // Update new ECVRF verifier
+  function _setMaxBatching(uint256 maxBatchingLimit) internal {
+    maxBatching = maxBatchingLimit;
+    emit SetBatchingLimit(msg.sender, maxBatchingLimit);
+  }
+
+  // Update new ECVRF verifier
+  function _setNewOracle(address oracleAddress) internal {
+    oracle = IOrocleAggregatorV1(oracleAddress);
+    emit SetNewOracle(msg.sender, oracleAddress);
+  }
+
+  // Update new ECVRF verifier
+  function _setNewECVRFVerifier(address ecvrfAddress) internal {
+    ecvrf = IOrandECVRFV2(ecvrfAddress);
+    emit SetNewECVRFVerifier(msg.sender, ecvrfAddress);
   }
 
   //=======================[  External  ]====================
@@ -252,5 +269,15 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
   // Get address of ECVRF verifier
   function getECVRFVerifier() external view returns (address ecvrfVerifier) {
     return address(ecvrf);
+  }
+
+  // Get address of Oracle
+  function getOracle() external view returns (address oracleAddress) {
+    return address(oracle);
+  }
+
+  // Get maximum batching limit
+  function getMaximumBatching() external view returns (uint256 maxBatchingLimit) {
+    return maxBatching;
   }
 }
