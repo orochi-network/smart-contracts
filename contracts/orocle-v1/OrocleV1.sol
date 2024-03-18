@@ -5,7 +5,6 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '../libraries/Bytes.sol';
 import './interfaces/IOrocleAggregatorV1.sol';
 import './Operatable.sol';
-import 'hardhat/console.sol';
 
 contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   using Bytes for bytes;
