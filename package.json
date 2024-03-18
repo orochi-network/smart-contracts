@@ -10,7 +10,7 @@
     "!/contracts/test/**/*"
   ],
   "scripts": {
-    "compile": "hardhat compile",
+    "compile": "rm -rf cache/ artifacts/ typechain-types/ && hardhat compile",
     "build": "hardhat compile && hardhat typechain",
     "prepack": "bash ./scripts/prepack.sh",
     "clean": "hardhat clean && rimraf build contracts/build",

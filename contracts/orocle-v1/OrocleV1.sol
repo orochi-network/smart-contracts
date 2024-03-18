@@ -122,10 +122,11 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   // Publish data to Orocle
   function _publish(uint32 appId, bytes20 identifier, bytes32 data) internal returns (bool) {
     (uint64 round, ) = _getMetadata(appId, identifier);
+    round += 1;
     // After 255 round, we will reuse the same slot, it saving a lot of gas
     database[_encodeDataKey(appId, round, identifier)] = data;
     emit PublishData(appId, round, identifier, data);
-    _setMetadata(appId, identifier, round + 1);
+    _setMetadata(appId, identifier, round);
     return true;
   }
 
