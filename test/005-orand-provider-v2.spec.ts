@@ -426,7 +426,7 @@ describe('OrandProviderV2', function () {
       OrocleV1,
       100,
     );
-    diceGame = await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);
+    diceGame = await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2, OrocleV1);
 
     const operatorAddress = await orandProviderV2.getOperator();
     console.log(`\tCorresponding address: ${correspondingAddress}`);
@@ -608,7 +608,7 @@ describe('OrandProviderV2', function () {
     ).to.emit(orandProviderV2, 'NewEpoch');
   });
 
-  it('anyone should able to gues result', async () => {
+  it('anyone should able to guess result', async () => {
     for (let i = 0; i < 1500; i += 1) {
       await expect(diceGame.connect(somebody).guessingDiceNumber(Math.round(Math.random() * 5) + 1)).to.emit(
         diceGame,
@@ -619,7 +619,7 @@ describe('OrandProviderV2', function () {
     console.log(await diceGame.getStateOfGame());
   });
 
-  it('anyone should able to gues result', async () => {
+  it('anyone should able to guess result', async () => {
     for (let i = 0; i < 1500; i += 1) {
       await expect(diceGame.connect(somebody).guessingDiceNumber(Math.round(Math.random() * 5) + 1)).to.emit(
         diceGame,

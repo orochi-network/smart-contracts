@@ -45,10 +45,6 @@ describe('OrocleV1', function () {
     OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], [operator]);
     bitcoinSeller = await deployer.contractDeploy<BitcoinSeller>('example/BitcoinSeller', [], OrocleV1);
 
-    OrocleV1.on(OrocleV1.filters['PublishData'], (appId, round, id, data) => {
-      console.log('\tData published:', appId, round, id, data);
-    });
-
     expect(await OrocleV1.isOperator(operator)).to.eq(true);
   });
 
@@ -195,7 +191,7 @@ describe('OrocleV1', function () {
     let t = await r.wait();
 
     for (let i = 0; i < 100; i += 1) {
-      expect((await OrocleV1.getData(2, 0, identifier[i])).toLowerCase()).to.eq(data[i]);
+      expect((await OrocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
     }
   });
 
