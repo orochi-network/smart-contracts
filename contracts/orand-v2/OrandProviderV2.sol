@@ -162,7 +162,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     if (ecdsaProof.receiverAddress.code.length > 0) {
       for (uint256 i = 0; i < maxBatching; i += 1) {
         if (!IOrandConsumerV2(ecdsaProof.receiverAddress).consumeRandomness(result)) {
-          oracle.request(0, abi.encodePacked(ecdsaProof.receiverAddress));
+          oracle.fulfill(0, abi.encodePacked(ecdsaProof.receiverAddress));
           break;
         }
         result = uint256(keccak256(abi.encodePacked(result)));
@@ -192,7 +192,7 @@ contract OrandProviderV2 is IOrandProviderV2, Ownable, OrandStorageV2, OrandMana
     if (receiver.code.length > 0) {
       for (uint256 i = 0; i < maxBatching; i += 1) {
         if (!IOrandConsumerV2(receiver).consumeRandomness(result)) {
-          oracle.request(0, abi.encodePacked(receiver));
+          oracle.fulfill(0, abi.encodePacked(receiver));
           break;
         }
         result = uint256(keccak256(abi.encodePacked(result)));

@@ -10,15 +10,15 @@
     "!/contracts/test/**/*"
   ],
   "scripts": {
-    "compile": "rm -rf cache/ artifacts/ typechain-types/ && hardhat compile",
-    "build": "hardhat compile && hardhat typechain",
+    "compile": "rm -rf ./cache ./artifacts ./typechain-types ./flatten  && hardhat compile",
+    "build": "yarn run compile && hardhat typechain && yarn flatten",
     "prepack": "bash ./scripts/prepack.sh",
     "clean": "hardhat clean && rimraf build contracts/build",
     "release": "yarn build && yarn flatten",
     "coverage": "hardhat compile && hardhat coverage",
     "node:local": "hardhat node",
     "test": "hardhat test",
-    "flatten": "waffle flatten && node ./clean.js"
+    "flatten": "mkdir -p flatten/ && npx hardhat flatten ./contracts/orocle-v1/OrocleV1.sol > ./flatten/OrocleV1.sol && npx hardhat flatten ./contracts/orand-v2/OrandProviderV2.sol > ./flatten/OrandProviderV2.sol && npx hardhat flatten ./contracts/orosign/OrosignV1.sol > ./flatten/OrosignV1.sol && npx hardhat flatten contracts/orosign/OrosignMasterV1.sol > ./flatten/OrosignMasterV1.sol"
   },
   "keywords": [
     "vrf",

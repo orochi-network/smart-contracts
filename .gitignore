@@ -105,3 +105,4 @@ dist
 typechain-types/
 artifacts/
 cache/
+flatten/
