@@ -11,6 +11,20 @@ error UnableToPublishData(bytes data);
 
 interface IOrocleAggregatorV1 {
   /**
+   * Emit event when a new request is created
+   * @param identifier Data identifier
+   * @param data Data
+   */
+  function request(uint256 identifier, bytes calldata data) external returns (bool);
+
+  /**
+   * Fulfill request
+   * @param identifier Data identifier
+   * @param data Data
+   */
+  function fulfill(uint256 identifier, bytes calldata data) external returns (bool);
+
+  /**
    * Get round of a given application
    * @param appId Application ID
    * @return round
@@ -44,3 +58,4 @@ interface IOrocleAggregatorV1 {
     uint32 appId,
     bytes20 identifier
   ) external view returns (uint64 round, uint64 lastUpdate, bytes32 data);
+}

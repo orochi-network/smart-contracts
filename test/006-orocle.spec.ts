@@ -23,22 +23,18 @@ function stringToBytes(input: string, length: number) {
 }
 
 export type AssetPrice = {
-  pair: string;
+  symbol: string;
   price: bigint;
 };
 
-function tokenPricePackedData(appId: number, input: AssetPrice[]): [string, string] {
+function tokenPricePackedData(input: AssetPrice[]): string {
   let packedData = '0x';
-  let chunksize = 0;
   for (let i = 0; i < input.length; i += 1) {
-    const { pair, price } = input[i];
-    const chunk = `${stringToBytes(pair, 20)}${numberToBytes(price, 256)}`;
+    const { symbol, price } = input[i];
+    const chunk = `${stringToBytes(symbol, 8)}${numberToBytes(price, 64)}`;
     packedData += chunk;
-    if (i === 0) {
-      chunksize = chunk.length / 2;
-    }
   }
-  return [`0x${numberToBytes(appId, 32)}${numberToBytes(chunksize, 224)}`, packedData];
+  return packedData;
 }
 
 describe('OrocleV1', function () {
@@ -48,6 +44,10 @@ describe('OrocleV1', function () {
 
     OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], [operator]);
     bitcoinSeller = await deployer.contractDeploy<BitcoinSeller>('example/BitcoinSeller', [], OrocleV1);
+
+    OrocleV1.on(OrocleV1.filters['PublishData'], (appId, round, id, data) => {
+      console.log('\tData published:', appId, round, id, data);
+    });
 
     expect(await OrocleV1.isOperator(operator)).to.eq(true);
   });
@@ -64,80 +64,118 @@ describe('OrocleV1', function () {
 
   it('should not able to read data since operator did not feed', async () => {
     const identifier = `0x${Buffer.from('BTC').toString('hex').padEnd(40, '0')}`;
-    await expect(OrocleV1.getLatestData(1, identifier)).to.revertedWithCustomError(OrocleV1, 'UndefinedRound');
+    await expect(OrocleV1.getData(1, 256, identifier)).to.revertedWithCustomError(OrocleV1, 'UndefinedRound');
   });
 
-  it('owner should able to create new application', async () => {
-    const appData = `0x${numberToBytes(1, 128)}${stringToBytes('AssetPrice', 16)}`;
-    await OrocleV1.newApplication(appData);
-
-    await OrocleV1.newApplication(`0x${numberToBytes(2, 128)}${stringToBytes('DataStorage', 16)}`);
-
-    console.log(OrocleV1.interface.encodeFunctionData('newApplication', [appData]));
-
-    console.log(await OrocleV1.getApplication(1));
-  });
-
-  it('operator should able to publish data to Oracle', async () => {
+  it('operator should able to publish asset price to Oracle', async () => {
     for (let j = 0; j < 520; j += 1) {
-      const data = tokenPricePackedData(1, [
+      const data = tokenPricePackedData([
         {
-          pair: 'BTC',
-          price: 42000n * 10n ** 18n,
+          symbol: 'BTC',
+          price: 42000n * 10n ** 9n,
         },
         {
-          pair: 'ETH',
-          price: 2000n * 10n ** 18n,
+          symbol: 'ETH',
+          price: 2000n * 10n ** 9n,
         },
         {
-          pair: 'DOT',
-          price: 6n * 10n ** 18n,
+          symbol: 'DOT',
+          price: 6n * 10n ** 9n,
         },
         {
-          pair: 'MINA',
-          price: 1n * 10n ** 18n,
+          symbol: 'MINA',
+          price: 1n * 10n ** 9n,
+        },
+        {
+          symbol: 'USDT',
+          price: 1n * 10n ** 9n,
+        },
+        {
+          symbol: 'USDC',
+          price: 1n * 10n ** 9n,
+        },
+        {
+          symbol: 'USA',
+          price: 1n * 10n ** 9n,
+        },
+        {
+          symbol: 'USB',
+          price: 1n * 10n ** 9n,
+        },
+        {
+          symbol: 'USG',
+          price: 1n * 10n ** 9n,
+        },
+        {
+          symbol: 'USS',
+          price: 1n * 10n ** 9n,
         },
       ]);
 
-      await OrocleV1.connect(operator).publishData(...data);
+      await OrocleV1.connect(operator).publishPrice(data);
     }
   });
 
-  it('operator should able to publish data to Oracle', async () => {
+  it('operator should able to publish asset price to Oracle', async () => {
+    for (let j = 0; j < 520; j += 1) {
+      const data = tokenPricePackedData([
+        {
+          symbol: 'BTC',
+          price: 42000n * 10n ** 9n,
+        },
+        {
+          symbol: 'ETH',
+          price: 2000n * 10n ** 9n,
+        },
+        {
+          symbol: 'DOT',
+          price: 6n * 10n ** 9n,
+        },
+        {
+          symbol: 'MINA',
+          price: 1n * 10n ** 9n,
+        },
+      ]);
+
+      await OrocleV1.connect(operator).publishPrice(data);
+    }
+  });
+
+  it('operator should able to publish token price to Oracle', async () => {
     const identifier = `0x${stringToBytes('BTC', 20)}`;
 
     const tokens = [];
     for (let i = 0; i < 100; i += 1) {
       tokens.push({
-        pair: Math.round(Math.random() * 1000000000).toString(16),
+        symbol: Math.round(Math.random() * 1000000000).toString(16),
         price: BigInt(Math.round(Math.random() * 1000000000)),
       });
     }
-    const data = tokenPricePackedData(1, [
+    const data = tokenPricePackedData([
       {
-        pair: 'BTC',
-        price: 42000n * 10n ** 18n,
+        symbol: 'BTC',
+        price: 42000n * 10n ** 9n,
       },
       {
-        pair: 'ETH',
-        price: 2000n * 10n ** 18n,
+        symbol: 'ETH',
+        price: 2000n * 10n ** 9n,
       },
       {
-        pair: 'DOT',
-        price: 6n * 10n ** 18n,
+        symbol: 'DOT',
+        price: 6n * 10n ** 9n,
       },
 
       {
-        pair: 'MINA',
-        price: 1n * 10n ** 18n,
+        symbol: 'MINA',
+        price: 1n * 10n ** 9n,
       },
       ...tokens,
     ]);
 
-    await OrocleV1.connect(operator).publishData(...data);
+    await OrocleV1.connect(operator).publishPrice(data);
     console.log('\tApp Id:', 1, 'identifier:', identifier);
     console.log('\tLatest data:', await OrocleV1.getLatestData(1, identifier));
-    console.log('\tApplication metadata:', await OrocleV1.getApplication(1));
+    console.log('\tApplication metadata:', await OrocleV1.getMetadata(1, identifier));
   });
 
   it('data correctness must be guarantee', async () => {
@@ -153,16 +191,17 @@ describe('OrocleV1', function () {
       data.push(`0x${dat.toLowerCase()}`);
     }
 
-    await OrocleV1.connect(operator).publishData(`0x${numberToBytes(2, 32)}${numberToBytes(52, 224)}`, packedData);
+    let r = await OrocleV1.connect(operator).publishData(2, packedData);
+    let t = await r.wait();
 
     for (let i = 0; i < 100; i += 1) {
-      expect((await OrocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
+      expect((await OrocleV1.getData(2, 0, identifier[i])).toLowerCase()).to.eq(data[i]);
     }
   });
 
   it('should able to use BitcoinSeller', async () => {
-    console.log('\tPrice for 2 BTC:', (await bitcoinSeller.estimate(2)) / 10n ** 18n, 'USDT');
-    const price = (await bitcoinSeller.ethOverBtc()) / 10n ** 15n;
+    console.log('\tPrice for 2 BTC:', (await bitcoinSeller.estimate(2)) / 10n ** 9n, 'USDT');
+    const price = (await bitcoinSeller.ethOverBtc()) / 10n ** 6n;
     console.log('\tPrice of 1 ETH/BTC:', Number(price) / 1000, 'BTC');
   });
 });

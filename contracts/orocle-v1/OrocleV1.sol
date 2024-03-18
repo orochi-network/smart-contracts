@@ -76,7 +76,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
     return _removeOperator(oldOperator);
   }
 
-  //=======================[  Operator View  ]====================
+  //=======================[  Operator  ]====================
 
   /**
    * Publish data to database
@@ -120,6 +120,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   //=======================[  Interal  ]====================
 
+  // Publish data to Orocle
   function _publish(uint32 appId, bytes20 identifier, bytes32 data) internal returns (bool) {
     (uint64 round, ) = _getMetadata(appId, identifier);
     // After 255 round, we will reuse the same slot, it saving a lot of gas
@@ -161,6 +162,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
     }
   }
 
+  // Decode metadata
   function _decodeMetadata(bytes32 metadataRecord) internal pure returns (uint64 round, uint64 lastUpdate) {
     assembly {
       round := shr(192, metadataRecord)
@@ -182,8 +184,8 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    */
   function _readDatabase(uint32 appId, uint64 round, bytes20 identifier) internal view returns (bytes32 data) {
     (uint64 onChainRound, ) = _getMetadata(appId, identifier);
-    // Can't get 0 round and round in the past
-    if (round == 0 || round + 255 < onChainRound) {
+    // Can't get > 255 round in the past
+    if (round + 255 < onChainRound || round > onChainRound) {
       revert UndefinedRound(round);
     }
     return database[_encodeDataKey(appId, round, identifier)];
@@ -218,7 +220,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    * @return data
    */
   function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes32 data) {
-    (uint64 round, uint64 lastUpdate) = _getMetadata(appId, identifier);
+    (uint64 round, ) = _getMetadata(appId, identifier);
     data = _readDatabase(appId, round, identifier);
   }
 
