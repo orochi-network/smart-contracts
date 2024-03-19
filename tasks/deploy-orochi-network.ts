@@ -41,6 +41,15 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Deploy Orocle
     const OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], TESTNET_OPERATOR);
 
+    /*
+      constructor(
+        uint256[2] memory publicKey,
+        address operator,
+        address ecvrfAddress,
+        address oracleAddress,
+        uint256 maxBatchingLimit
+      )
+    */
     // Deploy Provider
     const orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
       'OrandV2/OrandProviderV2',
@@ -50,7 +59,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       correspondingAddress,
       orandECVRF,
       OrocleV1,
-      100,
+      200,
     );
     await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);
 
