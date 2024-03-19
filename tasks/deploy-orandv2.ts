@@ -26,14 +26,24 @@ task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
     const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
     const orandECVRF = await deployer.contractDeploy<OrandECVRFV2>('OrandV2/OrandECVRFV2', []);
 
+    /**
+      constructor(
+        uint256[2] memory publicKey,
+        address operator,
+        address ecvrfAddress,
+        address oracleAddress,
+        uint256 maxBatchingLimit
+      )
+     */
     const orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
       'OrandV2/OrandProviderV2',
       [],
       // We going to skip 0x04 -> Pubkey format from libsecp256k1
       publicKeyToNumberish(pk),
       correspondingAddress,
-      '0x674305AD68cf9c2F572D06b8b617EF3C6c74503E',
       orandECVRF,
+      // Oracle
+      '0x674305AD68cf9c2F572D06b8b617EF3C6c74503E',
       100,
     );
     await deployer.contractDeploy<DiceGame>(
