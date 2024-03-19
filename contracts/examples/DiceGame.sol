@@ -91,7 +91,7 @@ contract DiceGame is IOrandConsumerV2, Ownable {
   }
 
   // Set oracle
-  function setOralce(address oracleAddress) external onlyOwner returns (bool) {
+  function setOracle(address oracleAddress) external onlyOwner returns (bool) {
     _setOracle(oracleAddress);
     return true;
   }

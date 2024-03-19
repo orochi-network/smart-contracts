@@ -37,7 +37,14 @@ task('deploy:oroclev1', 'Deploy Orocle V1 contracts').setAction(
     const accounts = await hre.ethers.getSigners();
     const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
     // Deploy Orocle
-    const OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], TESTNET_OPERATOR);
+    const oracle = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], TESTNET_OPERATOR);
+    const orand = await deployer.contractAttach<OrandProviderV2>(
+      'OrandV2/OrandProviderV2',
+      '0xe97FE633EC2021A71214D5d9BfF9f337dD1db5c1',
+    );
+    const diceGame = await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orand, oracle);
+    await orand.setNewOracle(oracle);
+    await diceGame.setOracle(oracle);
 
     await deployer.printReport();
   },
