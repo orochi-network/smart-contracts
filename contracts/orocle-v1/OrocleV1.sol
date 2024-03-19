@@ -219,7 +219,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   //=======================[  External View  ]====================
 
-  // Check if user is active
+  // Check if user is deactivated
   function isDeactivated(address user) external view returns (bool) {
     return deactivated[user];
   }

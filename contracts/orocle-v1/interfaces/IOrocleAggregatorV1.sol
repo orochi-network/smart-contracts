@@ -26,7 +26,7 @@ interface IOrocleAggregatorV1 {
   function fulfill(uint256 identifier, bytes calldata data) external returns (bool);
 
   /**
-   * Check if user is active
+   * Check if user is deactivated
    * @param user User address
    * @return status
    */
