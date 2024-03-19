@@ -31,7 +31,7 @@ function tokenPricePackedData(input: AssetPrice[]): string {
   let packedData = '0x';
   for (let i = 0; i < input.length; i += 1) {
     const { symbol, price } = input[i];
-    const chunk = `${stringToBytes(symbol, 8)}${numberToBytes(price, 64)}`;
+    const chunk = `${stringToBytes(symbol, 8)}${numberToBytes(price, 128)}`;
     packedData += chunk;
   }
   return packedData;
@@ -197,7 +197,7 @@ describe('OrocleV1', function () {
 
   it('should able to use BitcoinSeller', async () => {
     console.log('\tPrice for 2 BTC:', (await bitcoinSeller.estimate(2)) / 10n ** 9n, 'USDT');
-    const price = (await bitcoinSeller.ethOverBtc()) / 10n ** 6n;
-    console.log('\tPrice of 1 ETH/BTC:', Number(price) / 1000, 'BTC');
+    const price = (await bitcoinSeller.ethOverBtc()) / 10n ** 12n;
+    console.log('\tPrice of 1 ETH/BTC:', Number(price) / 1000000, 'BTC');
   });
 });

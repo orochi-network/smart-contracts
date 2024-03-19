@@ -8,6 +8,7 @@ error InvalidRoundNumber(uint64 round, uint64 requiredRound);
 error UndefinedRound(uint64 round);
 error InvalidDataLength(uint256 length);
 error UnableToPublishData(bytes data);
+error DeactivedUser(address user);
 
 interface IOrocleAggregatorV1 {
   /**
@@ -23,6 +24,13 @@ interface IOrocleAggregatorV1 {
    * @param data Data
    */
   function fulfill(uint256 identifier, bytes calldata data) external returns (bool);
+
+  /**
+   * Check if user is deactivated
+   * @param user User address
+   * @return status
+   */
+  function isDeactivated(address user) external view returns (bool);
 
   /**
    * Get round of a given application

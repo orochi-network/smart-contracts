@@ -15,6 +15,9 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   // Mapping application ID ++ identifier to application metadata
   mapping(bytes32 => bytes32) private metadata;
 
+  // Deactive user
+  mapping(address => bool) private deactivated;
+
   // Publish new data
   event PublishData(uint32 indexed application, uint64 indexed round, bytes20 indexed identifier, bytes32 data);
 
@@ -23,6 +26,17 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   // Fulfill request
   event FulFill(address indexed actor, uint256 indexed identifier, bytes indexed data);
+
+  // Deactive user status
+  event Deactive(address indexed actor, bool indexed status);
+
+  // Only active user
+  modifier onlyActive() {
+    if (deactivated[msg.sender]) {
+      revert DeactivedUser(msg.sender);
+    }
+    _;
+  }
 
   /**
    * Create new oracle
@@ -77,6 +91,12 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   //=======================[  Operator  ]====================
 
+  // Set deactive status
+  function setDeactiveStatus(address userAddress, bool status) external onlyOperator returns (bool) {
+    _setDeactivateStatus(userAddress, status);
+    return true;
+  }
+
   /**
    * Publish data to database
    * @param packedData packed data
@@ -104,20 +124,26 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
     // Decode appId and chunksize
     bytes20 identifier;
     bytes32 data;
-    if (packedData.length % 16 != 0) {
+    if (packedData.length % 24 != 0) {
       revert InvalidDataLength(packedData.length);
     }
-    for (uint256 i = 0; i < packedData.length; i += 16) {
+    for (uint256 i = 0; i < packedData.length; i += 24) {
       identifier = bytes20(bytes8(uint64(packedData.readUintUnsafe(i, 64))));
-      data = bytes32(uint256(uint64(packedData.readUintUnsafe(i + 8, 64))));
+      data = bytes32(uint256(uint64(packedData.readUintUnsafe(i + 8, 128))));
       if (!_publish(1, identifier, data)) {
-        revert UnableToPublishData(packedData.readBytes(i, 52));
+        revert UnableToPublishData(packedData.readBytes(i, 24));
       }
     }
     return true;
   }
 
   //=======================[  Interal  ]====================
+
+  // Set deactive status
+  function _setDeactivateStatus(address userAddress, bool status) internal {
+    deactivated[userAddress] = status;
+    emit Deactive(userAddress, status);
+  }
 
   // Publish data to Orocle
   function _publish(uint32 appId, bytes20 identifier, bytes32 data) internal returns (bool) {
@@ -193,6 +219,11 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   //=======================[  External View  ]====================
 
+  // Check if user is deactivated
+  function isDeactivated(address user) external view returns (bool) {
+    return deactivated[user];
+  }
+
   /**
    * Get round of a given application
    * @param appId Application ID
@@ -209,7 +240,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    * @param identifier Data identifier
    * @return data Data
    */
-  function getData(uint32 appId, uint64 round, bytes20 identifier) external view returns (bytes32 data) {
+  function getData(uint32 appId, uint64 round, bytes20 identifier) external view onlyActive returns (bytes32 data) {
     return _readDatabase(appId, round, identifier);
   }
 
@@ -219,7 +250,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
    * @param identifier Data identifier
    * @return data
    */
-  function getLatestData(uint32 appId, bytes20 identifier) external view returns (bytes32 data) {
+  function getLatestData(uint32 appId, bytes20 identifier) external view onlyActive returns (bytes32 data) {
     (uint64 round, ) = _getMetadata(appId, identifier);
     data = _readDatabase(appId, round, identifier);
   }
@@ -233,7 +264,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   function getLatestRound(
     uint32 appId,
     bytes20 identifier
-  ) external view returns (uint64 round, uint64 lastUpdate, bytes32 data) {
+  ) external view onlyActive returns (uint64 round, uint64 lastUpdate, bytes32 data) {
     (round, lastUpdate) = _getMetadata(appId, identifier);
     data = _readDatabase(appId, round, identifier);
   }

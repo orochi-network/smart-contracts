@@ -20,7 +20,7 @@ contract ConsumerAssetPrice is Ownable {
 
   /**
    * Get price of an asset based USD
-   * @dev Token price will use 9 decimal for all token
+   * @dev Token price will use 18 decimal for all token
    * @param identifier Asset identifier (e.g. BTC, ETH, USDT)
    * @return price Price
    */
@@ -30,14 +30,14 @@ contract ConsumerAssetPrice is Ownable {
 
   /**
    * Get price of a pair
-   * @dev Token price will use 9 decimal for all token
+   * @dev Token price will use 18 decimal for all token
    * (e.g. BTC/ETH => srcToken='BTC' dstToken='src')
    * @param srcToken Asset identifier of source
    * @param dstToken Asset identifier of destination
    * @return price Price
    */
   function _getPriceOfPair(bytes20 srcToken, bytes20 dstToken) internal view returns (uint256) {
-    return (_getPrice(srcToken) * 10 ** 9) / (_getPrice(dstToken));
+    return (_getPrice(srcToken) * 10 ** 18) / (_getPrice(dstToken));
   }
 
   /**
