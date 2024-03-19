@@ -8,7 +8,7 @@ error InvalidRoundNumber(uint64 round, uint64 requiredRound);
 error UndefinedRound(uint64 round);
 error InvalidDataLength(uint256 length);
 error UnableToPublishData(bytes data);
-error DeactivedUser(address user);
+error DeactivatedUser(address user);
 
 interface IOrocleAggregatorV1 {
   /**

@@ -15,7 +15,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   // Mapping application ID ++ identifier to application metadata
   mapping(bytes32 => bytes32) private metadata;
 
-  // Deactive user
+  // Deactivated user
   mapping(address => bool) private deactivated;
 
   // Publish new data
@@ -27,13 +27,13 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   // Fulfill request
   event FulFill(address indexed actor, uint256 indexed identifier, bytes indexed data);
 
-  // Deactive user status
-  event Deactive(address indexed actor, bool indexed status);
+  // Deactivated user status update
+  event Deactivated(address indexed actor, bool indexed status);
 
   // Only active user
   modifier onlyActive() {
     if (deactivated[msg.sender]) {
-      revert DeactivedUser(msg.sender);
+      revert DeactivatedUser(msg.sender);
     }
     _;
   }
@@ -91,8 +91,8 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   //=======================[  Operator  ]====================
 
-  // Set deactive status
-  function setDeactiveStatus(address userAddress, bool status) external onlyOperator returns (bool) {
+  // Set deactivated status
+  function setDeactivatedStatus(address userAddress, bool status) external onlyOperator returns (bool) {
     _setDeactivateStatus(userAddress, status);
     return true;
   }
@@ -139,10 +139,10 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
 
   //=======================[  Interal  ]====================
 
-  // Set deactive status
+  // Set deactivated status
   function _setDeactivateStatus(address userAddress, bool status) internal {
     deactivated[userAddress] = status;
-    emit Deactive(userAddress, status);
+    emit Deactivated(userAddress, status);
   }
 
   // Publish data to Orocle
