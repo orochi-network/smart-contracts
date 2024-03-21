@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import './interfaces/IOrosignV1.sol';
 
 // Unable to init new wallet
@@ -17,7 +18,7 @@ error InvalidAddress();
 /**
  * Orosign Master V1
  */
-contract OrosignMasterV1 is Ownable {
+contract OrosignMasterV1 is Ownable, ReentrancyGuard {
   // Allow master to clone other multi signature contract
   using Clones for address;
 
@@ -127,7 +128,7 @@ contract OrosignMasterV1 is Ownable {
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
-  ) external returns (address newWalletAdress) {
+  ) external nonReentrant returns (address newWalletAdress) {
     newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
     if (newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(userList, roleList, votingThreshold)) {
       revert UnableToInitNewWallet(salt, msg.sender, newWalletAdress);
