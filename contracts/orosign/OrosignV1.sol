@@ -116,7 +116,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
    ********************************************************/
 
   // Transfer role to new user
-  function transferRole(address newUser) external onlyActiveUser onlyValidAddress(newUser) returns (bool) {
+  function transferRole(address newUser) external onlyActiveUser returns (bool) {
     // New user will be activated after SECURED_TIMEOUT
     // We prevent them to vote and transfer permission to the other
     // and vote again
