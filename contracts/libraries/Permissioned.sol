@@ -83,7 +83,7 @@ contract Permissioned {
     for (uint256 i = 0; i < userList.length; i += 1) {
       // Role should not be composed of 1,2,4,8
       // PERMISSION_OBSERVE| PERMISSION_SIGN| PERMISSION_EXECUTE | PERMISSION_CREAT == 15
-      if (roleList[i] & 15 == PERMISSION_NONE) {
+      if (roleList[i] > 15 || roleList[i] == PERMISSION_NONE) {
         revert InlvaidRole(roleList[i]);
       }
       // User address must not be a zero address
