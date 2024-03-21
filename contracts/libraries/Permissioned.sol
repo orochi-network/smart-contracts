@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-// Top sender to process further
-error AccessDenied();
+// Stop sender to process further
+error InvalidUserActivePermission(address userAddress, uint256 permission);
 // Only allow registered users
 error OnlyUserAllowed();
 // Prevent contract to be reinit
@@ -46,7 +46,7 @@ contract Permissioned {
   // Only allow active users who have given role trigger smart contract
   modifier onlyActivePermission(uint256 permissions) {
     if (!_isActivePermission(msg.sender, permissions)) {
-      revert AccessDenied();
+      revert InvalidUserActivePermission(msg.sender, permissions);
     }
     _;
   }
