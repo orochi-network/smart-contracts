@@ -17,8 +17,8 @@ error InvalidReceiver(address userAddress);
 error InvalidUserOrRoleList();
 // Invalid role
 error InlvaidRole(uint256 role);
-// User address must unqiue
-error DuplicatedUser(address userAddress);
+// Duplicated user or wrong user list ordering
+error UserDuplicatedOrWrongOrder(address addedAddress, address userAddress);
 
 contract Permissioned {
   // Permission constants
@@ -92,7 +92,7 @@ contract Permissioned {
       }
       // User address must be unique
       if (userList[i] <= addedUser) {
-        revert DuplicatedUser(userList[i]);
+        revert UserDuplicatedOrWrongOrder(addedUser, userList[i]);
       }
       addedUser = userList[i];
       // Store user's address -> user list
