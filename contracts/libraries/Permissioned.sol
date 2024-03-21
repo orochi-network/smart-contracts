@@ -70,7 +70,7 @@ contract Permissioned {
     if (totalUser > 0) {
       revert OnlyAbleToInitOnce();
     }
-    if (userList.length == 0 || roleList.length == 0) {
+    if (userList.length == 0) {
       revert InvalidUserOrRoleList();
     }
     // Data length should match
