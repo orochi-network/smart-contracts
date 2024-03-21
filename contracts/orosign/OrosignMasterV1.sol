@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import './interfaces/IOrosignV1.sol';
 
 // Unable to init new wallet
@@ -11,19 +12,18 @@ error UnableToInitNewWallet(uint96 salt, address owner, address newWallet);
 error OnlyOperatorAllowed(address actor);
 // Invalid operator address
 error InvalidOperator(address operatorAddress);
+// Invalid Address
+error InvalidAddress();
 
 /**
  * Orosign Master V1
  */
-contract OrosignMasterV1 is Ownable {
+contract OrosignMasterV1 is Ownable, ReentrancyGuard {
   // Allow master to clone other multi signature contract
   using Clones for address;
 
   // Wallet implementation
   address private implementation;
-
-  // Chain id
-  uint256 private chainId;
 
   // Operator list
   mapping(address => bool) private operator;
@@ -48,11 +48,19 @@ contract OrosignMasterV1 is Ownable {
     _;
   }
 
-  // Pass parameters to parent contract
-  constructor(uint256 inputChainId, address multisigImplementation, address operatorAddress) {
-    // We use input chainId instead of EIP-1344
-    chainId = inputChainId;
+  // We only allow valid address
+  modifier onlyValidAddress(address validatingAddress) {
+    if (validatingAddress == address(0)) {
+      revert InvalidAddress();
+    }
+    _;
+  }
 
+  // Pass parameters to parent contract
+  constructor(
+    address multisigImplementation,
+    address operatorAddress
+  ) onlyValidAddress(multisigImplementation) onlyValidAddress(operatorAddress) {
     // Set the address of orosign implementation
     implementation = multisigImplementation;
 
@@ -85,7 +93,7 @@ contract OrosignMasterV1 is Ownable {
    ********************************************************/
 
   // Add new operator
-  function addOperator(address newOperator) external onlyOwner returns (bool) {
+  function addOperator(address newOperator) external onlyOwner onlyValidAddress(newOperator) returns (bool) {
     _addOperator(newOperator);
     return true;
   }
@@ -101,7 +109,9 @@ contract OrosignMasterV1 is Ownable {
    ********************************************************/
 
   // Upgrade new implementation
-  function upgradeImplementation(address newImplementation) external onlyOperator returns (bool) {
+  function upgradeImplementation(
+    address newImplementation
+  ) external onlyOperator onlyValidAddress(newImplementation) returns (bool) {
     // Overwrite current implementation address
     implementation = newImplementation;
     emit UpgradeImplementation(implementation, newImplementation);
@@ -118,11 +128,9 @@ contract OrosignMasterV1 is Ownable {
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
-  ) external returns (address newWalletAdress) {
+  ) external nonReentrant returns (address newWalletAdress) {
     newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
-    if (
-      newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(chainId, userList, roleList, votingThreshold)
-    ) {
+    if (newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(userList, roleList, votingThreshold)) {
       revert UnableToInitNewWallet(salt, msg.sender, newWalletAdress);
     }
     emit CreateNewWallet(salt, msg.sender, newWalletAdress);
@@ -133,7 +141,7 @@ contract OrosignMasterV1 is Ownable {
    * Internal View section
    ********************************************************/
 
-  // Packing adderss and uint96 to a single bytes32
+  // Packing address and uint96 to a single bytes32
   // 96 bits a ++ 160 bits b
   function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
     assembly {
@@ -146,8 +154,8 @@ contract OrosignMasterV1 is Ownable {
     return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
   }
 
-  // Check a Multi Signature Wallet is existed
-  function _isMultiSigExist(address walletAddress) internal view returns (bool isExist) {
+  // Check a smart contract is existed
+  function _isContractExist(address walletAddress) internal view returns (bool isExist) {
     return walletAddress.code.length > 0;
   }
 
@@ -157,7 +165,7 @@ contract OrosignMasterV1 is Ownable {
 
   // Get metadata of Orosign Master V1
   function getMetadata() external view returns (uint256 sChainId, address sImplementation) {
-    sChainId = chainId;
+    sChainId = block.chainid;
     sImplementation = implementation;
   }
 
@@ -166,14 +174,14 @@ contract OrosignMasterV1 is Ownable {
     return _predictWalletAddress(salt, creatorAddress);
   }
 
-  // Check a Multi Signature Wallet is existed
-  function isMultiSigExist(address walletAddress) external view returns (bool isExist) {
-    return _isMultiSigExist(walletAddress);
+  // Check a smart contract is existed
+  function isContractExist(address walletAddress) external view returns (bool isExist) {
+    return _isContractExist(walletAddress);
   }
 
   // Check a Multi Signature Wallet existing by creator and salt
-  function isMultiSigExistByCreator(uint96 salt, address creatorAddress) external view returns (bool isExist) {
-    return _isMultiSigExist(_predictWalletAddress(salt, creatorAddress));
+  function isMultiSigExist(uint96 salt, address creatorAddress) external view returns (bool isExist) {
+    return _isContractExist(_predictWalletAddress(salt, creatorAddress));
   }
 
   // Pacing salt and creator address

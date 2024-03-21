@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-// Top sender to process further
-error AccessDenied();
+// Stop sender to process further
+error InvalidUserActivePermission(address userAddress, uint256 permission);
 // Only allow registered users
 error OnlyUserAllowed();
 // Prevent contract to be reinit
@@ -13,6 +13,12 @@ error RecordLengthMismatch();
 error InvalidAddress();
 // Invalid address
 error InvalidReceiver(address userAddress);
+// Invalid user or role list
+error InvalidUserOrRoleList();
+// Invalid role
+error InlvaidRole(uint256 role);
+// Duplicated user or wrong user list ordering
+error UserDuplicatedOrWrongOrder(address addedAddress, address userAddress);
 
 contract Permissioned {
   // Permission constants
@@ -40,7 +46,7 @@ contract Permissioned {
   // Only allow active users who have given role trigger smart contract
   modifier onlyActivePermission(uint256 permissions) {
     if (!_isActivePermission(msg.sender, permissions)) {
-      revert AccessDenied();
+      revert InvalidUserActivePermission(msg.sender, permissions);
     }
     _;
   }
@@ -59,9 +65,13 @@ contract Permissioned {
 
   // Init method which can be called once
   function _init(address[] memory userList, uint256[] memory roleList) internal {
+    address addedUser = address(0);
     // Make sure that we only init this once
     if (totalUser > 0) {
       revert OnlyAbleToInitOnce();
+    }
+    if (userList.length == 0) {
+      revert InvalidUserOrRoleList();
     }
     // Data length should match
     if (userList.length != roleList.length) {
@@ -71,6 +81,20 @@ contract Permissioned {
     RoleRecord memory newRoleRecord;
     newRoleRecord.activeTime = 0;
     for (uint256 i = 0; i < userList.length; i += 1) {
+      // Role should not be composed of 1,2,4,8
+      // PERMISSION_OBSERVE| PERMISSION_SIGN| PERMISSION_EXECUTE | PERMISSION_CREAT == 15
+      if (roleList[i] > 15 || roleList[i] == PERMISSION_NONE) {
+        revert InlvaidRole(roleList[i]);
+      }
+      // User address must not be a zero address
+      if (address(0) == userList[i]) {
+        revert InvalidAddress();
+      }
+      // User address must be unique
+      if (userList[i] <= addedUser) {
+        revert UserDuplicatedOrWrongOrder(addedUser, userList[i]);
+      }
+      addedUser = userList[i];
       // Store user's address -> user list
       user[i] = userList[i];
       // Mapping user address -> role
@@ -111,7 +135,7 @@ contract Permissioned {
    * Internal View section
    ********************************************************/
 
-  // Packing adderss and uint96 to a single bytes32
+  // Packing address and uint96 to a single bytes32
   // 96 bits a ++ 160 bits b
   function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
     assembly {

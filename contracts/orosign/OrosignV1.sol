@@ -3,18 +3,21 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '../libraries/Bytes.sol';
 import '../libraries/Permissioned.sol';
 import './interfaces/IOrosignV1.sol';
 
 // Duplicated signer
 error DuplicatedSigner(address singed, address recovered);
+// Invalid Orosign address
+error InvalidOrosignAddress(address orosignAddress);
 
 /**
  * Orosign V1
  * Multi Signature Wallet based on off-chain ECDSA Proof
  */
-contract OrosignV1 is IOrosignV1, Permissioned {
+contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
   // Address lib providing safe {call} and {delegatecall}
   using Address for address;
 
@@ -39,9 +42,6 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Secure timeout
   uint256 private constant SECURED_TIMEOUT = 3 days;
 
-  // Chain Id
-  uint256 private chainId;
-
   // Quick transaction nonce
   uint256 private nonce;
 
@@ -54,12 +54,19 @@ contract OrosignV1 is IOrosignV1, Permissioned {
   // Execute transaction event
   event ExecutedTransaction(address indexed target, uint256 indexed value, bytes indexed data);
 
+  // We only allow valid address
+  modifier onlyValidAddress(address validatingAddress) {
+    if (validatingAddress == address(0)) {
+      revert InvalidAddress();
+    }
+    _;
+  }
+
   // This contract able to receive fund
   receive() external payable {}
 
   // Init method which can be called once
   function init(
-    uint256 inputChainId,
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
@@ -95,9 +102,6 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert InvalidPermission(countingSigner, countingExecutor, countingCreator);
     }
 
-    // These values can be set once
-    chainId = inputChainId;
-
     // Store voting threshold
     threshold = votingThreshold;
 
@@ -131,7 +135,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     bytes memory creatorSignature,
     bytes[] memory signatureList,
     bytes memory message
-  ) external onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
+  ) external nonReentrant onlyActivePermission(PERMISSION_EXECUTE) returns (bool) {
     uint256 totalSigned = 0;
     // Recover creator address from creator signature
     address creatorAddress = message.toEthSignedMessageHash().recover(creatorSignature);
@@ -142,7 +146,7 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert ProofNoCreator();
     }
 
-    // Couting total signed proof
+    // Counting total signed proof
     for (uint256 i = 0; i < signatureList.length; i += 1) {
       address recoveredSigner = message.toEthSignedMessageHash().recover(signatureList[i]);
       if (recoveredSigner <= signedAddress) {
@@ -164,9 +168,14 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     // Decode packed data from packed transaction
     PackedTransaction memory packedTransaction = _decodePackedTransaction(message);
 
+    // Orosign address should be the same
+    if (packedTransaction.orosignAddress != address(this)) {
+      revert InvalidOrosignAddress(packedTransaction.orosignAddress);
+    }
+
     // Chain Id should be the same
-    if (packedTransaction.chainId != chainId) {
-      revert ProofChainIdMismatch(packedTransaction.chainId, chainId);
+    if (packedTransaction.chainId != block.chainid) {
+      revert ProofChainIdMismatch(packedTransaction.chainId, block.chainid);
     }
     // Nonce should be equal
     if (packedTransaction.nonce != nonce) {
@@ -177,6 +186,8 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert ProofExpired(packedTransaction.votingDeadline, packedTransaction.currentBlockTime);
     }
 
+    emit ExecutedTransaction(packedTransaction.target, packedTransaction.value, packedTransaction.data);
+
     // Increasing nonce, prevent replay attack
     nonce = packedTransaction.nonce + 1;
 
@@ -186,7 +197,6 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     } else {
       payable(address(packedTransaction.target)).transfer(packedTransaction.value);
     }
-    emit ExecutedTransaction(packedTransaction.target, packedTransaction.value, packedTransaction.data);
     return true;
   }
 
@@ -209,19 +219,19 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       chainId: uint64(packedNonce >> 192),
       votingDeadline: uint64(packedNonce >> 128),
       nonce: uint128(packedNonce),
-      // This value isn't actuall existing in the proof
+      // This value isn't actually existing in the proof
       currentBlockTime: uint96(block.timestamp),
       // Transaction detail
       target: txData.readAddress(32),
       value: txData.readUint256(52),
-      data: txData.readBytes(84, txData.length - 84)
+      orosignAddress: txData.readAddress(84),
+      data: txData.readBytes(104, txData.length - 104)
     });
     return decodedTransaction;
   }
 
   // Get packed transaction to create raw ECDSA proof
   function _encodePackedTransaction(
-    uint256 inputChainId,
     uint256 timeout,
     address target,
     uint256 value,
@@ -231,7 +241,16 @@ contract OrosignV1 is IOrosignV1, Permissioned {
       revert InsecuredTimeout(timeout);
     }
     return
-      abi.encodePacked(uint64(inputChainId), uint64(block.timestamp + timeout), uint128(nonce), target, value, data);
+      abi.encodePacked(
+        block.chainid,
+        uint64(block.timestamp + timeout),
+        uint128(nonce),
+        target,
+        value,
+        // Add addres of this contract to prevent replay attack
+        address(this),
+        data
+      );
   }
 
   /*******************************************************
@@ -247,13 +266,12 @@ contract OrosignV1 is IOrosignV1, Permissioned {
 
   // Packing transaction to create raw ECDSA proof
   function encodePackedTransaction(
-    uint256 inputChainId,
     uint256 timeout,
     address target,
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return _encodePackedTransaction(inputChainId, timeout, target, value, data);
+    return _encodePackedTransaction(timeout, target, value, data);
   }
 
   // Quick packing transaction to create raw ECDSA proof
@@ -262,13 +280,13 @@ contract OrosignV1 is IOrosignV1, Permissioned {
     uint256 value,
     bytes memory data
   ) external view returns (bytes memory) {
-    return _encodePackedTransaction(chainId, SECURED_TIMEOUT / 3, target, value, data);
+    return _encodePackedTransaction(SECURED_TIMEOUT / 3, target, value, data);
   }
 
   // Get multisig metadata
   function getMetadata() external view returns (OrosignV1Metadata memory result) {
     result = OrosignV1Metadata({
-      chainId: chainId,
+      chainId: block.chainid,
       nonce: nonce,
       totalSigner: totalSigner,
       threshold: threshold,

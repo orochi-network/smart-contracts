@@ -29,6 +29,7 @@ interface IOrosignV1 {
     uint96 currentBlockTime;
     address target;
     uint256 value;
+    address orosignAddress;
     bytes data;
   }
 
@@ -41,10 +42,5 @@ interface IOrosignV1 {
     uint256 blockTimestamp;
   }
 
-  function init(
-    uint256 chainId,
-    address[] memory userList,
-    uint256[] memory roleList,
-    uint256 threshold
-  ) external returns (bool);
+  function init(address[] memory userList, uint256[] memory roleList, uint256 threshold) external returns (bool);
 }
