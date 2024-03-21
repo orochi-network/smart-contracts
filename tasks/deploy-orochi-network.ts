@@ -27,7 +27,7 @@ function stringToBytes(input: string, length: number) {
     .padEnd(length * 2, '0');
 }
 
-const TESTNET_OPERATOR = ['0xc4fFb047C1C6600FC82c68376C502bAa72ea2074', '0x4d8Ebc5601683C5b50dADA3066940e234146C07E'];
+const TESTNET_OPERATOR = ['0x22d5418e846bDf01EeD373f879Ee43283b061402', '0x8b8626544A03986fAB5134888c031CB61CC76680'];
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -61,12 +61,15 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       OrocleV1,
       200,
     );
-    await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);
+    //await deployer.contractDeploy<DiceGame>('examples/DiceGame', [], orandProviderV2);
 
     console.log(
       `Corresponding address: ${correspondingAddress} , is valid publicKey?:`,
       correspondingAddress === (await orandProviderV2.getOperator()),
     );
+
+    await OrocleV1.transferOwnership('0xCa484B766085992584af778F61579bB29EcE0BC4');
+    await orandProviderV2.transferOwnership('0xCa484B766085992584af778F61579bB29EcE0BC4');
 
     await deployer.printReport();
   },
