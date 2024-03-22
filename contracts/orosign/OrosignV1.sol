@@ -234,7 +234,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     }
     return
       abi.encodePacked(
-        block.chainid,
+        uint64(block.chainid),
         uint64(block.timestamp + timeout),
         uint128(nonce),
         target,
