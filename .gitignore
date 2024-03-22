@@ -106,3 +106,4 @@ typechain-types/
 artifacts/
 cache/
 flatten/
+.env*

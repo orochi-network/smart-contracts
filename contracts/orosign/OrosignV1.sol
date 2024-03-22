@@ -54,14 +54,6 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
   // Execute transaction event
   event ExecutedTransaction(address indexed target, uint256 indexed value, bytes indexed data);
 
-  // We only allow valid address
-  modifier onlyValidAddress(address validatingAddress) {
-    if (validatingAddress == address(0)) {
-      revert InvalidAddress();
-    }
-    _;
-  }
-
   // This contract able to receive fund
   receive() external payable {}
 
@@ -242,7 +234,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
     }
     return
       abi.encodePacked(
-        block.chainid,
+        uint64(block.chainid),
         uint64(block.timestamp + timeout),
         uint128(nonce),
         target,
