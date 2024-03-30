@@ -44,6 +44,16 @@ const config: HardhatUserConfig = {
       chainId: 28122024,
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
+    seitest: {
+      url: 'https://evm-rpc-arctic-1.sei-apis.com',
+      chainId: 713715,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
+    u2umain: {
+      url: 'https://rpc-mainnet.uniultra.xyz',
+      chainId: 39,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
     ethereum: {
       url: 'https://eth-mainnet.public.blastapi.io',
       chainId: 1,
