@@ -5,7 +5,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer } from '../helpers';
 import { OrocleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { env } from '../env';
-import { getAddress, keccak256 } from 'ethers';
+import { getAddress, isAddress, keccak256 } from 'ethers';
 
 const affineToNumberish = (affine: string): [string, string] => {
   const aff = affine.trim().replace(/^0x/gi, '').padStart(128, '0');
@@ -27,13 +27,23 @@ function stringToBytes(input: string, length: number) {
     .padEnd(length * 2, '0');
 }
 
-const OWNER = '0xA2096671D4A0939D4D50bd7AAB612883e98B4D47';
-const OPERATORS = ['0xdB0C9227974d080EB5B236914f610a49d908AAD2', '0xdEAaBBA9149AC4be9feE5ecA0939232688E19756'];
+const OWNER = env.OROCHI_OWNER.trim();
+const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
+    if (!isAddress(OWNER)) {
+      throw new Error('Invalid owner address');
+    }
+    for (let i = 0; i < OPERATORS.length; i += 1) {
+      if (!isAddress(OPERATORS[i])) {
+        throw new Error(`Invalid operator address ${i}: ${OPERATORS[i]}`);
+      }
+      console.log(`Operator [${i}]:`, OPERATORS[i]);
+    }
+    console.log('Owner:', OWNER);
 
     //m/44'/60'/0'/0/0
     //m/44'/60'/0'/0/0/0
