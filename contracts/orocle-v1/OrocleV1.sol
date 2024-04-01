@@ -129,7 +129,7 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
     }
     for (uint256 i = 0; i < packedData.length; i += 24) {
       identifier = bytes20(bytes8(uint64(packedData.readUintUnsafe(i, 64))));
-      data = bytes32(uint256(uint64(packedData.readUintUnsafe(i + 8, 128))));
+      data = bytes32(uint256(uint128(packedData.readUintUnsafe(i + 8, 128))));
       if (!_publish(1, identifier, data)) {
         revert UnableToPublishData(packedData.readBytes(i, 24));
       }

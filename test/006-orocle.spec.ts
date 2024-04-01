@@ -8,7 +8,7 @@ import { randomBytes } from 'crypto';
 let owner: SignerWithAddress;
 let operator: SignerWithAddress;
 let somebody: SignerWithAddress;
-let OrocleV1: OrocleV1;
+let orocleV1: OrocleV1;
 let bitcoinSeller: BitcoinSeller;
 let deployer: Deployer;
 
@@ -42,25 +42,25 @@ describe('OrocleV1', function () {
     [owner, operator, somebody] = await hre.ethers.getSigners();
     deployer = Deployer.getInstance(hre).connect(owner);
 
-    OrocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], [operator]);
-    bitcoinSeller = await deployer.contractDeploy<BitcoinSeller>('example/BitcoinSeller', [], OrocleV1);
+    orocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], [operator]);
+    bitcoinSeller = await deployer.contractDeploy<BitcoinSeller>('example/BitcoinSeller', [], orocleV1);
 
-    expect(await OrocleV1.isOperator(operator)).to.eq(true);
+    expect(await orocleV1.isOperator(operator)).to.eq(true);
   });
 
   it('owner should able to add an operator', async () => {
-    await OrocleV1.addOperator(somebody);
-    expect(await OrocleV1.isOperator(somebody)).to.eq(true);
+    await orocleV1.addOperator(somebody);
+    expect(await orocleV1.isOperator(somebody)).to.eq(true);
   });
 
   it('owner should able to remove an operator', async () => {
-    await OrocleV1.removeOperator(somebody);
-    expect(await OrocleV1.isOperator(somebody)).to.eq(false);
+    await orocleV1.removeOperator(somebody);
+    expect(await orocleV1.isOperator(somebody)).to.eq(false);
   });
 
   it('should not able to read data since operator did not feed', async () => {
     const identifier = `0x${Buffer.from('BTC').toString('hex').padEnd(40, '0')}`;
-    await expect(OrocleV1.getData(1, 256, identifier)).to.revertedWithCustomError(OrocleV1, 'UndefinedRound');
+    await expect(orocleV1.getData(1, 256, identifier)).to.revertedWithCustomError(orocleV1, 'UndefinedRound');
   });
 
   it('operator should able to publish asset price to Oracle', async () => {
@@ -108,7 +108,7 @@ describe('OrocleV1', function () {
         },
       ]);
 
-      await OrocleV1.connect(operator).publishPrice(data);
+      await orocleV1.connect(operator).publishPrice(data);
     }
   });
 
@@ -133,7 +133,7 @@ describe('OrocleV1', function () {
         },
       ]);
 
-      await OrocleV1.connect(operator).publishPrice(data);
+      await orocleV1.connect(operator).publishPrice(data);
     }
   });
 
@@ -168,10 +168,10 @@ describe('OrocleV1', function () {
       ...tokens,
     ]);
 
-    await OrocleV1.connect(operator).publishPrice(data);
+    await orocleV1.connect(operator).publishPrice(data);
     console.log('\tApp Id:', 1, 'identifier:', identifier);
-    console.log('\tLatest data:', await OrocleV1.getLatestData(1, identifier));
-    console.log('\tApplication metadata:', await OrocleV1.getMetadata(1, identifier));
+    console.log('\tLatest data:', await orocleV1.getLatestData(1, identifier));
+    console.log('\tApplication metadata:', await orocleV1.getMetadata(1, identifier));
   });
 
   it('data correctness must be guarantee', async () => {
@@ -187,11 +187,11 @@ describe('OrocleV1', function () {
       data.push(`0x${dat.toLowerCase()}`);
     }
 
-    let r = await OrocleV1.connect(operator).publishData(2, packedData);
+    let r = await orocleV1.connect(operator).publishData(2, packedData);
     let t = await r.wait();
 
     for (let i = 0; i < 100; i += 1) {
-      expect((await OrocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
+      expect((await orocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
     }
   });
 
@@ -199,5 +199,23 @@ describe('OrocleV1', function () {
     console.log('\tPrice for 2 BTC:', (await bitcoinSeller.estimate(2)) / 10n ** 9n, 'USDT');
     const price = (await bitcoinSeller.ethOverBtc()) / 10n ** 12n;
     console.log('\tPrice of 1 ETH/BTC:', Number(price) / 1000000, 'BTC');
+  });
+
+  it('Oracle must pack correct data', async () => {
+    const data =
+      '42544300000000000000000000000eedeb84ba803e17d400455448000000000000000000000000c36f172341703e55b0424e42000000000000000000000000204148a38e0d6c00004144410000000000000000000000000008f70d93cce700005852500000000000000000000000000008b27c5460bcc000555344430000000000000000000000000de000cd866f80004c494e4b00000000000000000000000108d46f64d8c779d0534f4c0000000000000000000000000af98ee25fb9d4d380444f5400000000000000000000000000868f1ca0de2fff0041564158000000000000000000000002e62f20a69be3f3c0';
+    await orocleV1.connect(operator).publishPrice(`0x${data}`);
+    for (let i = 0; i < data.length; i += 48) {
+      const chunk = data.substring(i, i + 48);
+      const identifier = `0x${chunk.substring(0, 16).padEnd(40, '0')}`;
+      const price = BigInt(`0x${chunk.substring(16)}`);
+      const [round, timestamp, value] = await orocleV1.getLatestRound(1, identifier);
+      console.log(
+        Buffer.from(chunk.substring(0, 16), 'hex').toString().trim(),
+        Number(price / 10n ** 12n) / 1000000,
+        'USDT',
+      );
+      expect(BigInt(value)).to.eq(price);
+    }
   });
 });
