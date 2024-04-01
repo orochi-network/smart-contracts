@@ -18,7 +18,7 @@ task('deploy:oroclev1', 'Deploy Orocle V1 contracts').setAction(
     // Deploy Orocle
     const orocle = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], OPERATORS);
 
-    orocle.transferOwnership(OWNER);
+    await orocle.transferOwnership(OWNER);
 
     await deployer.printReport();
   },
