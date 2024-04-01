@@ -49,6 +49,11 @@ const config: HardhatUserConfig = {
       chainId: 713715,
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
+    a8main: {
+      url: 'https://rpc.ancient8.gg',
+      chainId: 888888888,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
     u2umain: {
       url: 'https://rpc-mainnet.uniultra.xyz',
       chainId: 39,
