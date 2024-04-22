@@ -101,6 +101,28 @@ const config: HardhatUserConfig = {
         mnemonic: env.OROCHI_MNEMONIC,
       },
     },
+    moonbeamTest: {
+      url: 'https://rpc.api.moonbase.moonbeam.network',
+      chainId: 1287,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    saakuruTest: {
+      url: 'https://rpc.testnet.oasys.games/',
+      chainId: 9372,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    zkFairTest: {
+      url: 'https://testnet-rpc.zkfair.io',
+      chainId: 43851,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+
     // Hard hat network
     hardhat: {
       chainId: 911,
