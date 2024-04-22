@@ -101,6 +101,13 @@ const config: HardhatUserConfig = {
         mnemonic: env.OROCHI_MNEMONIC,
       },
     },
+    local: {
+      url: 'http://127.0.0.1:8545',
+      chainId: 911,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
     // Hard hat network
     hardhat: {
       chainId: 911,
@@ -108,6 +115,10 @@ const config: HardhatUserConfig = {
       blockGasLimit: 30000000,
       initialBaseFeePerGas: 0,
       gas: 25000000,
+      /*mining: {
+        auto: true,
+        interval: 2000,
+      },*/
       accounts: {
         mnemonic: env.OROCHI_MNEMONIC,
         path: "m/44'/60'/0'/0",

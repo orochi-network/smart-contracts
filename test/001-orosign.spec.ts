@@ -1,7 +1,7 @@
 import hre from 'hardhat';
-import chai, { expect } from 'chai';
+import { expect } from 'chai';
 import { BigO, OrosignV1, OrosignMasterV1 } from '../typechain-types';
-import { ethers, getBytes } from 'ethers';
+import { getBytes } from 'ethers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import Deployer from '../helpers/deployer';
 import { dayToSec, printAllEvents } from '../helpers/functions';
@@ -181,10 +181,28 @@ describe('OrosignV1', function () {
     );
   });
 
-  it('anyone could able to create new signature from multi signature master', async () => {
+  it('anyone could able to create new multisig from multi signature master', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
 
-    printAllEvents(await contractMultiSigMaster.createWallet(1, [admin1, admin2], [ROLE_ADMIN, ROLE_ADMIN], 1));
+    const list = sortByAddress([
+      {
+        address: admin1.address,
+        data: ROLE_ADMIN,
+      },
+      {
+        address: admin2.address,
+        data: ROLE_ADMIN,
+      },
+    ]);
+
+    printAllEvents(
+      await contractMultiSigMaster.createWallet(
+        1,
+        list.map((e) => e.address),
+        list.map((e) => e.data),
+        1,
+      ),
+    );
 
     cloneMultiSig = <OrosignV1>(
       await deployer.contractAttach(
