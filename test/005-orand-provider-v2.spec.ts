@@ -4,6 +4,7 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { DiceGame, OrocleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { getAddress, keccak256 } from 'ethers';
+import { HexString, OrandEncoding } from '@orochi-network/utilities';
 
 let deployerSigner: SignerWithAddress;
 let orandECVRFV2: OrandECVRFV2;
@@ -381,32 +382,18 @@ const epochs = [
   return a.epoch - b.epoch;
 });
 
-const publicKeyToNumberish = (pubkey: string): [string, string] => {
-  const aff = pubkey.trim().replace(/^0x/gi, '').padStart(130, '0').substring(2, 130);
-  return affineToNumberish(aff);
-};
-
-const affineToNumberish = (affine: string): [string, string] => {
-  const aff = affine.trim().replace(/^0x/gi, '').padStart(128, '0');
-  return [`0x${aff.substring(0, 64)}`, `0x${aff.substring(64, 128)}`];
-};
-
-const scalarToNumberish = (scala: string): string => {
-  return `0x${scala.trim().replace(/^0x/gi, '').padStart(32, '0')}`;
-};
-
-const toEcvrfProof = (e: any) => {
+const toEcvrfProof = (e: (typeof epochs)[1]) => {
   return <any>{
-    pk: publicKeyToNumberish(pk),
-    gamma: affineToNumberish(e.gamma),
-    alpha: scalarToNumberish(e.alpha),
-    c: scalarToNumberish(e.c),
-    s: scalarToNumberish(e.s),
-    y: scalarToNumberish(e.y),
-    uWitness: `0x${e.witnessAddress}`,
-    cGammaWitness: affineToNumberish(e.witnessGamma),
-    sHashWitness: affineToNumberish(e.witnessHash),
-    zInv: scalarToNumberish(e.inverseZ),
+    pk: OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
+    gamma: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.gamma)),
+    alpha: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.alpha)),
+    c: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.c)),
+    s: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.s)),
+    y: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.y)),
+    uWitness: getAddress(e.witnessAddress),
+    cGammaWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessGamma)),
+    sHashWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessHash)),
+    zInv: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.inverseZ)),
   };
 };
 
@@ -420,7 +407,7 @@ describe('OrandProviderV2', function () {
     orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
       'OrandV2/OrandProviderV2',
       [],
-      publicKeyToNumberish(pk),
+      OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
       correspondingAddress,
       orandECVRFV2,
       OrocleV1,
@@ -430,7 +417,7 @@ describe('OrandProviderV2', function () {
 
     const operatorAddress = await orandProviderV2.getOperator();
     console.log(`\tCorresponding address: ${correspondingAddress}`);
-    console.log('\tProvider opeartor:', operatorAddress);
+    console.log('\tProvider operator:', operatorAddress);
     expect(correspondingAddress.toLowerCase()).to.eq('0xed6a792f694b7a52e7cf4b7f02daa41a7c92f362');
     expect(operatorAddress.toLowerCase()).to.eq('0xed6a792f694b7a52e7cf4b7f02daa41a7c92f362');
   });
@@ -451,7 +438,7 @@ describe('OrandProviderV2', function () {
     ).to.revertedWithCustomError(orandProviderV2, 'InvalidAlphaValue');
   });
 
-  it('should able to create new gensis for receiver', async () => {
+  it('should able to create new genesis for receiver', async () => {
     const { alpha, gamma, s, c, cGammaWitness, sHashWitness, zInv, uWitness } = toEcvrfProof(epochs[0]);
     await expect(
       orandProviderV2.genesis(`0x${epochs[0].signatureProof}`, {
@@ -584,7 +571,7 @@ describe('OrandProviderV2', function () {
         gamma,
         c,
         // Craft a malicious proof
-        s: scalarToNumberish(epochs[1].s),
+        s: OrandEncoding.toScalar(HexString.hexPrefixAdd(epochs[1].s)),
         alpha,
         uWitness,
         cGammaWitness,
