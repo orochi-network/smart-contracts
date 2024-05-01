@@ -4,6 +4,7 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { BitcoinSeller, OrocleV1 } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { randomBytes } from 'crypto';
+import { HexString, OrocleEncoding, TDataRecord } from '@orochi-network/utilities';
 
 let owner: SignerWithAddress;
 let operator: SignerWithAddress;
@@ -11,31 +12,6 @@ let somebody: SignerWithAddress;
 let orocleV1: OrocleV1;
 let bitcoinSeller: BitcoinSeller;
 let deployer: Deployer;
-
-function numberToBytes(input: number | bigint, bits: number) {
-  return input.toString(16).padStart((bits / 8) * 2, '0');
-}
-
-function stringToBytes(input: string, length: number) {
-  return Buffer.from(input)
-    .toString('hex')
-    .padEnd(length * 2, '0');
-}
-
-export type AssetPrice = {
-  symbol: string;
-  price: bigint;
-};
-
-function tokenPricePackedData(input: AssetPrice[]): string {
-  let packedData = '0x';
-  for (let i = 0; i < input.length; i += 1) {
-    const { symbol, price } = input[i];
-    const chunk = `${stringToBytes(symbol, 8)}${numberToBytes(price, 128)}`;
-    packedData += chunk;
-  }
-  return packedData;
-}
 
 describe('OrocleV1', function () {
   it('Orocle V1 must be deployed correctly', async () => {
@@ -65,7 +41,7 @@ describe('OrocleV1', function () {
 
   it('operator should able to publish asset price to Oracle', async () => {
     for (let j = 0; j < 520; j += 1) {
-      const data = tokenPricePackedData([
+      const data = OrocleEncoding.encodeTokenPrice([
         {
           symbol: 'BTC',
           price: 42000n * 10n ** 9n,
@@ -114,7 +90,7 @@ describe('OrocleV1', function () {
 
   it('operator should able to publish asset price to Oracle', async () => {
     for (let j = 0; j < 520; j += 1) {
-      const data = tokenPricePackedData([
+      const data = OrocleEncoding.encodeTokenPrice([
         {
           symbol: 'BTC',
           price: 42000n * 10n ** 9n,
@@ -138,7 +114,7 @@ describe('OrocleV1', function () {
   });
 
   it('operator should able to publish token price to Oracle', async () => {
-    const identifier = `0x${stringToBytes('BTC', 20)}`;
+    const identifier = OrocleEncoding.toIdentifier('BTC');
 
     const tokens = [];
     for (let i = 0; i < 100; i += 1) {
@@ -147,7 +123,7 @@ describe('OrocleV1', function () {
         price: BigInt(Math.round(Math.random() * 1000000000)),
       });
     }
-    const data = tokenPricePackedData([
+    const data = OrocleEncoding.encodeTokenPrice([
       {
         symbol: 'BTC',
         price: 42000n * 10n ** 9n,
@@ -176,22 +152,21 @@ describe('OrocleV1', function () {
 
   it('data correctness must be guarantee', async () => {
     const identifier = [];
-    const data = [];
-    let packedData = '0x';
+    const data: TDataRecord[] = [];
     for (let i = 0; i < 100; i += 1) {
-      const id = randomBytes(20).toString('hex').padStart(40, '0');
-      const dat = randomBytes(32).toString('hex').padStart(64, '0');
-      packedData += id;
-      packedData += dat;
-      identifier.push(`0x${id.toLowerCase()}`);
-      data.push(`0x${dat.toLowerCase()}`);
+      const id = OrocleEncoding.toIdentifier(randomBytes(20).toString()).toLowerCase();
+      identifier.push(id);
+      data.push({
+        identifier: id,
+        data: HexString.hexPrefixAdd(randomBytes(32).toString('hex')),
+      });
     }
 
-    let r = await orocleV1.connect(operator).publishData(2, packedData);
+    let r = await orocleV1.connect(operator).publishData(2, OrocleEncoding.encodeData(data));
     let t = await r.wait();
 
     for (let i = 0; i < 100; i += 1) {
-      expect((await orocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq(data[i]);
+      expect((await orocleV1.getData(2, 1, identifier[i])).toLowerCase()).to.eq((data[i].data as string).toLowerCase());
     }
   });
 

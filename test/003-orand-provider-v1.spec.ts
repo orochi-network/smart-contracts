@@ -5,6 +5,7 @@ import { OrandECVRF } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { OrandProviderV1 } from '../typechain-types/';
 import { getAddress, getBytes, keccak256 } from 'ethers';
+import { HexString, OrandEncoding } from '@orochi-network/utilities';
 
 let deployerSigner: SignerWithAddress;
 let orandECVRF: OrandECVRF;
@@ -71,40 +72,33 @@ const epochs = [
     createdDate: '2023-02-20 07:49:15',
   },
 ];
-const optimus = (e: any) => {
+const optimus = (e: (typeof epochs)[1]) => {
   return [
-    `0x${e.signatureProof}`,
+    HexString.hexPrefixAdd(e.signatureProof),
     <any>{
-      y: `0x${e.y}`,
-      gamma: [`0x${e.gamma.substring(0, 64)}`, `0x${e.gamma.substring(64, 128)}`],
-      c: `0x${e.c}`,
-      s: `0x${e.s}`,
-      uWitness: `0x${e.witnessAddress}`,
-      cGammaWitness: [`0x${e.witnessGamma.substring(0, 64)}`, `0x${e.witnessGamma.substring(64, 128)}`],
-      sHashWitness: [`0x${e.witnessHash.substring(0, 64)}`, `0x${e.witnessHash.substring(64, 128)}`],
-      zInv: `0x${e.inverseZ}`,
+      y: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.y)),
+      gamma: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.gamma)),
+      c: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.c)),
+      s: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.s)),
+      uWitness: getAddress(e.witnessAddress),
+      cGammaWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessGamma)),
+      sHashWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessHash)),
+      zInv: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.inverseZ)),
     },
   ];
 };
 
-const optimus2 = (e: any) => {
-  return [
-    `0x${e.signatureProof}`,
-    `0x${[e.y, e.gamma, e.c, e.s, e.witnessAddress, e.witnessGamma, e.witnessHash, e.inverseZ].join('')}`,
-  ];
-};
-
-const toEcvrfProof = (e: any) => {
+const toEcvrfProof = (e: (typeof epochs)[1]) => {
   return <any>{
-    pk: [`0x${pk.substring(2, 66)}`, `0x${pk.substring(66, 130)}`],
-    gamma: [`0x${e.gamma.substring(0, 64)}`, `0x${e.gamma.substring(64, 128)}`],
-    alpha: `0x${e.alpha}`,
-    c: `0x${e.c}`,
-    s: `0x${e.s}`,
-    uWitness: `0x${e.witnessAddress}`,
-    cGammaWitness: [`0x${e.witnessGamma.substring(0, 64)}`, `0x${e.witnessGamma.substring(64, 128)}`],
-    sHashWitness: [`0x${e.witnessHash.substring(0, 64)}`, `0x${e.witnessHash.substring(64, 128)}`],
-    zInv: `0x${e.inverseZ}`,
+    pk: OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
+    gamma: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.gamma)),
+    alpha: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.alpha)),
+    c: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.c)),
+    s: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.s)),
+    uWitness: getAddress(e.witnessAddress),
+    cGammaWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessGamma)),
+    sHashWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessHash)),
+    zInv: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.inverseZ)),
   };
 };
 

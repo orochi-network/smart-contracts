@@ -6,26 +6,7 @@ import { Deployer } from '../helpers';
 import { OrocleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
-
-const affineToNumberish = (affine: string): [string, string] => {
-  const aff = affine.trim().replace(/^0x/gi, '').padStart(128, '0');
-  return [`0x${aff.substring(0, 64)}`, `0x${aff.substring(64, 128)}`];
-};
-
-const publicKeyToNumberish = (pubkey: string): [string, string] => {
-  const aff = pubkey.trim().replace(/^0x/gi, '').padStart(130, '0').substring(2, 130);
-  return affineToNumberish(aff);
-};
-
-function numberToBytes(input: number | bigint, bits: number) {
-  return input.toString(16).padStart((bits / 8) * 2, '0');
-}
-
-function stringToBytes(input: string, length: number) {
-  return Buffer.from(input)
-    .toString('hex')
-    .padEnd(length * 2, '0');
-}
+import { HexString, OrandEncoding } from '@orochi-network/utilities';
 
 const OWNER = env.OROCHI_OWNER.trim();
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
@@ -71,7 +52,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       'OrandV2/OrandProviderV2',
       [],
       // We going to skip 0x04 -> Pubkey format from libsecp256k1
-      publicKeyToNumberish(pk),
+      OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
       correspondingAddress,
       orandECVRF,
       orocleV1,

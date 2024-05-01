@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { OrochiVRF } from '../typechain-types';
 import { Deployer } from '../helpers';
+import { HexString, OrandEncoding } from '@orochi-network/utilities';
+import { getAddress } from 'ethers';
 
 let deployerSigner: SignerWithAddress;
 let orochiECVRF: OrochiVRF;
@@ -70,35 +72,35 @@ const epochs = [
   },
 ];
 
-const converOrandV1Record = (e: any) => {
+const convertOrandV1Record = (e: (typeof epochs)[0]) => {
   return {
-    pk: [`0x${pk2.substring(2, 66)}`, `0x${pk2.substring(66, 130)}`],
-    seed: `0x${e.alpha}`,
-    gamma: [`0x${e.gamma.substring(0, 64)}`, `0x${e.gamma.substring(64, 128)}`],
-    c: `0x${e.c}`,
-    s: `0x${e.s}`,
-    uWitness: `0x${e.witnessAddress}`,
-    cGammaWitness: [`0x${e.witnessGamma.substring(0, 64)}`, `0x${e.witnessGamma.substring(64, 128)}`],
-    sHashWitness: [`0x${e.witnessHash.substring(0, 64)}`, `0x${e.witnessHash.substring(64, 128)}`],
-    zInv: `0x${e.inverseZ}`,
+    pk: OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk2)),
+    seed: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.alpha)),
+    gamma: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.gamma)),
+    c: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.c)),
+    s: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.s)),
+    uWitness: getAddress(e.witnessAddress),
+    cGammaWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessGamma)),
+    sHashWitness: OrandEncoding.toAffine(HexString.hexPrefixAdd(e.witnessHash)),
+    zInv: OrandEncoding.toScalar(HexString.hexPrefixAdd(e.inverseZ)),
   };
 };
 
-const converOrandRecord = (e: any) => {
+const convertOrandRecord = (e: any) => {
   return {
-    pk: [`0x${pk.substring(2, 66)}`, `0x${pk.substring(66, 130)}`],
-    seed: `0x${e.alpha}`,
-    gamma: [`0x${e.gamma.substring(0, 64)}`, `0x${e.gamma.substring(64, 128)}`],
-    c: `0x${e.c}`,
-    s: `0x${e.s}`,
-    uWitness: `0x${e.witness_address}`,
-    cGammaWitness: [`0x${e.witness_gamma.substring(0, 64)}`, `0x${e.witness_gamma.substring(64, 128)}`],
-    sHashWitness: [`0x${e.witness_hash.substring(0, 64)}`, `0x${e.witness_hash.substring(64, 128)}`],
-    zInv: `0x${e.inverse_z}`,
+    pk: OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
+    seed: OrandEncoding.toScalar(e.alpha),
+    gamma: OrandEncoding.toAffine(e.gamma),
+    c: OrandEncoding.toScalar(e.c),
+    s: OrandEncoding.toScalar(e.s),
+    uWitness: HexString.hexPrefixAdd(e.witness_address),
+    cGammaWitness: OrandEncoding.toAffine(e.witness_gamma),
+    sHashWitness: OrandEncoding.toAffine(e.witness_hash),
+    zInv: HexString.hexPrefixAdd(e.inverse_z),
   };
 };
 
-const optimus = converOrandRecord(record);
+const optimus = convertOrandRecord(record);
 
 describe('OrandECVRF', function () {
   it('Orochi ECVRF must be deployed correctly', async () => {
@@ -163,7 +165,7 @@ describe('OrandECVRF', function () {
 
   it('should able to verify multiple epochs', async () => {
     for (let i = 0; i < epochs.length; i += 1) {
-      const optimus = converOrandV1Record(epochs[i]);
+      const optimus = convertOrandV1Record(epochs[i]);
       const output = await orochiECVRF.verifyProof(optimus as any, optimus.seed);
       console.log(`\tverifyProof() -> output: ${output}`);
       console.log(`\t y -> output: ${BigInt(`0x${epochs[i].y}`)}`);

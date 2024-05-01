@@ -33,7 +33,6 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
-    "@orochi-network/contracts": "^1.2.2",
     "@typechain/ethers-v6": "^0.5.0",
     "@typechain/hardhat": "^9.0.0",
     "@types/chai": "^4.2.0",
@@ -50,7 +49,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.5",
-    "@orochi-network/contracts": "^1.2.3",
+    "@orochi-network/contracts": "^1.3.1",
+    "@orochi-network/utilities": "^0.2.11",
     "axios": "^1.6.5",
     "dotenv": "^16.3.1"
   }
