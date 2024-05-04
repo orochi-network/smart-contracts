@@ -6,16 +6,7 @@ import { Deployer } from '../helpers';
 import { DiceGame, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { env } from '../env';
 import { getAddress, keccak256 } from 'ethers';
-
-const affineToNumberish = (affine: string): [string, string] => {
-  const aff = affine.trim().replace(/^0x/gi, '').padStart(128, '0');
-  return [`0x${aff.substring(0, 64)}`, `0x${aff.substring(64, 128)}`];
-};
-
-const publicKeyToNumberish = (pubkey: string): [string, string] => {
-  const aff = pubkey.trim().replace(/^0x/gi, '').padStart(130, '0').substring(2, 130);
-  return affineToNumberish(aff);
-};
+import { HexString, OrandEncoding } from '@orochi-network/utilities';
 
 task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -39,7 +30,7 @@ task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
       'OrandV2/OrandProviderV2',
       [],
       // We going to skip 0x04 -> Pubkey format from libsecp256k1
-      publicKeyToNumberish(pk),
+      OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
       correspondingAddress,
       orandECVRF,
       // Oracle

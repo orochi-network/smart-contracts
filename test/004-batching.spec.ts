@@ -1,12 +1,10 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { OrandECVRF } from '../typechain-types';
 import { Deployer } from '../helpers';
 import { ExampleValidityProofDice } from '../typechain-types/';
 
 let deployerSigner: SignerWithAddress;
-let orandECVRF: OrandECVRF;
 let exampleDice: ExampleValidityProofDice;
 let deployer: Deployer;
 let player: SignerWithAddress;

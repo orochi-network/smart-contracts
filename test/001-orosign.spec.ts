@@ -1,10 +1,11 @@
 import hre from 'hardhat';
-import chai, { expect } from 'chai';
+import { expect } from 'chai';
 import { BigO, OrosignV1, OrosignMasterV1 } from '../typechain-types';
-import { ethers, getBytes } from 'ethers';
+import { getBytes } from 'ethers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import Deployer from '../helpers/deployer';
 import { dayToSec, printAllEvents } from '../helpers/functions';
+import { OrosignEncoding } from '@orochi-network/utilities';
 
 // View permission only
 const PERMISSION_OBSERVE = 1;
@@ -49,31 +50,11 @@ let deployerSigner: SignerWithAddress,
   admin2: SignerWithAddress,
   admin3: SignerWithAddress,
   nobody: SignerWithAddress;
-let chainId: bigint;
 let replayAttackParams: any;
-
-export type AddressDependencyRecord<T> = {
-  address: string;
-  data: T;
-};
-
-function sortByAddress<T>(data: AddressDependencyRecord<T>[]): AddressDependencyRecord<T>[] {
-  return data.sort((a, b) => {
-    const c = BigInt(a.address);
-    const d = BigInt(b.address);
-    if (c > d) {
-      return 1;
-    } else if (c < d) {
-      return -1;
-    }
-    return 0;
-  });
-}
 
 describe('OrosignV1', function () {
   it('OrosignV1 must be deployed correctly', async () => {
     const network = await hre.ethers.provider.getNetwork();
-    chainId = network.chainId;
     accounts = await hre.ethers.getSigners();
     [deployerSigner, creator, voter, executor, viewer, admin1, admin2, admin3, nobody] = accounts;
     const deployer: Deployer = Deployer.getInstance(hre);
@@ -83,7 +64,7 @@ describe('OrosignV1', function () {
 
     await contractBigO.transfer(contractMultiSig, 10000n * UNIT);
 
-    const userList = sortByAddress([
+    const userList = OrosignEncoding.sortByAddress([
       {
         address: await creator.getAddress(),
         data: ROLE_CREATOR,
@@ -132,7 +113,7 @@ describe('OrosignV1', function () {
   });
 
   it('user list should be correct', async () => {
-    const checkList = sortByAddress([
+    const checkList = OrosignEncoding.sortByAddress([
       {
         address: await creator.getAddress(),
         data: ROLE_CREATOR,
@@ -181,10 +162,28 @@ describe('OrosignV1', function () {
     );
   });
 
-  it('anyone could able to create new signature from multi signature master', async () => {
+  it('anyone could able to create new multisig from multi signature master', async () => {
     const deployer: Deployer = Deployer.getInstance(hre);
 
-    printAllEvents(await contractMultiSigMaster.createWallet(1, [admin1, admin2], [ROLE_ADMIN, ROLE_ADMIN], 1));
+    const list = OrosignEncoding.sortByAddress([
+      {
+        address: admin1.address,
+        data: ROLE_ADMIN,
+      },
+      {
+        address: admin2.address,
+        data: ROLE_ADMIN,
+      },
+    ]);
+
+    printAllEvents(
+      await contractMultiSigMaster.createWallet(
+        1,
+        list.map((e) => e.address),
+        list.map((e) => e.data),
+        1,
+      ),
+    );
 
     cloneMultiSig = <OrosignV1>(
       await deployer.contractAttach(
@@ -206,7 +205,7 @@ describe('OrosignV1', function () {
     printAllEvents(
       await cloneMultiSig.connect(admin2).executeTransaction(
         await admin1.signMessage(getBytes(tx)),
-        sortByAddress([
+        OrosignEncoding.sortByAddress([
           { address: admin1.address, data: await admin1.signMessage(getBytes(tx)) },
           { address: admin2.address, data: await admin2.signMessage(getBytes(tx)) },
         ]).map((e) => e.data),
@@ -248,7 +247,7 @@ describe('OrosignV1', function () {
 
     replayAttackParams = [
       await admin1.signMessage(getBytes(tx)),
-      sortByAddress([
+      OrosignEncoding.sortByAddress([
         { address: admin1.address, data: await admin1.signMessage(getBytes(tx)) },
         { address: admin2.address, data: await admin2.signMessage(getBytes(tx)) },
       ]).map((e) => e.data),
@@ -258,7 +257,7 @@ describe('OrosignV1', function () {
     printAllEvents(
       await cloneMultiSig.connect(admin2).executeTransaction(
         await admin1.signMessage(getBytes(tx)),
-        sortByAddress([
+        OrosignEncoding.sortByAddress([
           { address: admin1.address, data: await admin1.signMessage(getBytes(tx)) },
           { address: admin2.address, data: await admin2.signMessage(getBytes(tx)) },
         ]).map((e) => e.data),
@@ -277,7 +276,7 @@ describe('OrosignV1', function () {
   });
 
   it('init() can not able to be called twice', async () => {
-    const userList = sortByAddress([
+    const userList = OrosignEncoding.sortByAddress([
       {
         address: await creator.getAddress(),
         data: ROLE_CREATOR,
