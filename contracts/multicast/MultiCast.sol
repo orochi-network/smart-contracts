@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import '../libraries/Bytes.sol';
-import 'hardhat/console.sol';
 
 error InvalidLength();
 
