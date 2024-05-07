@@ -13,7 +13,7 @@
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --sourceMap false --declaration false --outDir build/cjs",
     "build": "node ./devel && rm -rf build && npm run build:esm && npm run build:cjs",
-    "release": "node ./devel && npm run build .js && npm publish --access public"
+    "release": "node ./devel && npm run build && npm publish --access public"
   },
   "exports": {
     ".": {
