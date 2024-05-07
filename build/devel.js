@@ -24,6 +24,16 @@ function incVersion(v) {
   return [major, minor, patch].join('.');
 }
 
-mPackage.version = incVersion(mPackage.version);
+//mPackage.version = incVersion(mPackage.version);
+
+function cp(src, dst) {
+  if (fs.existsSync(dst)) {
+    fs.unlink(dst);
+  }
+  fs.copyFileSync(src, dst);
+}
+
+cp('../contracts/orand-v2/interfaces/IOrandConsumerV2.sol', './IOrandConsumerV2.sol');
+cp('../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol', './IOrocleAggregatorV1.sol');
 
 writeJson('package.json', mPackage);
