@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "outDir": "./build/esm",
+    "types": ["node"]
+  },
+  "include": ["./src"],
+  "exclude": ["build", "db", "node_modules", "**/*.spec.ts", "**/*.test.ts", "typechain/**/*.ts"]
+}
