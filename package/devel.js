@@ -68,12 +68,16 @@ cpAbi('../artifacts/contracts/orosign/OrosignV1.sol/OrosignV1.json', './src/AbiO
 cpAbi('../artifacts/contracts/multicast/MultiCast.sol/Multicast.json', './src/AbiMulticast.ts');
 cpAbi('../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json', './src/AbiERC20.ts');
 cpAbi('../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json', './src/AbiERC721.ts');
+cpAbi('../artifacts/contracts/orocle-v1/OrocleV1.sol/OrocleV1.json', './src/AbiOrocleV1.ts');
+cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json', './src/AbiOrandProviderV2.ts');
 
 cpTypes('../typechain-types/contracts/orosign/OrosignMasterV1.ts', './src/OrosignMasterV1.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignV1.ts', './src/OrosignV1.ts');
 cpTypes('../typechain-types/contracts/multicast/MultiCast.sol/Multicast.ts', './src/Multicast.ts');
 cpTypes('../typechain-types/@openzeppelin/contracts/token/ERC20/ERC20.ts', './src/ERC20.ts');
 cpTypes('../typechain-types/@openzeppelin/contracts/token/ERC721/ERC721.ts', './src/ERC721.ts');
+cpTypes('../typechain-types/contracts/orocle-v1/OrocleV1.ts', './src/OrocleV1.ts');
+cpTypes('../typechain-types/contracts/orand-v2/OrandProviderV2.ts', './src/OrandProviderV2.ts');
 
 fs.writeFileSync(
   './src/index.ts',
@@ -85,6 +89,6 @@ fs.writeFileSync(
   ].join('\n'),
 );
 
-//mPackage.version = incVersion(mPackage.version);
+mPackage.version = incVersion(mPackage.version);
 
 writeJson('package.json', mPackage);
