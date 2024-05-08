@@ -1,0 +1,18 @@
+{
+    "a8main": {
+        "orosign": "0xdA882853B3F5167C4Acfa981C7282f70DCaDb2D6",
+        "master": "0x575B5287764Fb2c6FdFC8bafA30317881c1ea122"
+    },
+    "u2umain": {
+        "orosign": "0x0a8ca63a065a629391E6D29bFef4f647524a2413",
+        "master": "0xCfe17a70484248E4cA82DA4199176011F864314F"
+    },
+    "binance": {
+        "orosign": "0x16417A3F4533D46Fef674d06c3Ff8d9dF5D2a552",
+        "master": "0xCa9Ff27536e38640A8a16FBeCF21404C0b3c4057"
+    },
+    "ethereum": {
+        "orosign": "0xb02C4f618AEAF4e43624172877a413096932AA73",
+        "master": "0x812dd2227fb7eEbBDb16E95070d682d8FaDae0b5"
+    }
+}
