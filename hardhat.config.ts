@@ -129,6 +129,13 @@ const config: HardhatUserConfig = {
         mnemonic: env.OROCHI_MNEMONIC,
       },
     },
+    zircuitTest: {
+      url: `https://zircuit1.p2pify.com/`,
+      chainId: 48899,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
 
     // Hard hat network
     hardhat: {
