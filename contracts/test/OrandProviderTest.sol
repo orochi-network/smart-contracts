@@ -1,26 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import './interfaces/IOrandProviderV2.sol';
-import './interfaces/IOrandECVRFV2.sol';
-import './interfaces/IOrandConsumerV2.sol';
-import './OrandStorageV2.sol';
-import './OrandManagementV2.sol';
-import './OrandECDSAV2.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '../libraries/Ownable.sol';
+import '../libraries/ReentrancyGuard.sol';
+import '../orand-v3/interfaces/IOrandProviderV3.sol';
+import '../orand-v3/interfaces/IOrandECVRFV3.sol';
+import '../orand-v3/interfaces/IOrandConsumerV3.sol';
+import '../orand-v3/OrandStorageV3.sol';
+import '../orand-v3/OrandManagementV3.sol';
+import '../orand-v3/OrandECDSAV3.sol';
 import '../orocle-v1/interfaces/IOrocleAggregatorV1.sol';
 
-contract OrandProviderV2 is
-  IOrandProviderV2,
+contract OrandProviderTest is
+  Initializable,
   Ownable,
-  OrandStorageV2,
-  OrandManagementV2,
-  OrandECDSAV2,
-  ReentrancyGuard
+  ReentrancyGuard,
+  OrandStorageV3,
+  OrandManagementV3,
+  OrandECDSAV3,
+  IOrandProviderV3
 {
   // ECVRF verifier smart contract
-  IOrandECVRFV2 private ecvrf;
+  IOrandECVRFV3 private ecvrf;
 
   // Orocle V1
   IOrocleAggregatorV1 private oracle;
@@ -37,14 +39,19 @@ contract OrandProviderV2 is
   // Event: set new oracle
   event SetNewOracle(address indexed actor, address indexed newOracle);
 
-  // Provider V2 construct method
-  constructor(
+  // Provider V3 construct method
+
+  function initialize(
     uint256[2] memory publicKey,
     address operator,
     address ecvrfAddress,
     address oracleAddress,
     uint256 maxBatchingLimit
-  ) OrandManagementV2(publicKey) OrandECDSAV2(operator) {
+  ) public initializer {
+    Ownable._initOwnable();
+    ReentrancyGuard._initReentrancyGuard();
+    OrandManagementV3._initOrandManagementV3(publicKey);
+    OrandECDSAV3._initOrandECDSAV3(operator);
     _setNewECVRFVerifier(ecvrfAddress);
     _setNewOracle(oracleAddress);
     _setMaxBatching(maxBatchingLimit);
@@ -92,13 +99,13 @@ contract OrandProviderV2 is
 
   // Update new ECVRF verifier
   function _setNewECVRFVerifier(address ecvrfAddress) internal {
-    ecvrf = IOrandECVRFV2(ecvrfAddress);
+    ecvrf = IOrandECVRFV3(ecvrfAddress);
     emit SetNewECVRFVerifier(msg.sender, ecvrfAddress);
   }
 
   // Forward call to receiver
   function _forward(address receiverAddress, uint256 result) internal {
-    IOrandConsumerV2 consumerContract = IOrandConsumerV2(receiverAddress);
+    IOrandConsumerV3 consumerContract = IOrandConsumerV3(receiverAddress);
     bool currentProcessResponse = false;
     if (receiverAddress.code.length > 0) {
       for (uint256 i = 0; i < maxBatching; i += 1) {
@@ -290,8 +297,8 @@ contract OrandProviderV2 is
   }
 
   // Get address of Oracle
-  function getOracle() external view returns (address oracleAddress) {
-    return address(oracle);
+  function getOracle() external pure returns (address oracleAddress) {
+    return address(0);
   }
 
   // Get maximum batching limit
