@@ -6,7 +6,7 @@ import { env } from '../env';
 import { getAddress, keccak256 } from 'ethers';
 import { getWallet } from '../helpers/wallet';
 
-const PREVIOUS_ORAND_ADDRESS = '0xAB0508c9049F0a7430e46372638521b7E5406E69';
+const PREVIOUS_ORAND_ADDRESS = '0x90028d825C04e85DB045364a956931aF1AF5d5f5';
 
 task('upgrade:orandv3', 'Upgrade OrandV3 contract').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -26,6 +26,10 @@ task('upgrade:orandv3', 'Upgrade OrandV3 contract').setAction(
 
     // Setup deployer
     console.log('Deployer:', account.address);
+
+    // Prepare upgrade
+    console.log('Preparing for the upgrade...');
+    await upgrades.prepareUpgrade(PREVIOUS_ORAND_ADDRESS, orandProviderV3Factory);
 
     // Deploy Provider
     const orandProviderV3Proxy = await upgrades.upgradeProxy(PREVIOUS_ORAND_ADDRESS, orandProviderV3Factory);

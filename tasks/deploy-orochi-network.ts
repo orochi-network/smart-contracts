@@ -78,10 +78,10 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     });
 
     await orocleV2Proxy.transferOwnership(OWNER);
-    await upgrades.admin.transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER);
+    await upgrades.admin.transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account);
 
     await orandProviderV3Proxy.transferOwnership(OWNER);
-    await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER);
+    await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account);
 
     console.log(
       `Corresponding address: ${correspondingAddress} , is valid publicKey?:`,
