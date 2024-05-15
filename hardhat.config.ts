@@ -9,7 +9,7 @@ if (fs.existsSync('./typechain-types')) {
   for (let entry = dir.readSync(); entry !== null; entry = dir.readSync()) {
     if (entry.name.toLowerCase().includes('.ts')) {
       // eslint-disable-next-line import/no-dynamic-require
-      import(`./tasks/${entry.name.replace(/\.ts$/gi, '')}`);
+      require(`./tasks/${entry.name.replace(/\.ts$/gi, '')}`);
     }
   }
 }

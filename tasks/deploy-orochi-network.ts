@@ -2,19 +2,25 @@
 import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Deployer } from '../helpers';
-import { OrocleV1, OrandECVRFV2, OrandProviderV2 } from '../typechain-types';
 import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { HexString, OrandEncoding } from '@orochi-network/utilities';
+import { getWallet } from '../helpers/wallet';
 
-const OWNER = env.OROCHI_OWNER.trim();
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
+    // Public key
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
+    // Get deployer account
+    const { chainId } = await hre.ethers.provider.getNetwork();
+    const account = await getWallet(hre, chainId);
+    const { ethers, upgrades } = hre;
+    const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
+
+    // Check owner and operators
     if (!isAddress(OWNER)) {
       throw new Error('Invalid owner address');
     }
@@ -29,14 +35,19 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     //m/44'/60'/0'/0/0
     //m/44'/60'/0'/0/0/0
 
+    const orandECVRFV3Factory = (await ethers.getContractFactory('OrandECVRFV3')).connect(account);
+    const orandProviderV3Factory = (await ethers.getContractFactory('OrandProviderV3')).connect(account);
+    const orocleV2Factory = (await ethers.getContractFactory('OrocleV2')).connect(account);
+
     // Setup deployer
-    const accounts = await hre.ethers.getSigners();
-    console.log('Deployer:', accounts[0].address);
-    const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
+    console.log('Deployer:', account.address);
     // Deploy ECVRF
-    const orandECVRF = await deployer.contractDeploy<OrandECVRFV2>('OrandV2/OrandECVRFV2', []);
+    const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
+
     // Deploy Orocle
-    const orocleV1 = await deployer.contractDeploy<OrocleV1>('OrocleV1/OrocleV1', [], OPERATORS);
+    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
+    await orocleV2Proxy.waitForDeployment();
+    console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
     /*
       constructor(
@@ -48,37 +59,51 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       )
     */
     // Deploy Provider
-    const orandProviderV2 = await deployer.contractDeploy<OrandProviderV2>(
-      'OrandV2/OrandProviderV2',
-      [],
+    const orandProviderV3Proxy = await upgrades.deployProxy(
+      orandProviderV3Factory,
       // We going to skip 0x04 -> Pubkey format from libsecp256k1
-      OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
-      correspondingAddress,
-      orandECVRF,
-      orocleV1,
-      200,
+      [
+        OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
+        correspondingAddress,
+        await orandECVRF.getAddress(),
+        await orocleV2Proxy.getAddress(),
+        200,
+      ],
     );
+    console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
 
-    await orocleV1.transferOwnership(OWNER);
-    await orandProviderV2.transferOwnership(OWNER);
+    console.table({
+      OrocleV2: await orocleV2Proxy.getAddress(),
+      OrandProviderV3: await orandProviderV3Proxy.getAddress(),
+    });
+
+    await orocleV2Proxy.transferOwnership(OWNER);
+    await upgrades.admin.transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER);
+
+    await orandProviderV3Proxy.transferOwnership(OWNER);
+    await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER);
 
     console.log(
       `Corresponding address: ${correspondingAddress} , is valid publicKey?:`,
-      correspondingAddress === (await orandProviderV2.getOperator()),
+      correspondingAddress === (await orandProviderV3Proxy.getOperator()),
     );
 
-    console.log('Is Oracle deployed correct?', (await orocleV1.getAddress()) === (await orandProviderV2.getOracle()));
+    console.log(
+      'Is Oracle deployed correct?',
+      (await orocleV2Proxy.getAddress()) === (await orandProviderV3Proxy.getOracle()),
+    );
     console.log(
       'Is ECVRF verifier deployed correct?',
-      (await orandECVRF.getAddress()) === (await orandProviderV2.getECVRFVerifier()),
+      (await orandECVRF.getAddress()) === (await orandProviderV3Proxy.getECVRFVerifier()),
     );
-    console.log('Is orand service operator  correct?', correspondingAddress === (await orandProviderV2.getOperator()));
-    console.log('Is OrocleV1 operator correct?', await orocleV1.isOperator(OPERATORS[0]));
-    console.log('Is OrocleV1 operator correct?', await orocleV1.isOperator(OPERATORS[1]));
-    console.log('Is OrocleV1 owner correct?', OWNER === (await orocleV1.owner()));
-    console.log('Is OrandProviderV2 owner correct?', OWNER === (await orandProviderV2.owner()));
-
-    await deployer.printReport();
+    console.log(
+      'Is orand service operator  correct?',
+      correspondingAddress === (await orandProviderV3Proxy.getOperator()),
+    );
+    console.log('Is OrocleV1 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[0]));
+    console.log('Is OrocleV1 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[1]));
+    console.log('Is OrocleV1 owner correct?', OWNER === (await orocleV2Proxy.owner()));
+    console.log('Is OrandProviderV2 owner correct?', OWNER === (await orandProviderV3Proxy.owner()));
   },
 );
 
