@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '../libraries/Ownable.sol';
 import '../libraries/Bytes.sol';
 import '../libraries/Operatable.sol';
-import './interfaces/IOrocleAggregatorV1.sol';
+import './interfaces/IOrocleAggregatorV2.sol';
 
-contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
+contract OrocleV2 is Initializable, IOrocleAggregatorV2, Ownable, Operatable {
   using Bytes for bytes;
 
   // Maping unique fingerprint to data
@@ -41,7 +42,8 @@ contract OrocleV1 is IOrocleAggregatorV1, Ownable, Operatable {
   /**
    * Create new oracle
    */
-  constructor(address[] memory operatorList) {
+  function initialize(address[] memory operatorList) public initializer {
+    Ownable._initOwnable();
     for (uint256 i = 0; i < operatorList.length; i += 1) {
       _addOperator(operatorList[i]);
     }
