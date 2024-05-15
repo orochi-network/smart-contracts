@@ -2,13 +2,14 @@ import fs from 'fs';
 import { HardhatUserConfig } from 'hardhat/types';
 import { env } from './env';
 import '@nomicfoundation/hardhat-toolbox';
+import '@openzeppelin/hardhat-upgrades';
 
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
   for (let entry = dir.readSync(); entry !== null; entry = dir.readSync()) {
     if (entry.name.toLowerCase().includes('.ts')) {
       // eslint-disable-next-line import/no-dynamic-require
-      require(`./tasks/${entry.name.replace(/\.ts$/gi, '')}`);
+      import(`./tasks/${entry.name.replace(/\.ts$/gi, '')}`);
     }
   }
 }
@@ -115,10 +116,10 @@ const config: HardhatUserConfig = {
       blockGasLimit: 30000000,
       initialBaseFeePerGas: 0,
       gas: 25000000,
-      /*mining: {
+      mining: {
         auto: true,
         interval: 2000,
-      },*/
+      },
       accounts: {
         mnemonic: env.OROCHI_MNEMONIC,
         path: "m/44'/60'/0'/0",
