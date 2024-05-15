@@ -6,7 +6,7 @@ import { env } from '../env';
 import { getAddress, keccak256 } from 'ethers';
 import { getWallet } from '../helpers/wallet';
 
-const PREVIOUS_ORACLE_ADDRESS = '0x348aCeF6eAFF0DAa17714224Bc506DC86DaA02b1';
+const PREVIOUS_ORACLE_ADDRESS = '0x2416Ec1d62bE2715A4902d0737efe38A92c95394';
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 task('upgrade:oroclev2', 'Upgrade OrocleV2 contract').setAction(
@@ -24,6 +24,9 @@ task('upgrade:oroclev2', 'Upgrade OrocleV2 contract').setAction(
     //m/44'/60'/0'/0/0/0
 
     const orocleV2Factory = (await ethers.getContractFactory('OrocleV2')).connect(account);
+
+    console.log('Preparing for the upgrade...');
+    await upgrades.prepareUpgrade(PREVIOUS_ORACLE_ADDRESS, orocleV2Factory);
 
     // Setup deployer
     console.log('Deployer:', account.address);
