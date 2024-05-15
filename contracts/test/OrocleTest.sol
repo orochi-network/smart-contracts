@@ -7,7 +7,7 @@ import '../libraries/Bytes.sol';
 import '../libraries/Operatable.sol';
 import '../orocle-v2/interfaces/IOrocleAggregatorV2.sol';
 
-contract OrocleV2 is Initializable, IOrocleAggregatorV2, Ownable, Operatable {
+contract OrocleTest is Initializable, IOrocleAggregatorV2, Ownable, Operatable {
   using Bytes for bytes;
 
   // Maping unique fingerprint to data
