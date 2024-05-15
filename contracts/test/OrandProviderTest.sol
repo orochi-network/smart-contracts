@@ -297,8 +297,8 @@ contract OrandProviderTest is
   }
 
   // Get address of Oracle
-  function getOracle() external pure returns (address oracleAddress) {
-    return address(0);
+  function getOracle() external view returns (address oracleAddress) {
+    return address(oracle);
   }
 
   // Get maximum batching limit

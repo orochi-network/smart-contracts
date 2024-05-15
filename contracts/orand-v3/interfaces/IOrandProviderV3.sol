@@ -7,6 +7,7 @@ error UnableToForwardRandomness(address receiver, uint256 y);
 error InvalidAlphaValue(uint256 expectedAlpha, uint256 givenAlpha);
 error InvalidGenesisEpoch(uint256 currentEpoch);
 error InvalidECVRFProofDigest();
+error InvalidECDSAProof(address signerAddress);
 
 interface IOrandProviderV3 is IOrandECDSAV3 {
   // ECVRF struct

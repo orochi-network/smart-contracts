@@ -39,8 +39,10 @@ contract OrandProviderV3 is
   // Event: set new oracle
   event SetNewOracle(address indexed actor, address indexed newOracle);
 
-  // Provider V3 construct method
+  // Event: External Error
+  event ExternalError(address receiverAddress);
 
+  // Provider V3 initialize method
   function initialize(
     uint256[2] memory publicKey,
     address operator,
@@ -113,6 +115,7 @@ contract OrandProviderV3 is
           currentProcessResponse = contractResponse;
         } catch {
           currentProcessResponse = false;
+          emit ExternalError(receiverAddress);
         }
         if (currentProcessResponse) {
           oracle.fulfill(0, abi.encodePacked(receiverAddress));
@@ -133,6 +136,11 @@ contract OrandProviderV3 is
     // Invalid genesis epoch
     if (currentEpochResult != 0 || ecdsaProof.receiverEpoch != 0) {
       revert InvalidGenesisEpoch(currentEpochResult);
+    }
+
+    // Make sure operator is valid
+    if (ecdsaProof.signer != _getOperator()) {
+      revert InvalidECDSAProof(ecdsaProof.signer);
     }
 
     // ECVRF proof digest must match
