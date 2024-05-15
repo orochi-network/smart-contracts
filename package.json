@@ -12,6 +12,8 @@
   "scripts": {
     "compile": "rm -rf ./cache ./artifacts ./typechain-types ./flatten  && hardhat compile",
     "build": "yarn run compile && hardhat typechain && yarn flatten",
+    "compile:zk": "rm -rf ./cache-zk ./artifacts-zk ./typechain-types ./flatten ./deployments-zk ./.upgradable && USE_ZKSOLC=true hardhat compile",
+    "build:zk": "yarn run compile:zk && hardhat typechain && yarn flatten",
     "prepack": "bash ./scripts/prepack.sh",
     "clean": "hardhat clean && rimraf build contracts/build",
     "release": "yarn build && yarn flatten",

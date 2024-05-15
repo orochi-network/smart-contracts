@@ -7,6 +7,8 @@ import '@matterlabs/hardhat-zksync';
 import '@matterlabs/hardhat-zksync-deploy';
 import '@matterlabs/hardhat-zksync-solc';
 
+const isZkSolc = process.env.USE_ZKSOLC === 'true';
+
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
   for (let entry = dir.readSync(); entry !== null; entry = dir.readSync()) {
@@ -161,7 +163,7 @@ const config: HardhatUserConfig = {
 
     // Hard hat network
     hardhat: {
-      zksync: true,
+      zksync: isZkSolc,
       chainId: 911,
       hardfork: 'london',
       blockGasLimit: 30000000,
