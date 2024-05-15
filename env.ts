@@ -8,6 +8,7 @@ export interface IEnvironment {
   OROCHI_PUBLIC_KEY: string;
   OROCHI_OWNER: string;
   OROCHI_OPERATOR: string;
+  WALLET_PRIVATE_KEY: string;
 }
 
 function clean(config: any): any {

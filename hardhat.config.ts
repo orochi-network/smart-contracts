@@ -3,6 +3,9 @@ import { HardhatUserConfig } from 'hardhat/types';
 import { env } from './env';
 import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
+import '@matterlabs/hardhat-zksync';
+import '@matterlabs/hardhat-zksync-deploy';
+import '@matterlabs/hardhat-zksync-solc';
 
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
@@ -28,6 +31,10 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   gasReporter: {
     enabled: true,
+  },
+  zksolc: {
+    version: 'latest',
+    settings: {},
   },
   networks: {
     sepolia: {
@@ -96,7 +103,7 @@ const config: HardhatUserConfig = {
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
     bnbChainTest: {
-      url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+      url: 'https://bsc-testnet-rpc.publicnode.com',
       chainId: 97,
       accounts: {
         mnemonic: env.OROCHI_MNEMONIC,
@@ -137,9 +144,24 @@ const config: HardhatUserConfig = {
         mnemonic: env.OROCHI_MNEMONIC,
       },
     },
+    xLayerTest: {
+      url: `https://testrpc.xlayer.tech/`,
+      chainId: 195,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    zkLinkTest: {
+      url: `https://sepolia.rpc.zklink.io`,
+      zksync: true,
+      ethNetwork: 'https://sepolia.rpc.zklink.io',
+      chainId: 810181,
+      accounts: [env.WALLET_PRIVATE_KEY],
+    },
 
     // Hard hat network
     hardhat: {
+      zksync: true,
       chainId: 911,
       hardfork: 'london',
       blockGasLimit: 30000000,

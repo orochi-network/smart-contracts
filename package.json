@@ -19,7 +19,7 @@
     "node:local": "hardhat node",
     "deploy:orochi": "hardhat deploy:orochi",
     "test": "hardhat test",
-    "flatten": "mkdir -p flatten/ && npx hardhat flatten ./contracts/orocle-v1/OrocleV1.sol > ./flatten/OrocleV1.sol && npx hardhat flatten ./contracts/orand-v2/OrandProviderV2.sol > ./flatten/OrandProviderV2.sol && npx hardhat flatten ./contracts/orosign/OrosignV1.sol > ./flatten/OrosignV1.sol && npx hardhat flatten ./contracts/orosign/OrosignMasterV1.sol > ./flatten/OrosignMasterV1.sol && npx hardhat flatten ./contracts/examples/DiceGame.sol > ./flatten/DiceGame.sol"
+    "flatten": "mkdir -p flatten/ && npx hardhat flatten ./contracts/orocle-v1/OrocleV1.sol > ./flatten/OrocleV1.sol && npx hardhat flatten ./contracts/orand-v2/OrandProviderV2.sol > ./flatten/OrandProviderV2.sol && npx hardhat flatten ./contracts/orosign/OrosignV1.sol > ./flatten/OrosignV1.sol && npx hardhat flatten ./contracts/orosign/OrosignMasterV1.sol > ./flatten/OrosignMasterV1.sol && npx hardhat flatten ./contracts/examples/DiceGame.sol > ./flatten/DiceGame.sol && npx hardhat flatten ./contracts/orocle-v2/OrocleV2.sol > ./flatten/OrocleV2.sol && npx hardhat flatten ./contracts/orand-v3/OrandProviderV3.sol > ./flatten/OrandProviderV3.sol"
   },
   "keywords": [
     "vrf",
@@ -29,6 +29,11 @@
   "author": "chiro@orochi.network",
   "license": "MIT",
   "devDependencies": {
+    "@matterlabs/hardhat-zksync": "^1.0.0",
+    "@matterlabs/hardhat-zksync-deploy": "^1.3.0",
+    "@matterlabs/hardhat-zksync-solc": "^1.1.4",
+    "@matterlabs/hardhat-zksync-upgradable": "^1.4.1",
+    "@matterlabs/zksync-contracts": "^0.6.1",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
@@ -47,7 +52,8 @@
     "solidity-coverage": "^0.8.0",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "zksync-ethers": "^6.7.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6",
