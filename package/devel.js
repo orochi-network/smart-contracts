@@ -63,6 +63,9 @@ cp('../typechain-types/common.ts', './src/common.ts');
 cp('../contracts/orand-v2/interfaces/IOrandConsumerV2.sol', './IOrandConsumerV2.sol');
 cp('../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol', './IOrocleAggregatorV1.sol');
 
+cp('../contracts/orand-v3/interfaces/IOrandConsumerV3.sol', './IOrandConsumerV3.sol');
+cp('../contracts/orocle-v2/interfaces/IOrocleAggregatorV2.sol', './IOrocleAggregatorV2.sol');
+
 cpAbi('../artifacts/contracts/orosign/OrosignMasterV1.sol/OrosignMasterV1.json', './src/AbiOrosignMasterV1.ts');
 cpAbi('../artifacts/contracts/orosign/OrosignV1.sol/OrosignV1.json', './src/AbiOrosignV1.ts');
 cpAbi('../artifacts/contracts/multicast/MultiCast.sol/Multicast.json', './src/AbiMulticast.ts');
@@ -71,6 +74,9 @@ cpAbi('../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json'
 cpAbi('../artifacts/contracts/orocle-v1/OrocleV1.sol/OrocleV1.json', './src/AbiOrocleV1.ts');
 cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json', './src/AbiOrandProviderV2.ts');
 
+cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/OrocleV2.ts');
+cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/OrandProviderV3.ts');
+
 cpTypes('../typechain-types/contracts/orosign/OrosignMasterV1.ts', './src/OrosignMasterV1.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignV1.ts', './src/OrosignV1.ts');
 cpTypes('../typechain-types/contracts/multicast/MultiCast.sol/Multicast.ts', './src/Multicast.ts');
@@ -78,6 +84,8 @@ cpTypes('../typechain-types/@openzeppelin/contracts/token/ERC20/ERC20.ts', './sr
 cpTypes('../typechain-types/@openzeppelin/contracts/token/ERC721/ERC721.ts', './src/ERC721.ts');
 cpTypes('../typechain-types/contracts/orocle-v1/OrocleV1.ts', './src/OrocleV1.ts');
 cpTypes('../typechain-types/contracts/orand-v2/OrandProviderV2.ts', './src/OrandProviderV2.ts');
+cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts');
+cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
 
 fs.writeFileSync(
   './src/index.ts',
@@ -85,7 +93,14 @@ fs.writeFileSync(
     typesList
       .map((e) => `export { ${path.basename(e, '.ts')} } from '${e.replace('.ts', '').replace('./src/', './')}';`)
       .join('\n'),
-    tsFileList.map((e) => `export * from '${e.replace('.ts', '').replace('./src/', './')}';`).join('\n'),
+    tsFileList
+      .map((e) => {
+        if (e.includes('OrandProviderV3')) {
+          return `export * as OrandProviderV3Package from './OrandProviderV3';`;
+        }
+        return `export * from '${e.replace('.ts', '').replace('./src/', './')}';`;
+      })
+      .join('\n'),
   ].join('\n'),
 );
 

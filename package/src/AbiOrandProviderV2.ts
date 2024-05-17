@@ -528,7 +528,7 @@ export const AbiOrandProviderV2 = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "receiver",
+        "name": "receiverAddress",
         "type": "address"
       },
       {
