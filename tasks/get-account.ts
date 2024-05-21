@@ -20,6 +20,7 @@ task('get:account', 'Get list of accounts').setAction(async (_taskArgs: any, hre
     43851n,
     713715n,
     28122024n,
+    810181n,
   ];
   for (let i = 0; i < chains.length; i += 1) {
     getWallet(hre, chains[i]);

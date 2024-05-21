@@ -10,6 +10,7 @@ import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Provider, Wallet } from 'zksync-ethers';
 import { env } from '../env';
+import { getWallet, getZkSyncWallet } from '../helpers/wallet';
 
 const sleep = async (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
@@ -21,12 +22,9 @@ task('deploy:zk', 'Deploy Orochi Network contracts with zkSolc').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     const OWNER = env.OROCHI_OWNER.trim();
     const provider = new Provider(hre.network.config.url);
+    const { chainId } = await provider.getNetwork();
 
-    if (!env.WALLET_PRIVATE_KEY) {
-      throw new Error('Not found wallet private key');
-    }
-
-    const wallet = new Wallet(env.WALLET_PRIVATE_KEY, provider);
+    const wallet = getZkSyncWallet(await getWallet(hre, chainId), provider);
     const deployer = new Deployer(hre, wallet);
     console.log('Deployer:', deployer.zkWallet, deployer.ethWallet);
 

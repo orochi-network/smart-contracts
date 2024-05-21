@@ -77,12 +77,6 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       OrandProviderV3: await orandProviderV3Proxy.getAddress(),
     });
 
-    // await orocleV2Proxy.transferOwnership(OWNER);
-    // await upgrades.admin.transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account);
-
-    // await orandProviderV3Proxy.transferOwnership(OWNER);
-    // await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account);
-
     console.log(
       `Corresponding address: ${correspondingAddress}, is valid publicKey?:`,
       correspondingAddress === (await orandProviderV3Proxy.getOperator()),
@@ -100,10 +94,6 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       'Is orand service operator  correct?',
       correspondingAddress === (await orandProviderV3Proxy.getOperator()),
     );
-    // console.log('Is OrocleV2 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[0]));
-    // console.log('Is OrocleV2 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[1]));
-    // console.log('Is OrocleV2 owner correct?', OWNER === (await orocleV2Proxy.owner()));
-    // console.log('Is OrandProviderV3 owner correct?', OWNER === (await orandProviderV3Proxy.owner()));
   },
 );
 

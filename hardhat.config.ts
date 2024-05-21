@@ -163,7 +163,9 @@ const config: HardhatUserConfig = {
       zksync: true,
       ethNetwork: 'https://sepolia.rpc.zklink.io',
       chainId: 810181,
-      accounts: [env.WALLET_PRIVATE_KEY],
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
     },
 
     // Hard hat network
