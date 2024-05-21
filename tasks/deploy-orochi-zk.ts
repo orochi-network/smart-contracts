@@ -11,12 +11,16 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Provider, Wallet } from 'zksync-ethers';
 import { env } from '../env';
 
+const sleep = async (seconds: number) => {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+};
+
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
-task('deploy:zk', 'Deploy Orochi Network contracts').setAction(
+task('deploy:zk', 'Deploy Orochi Network contracts with zkSolc').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     const OWNER = env.OROCHI_OWNER.trim();
-    const provider = new Provider('https://sepolia.rpc.zklink.io');
+    const provider = new Provider(hre.network.config.url);
 
     if (!env.WALLET_PRIVATE_KEY) {
       throw new Error('Not found wallet private key');
@@ -62,17 +66,6 @@ task('deploy:zk', 'Deploy Orochi Network contracts').setAction(
       )
     */
     // Deploy Provider
-    // const orandProviderV3Proxy = await upgrades.deployProxy(
-    //   orandProviderV3Factory,
-    //   // We going to skip 0x04 -> Pubkey format from libsecp256k1
-    //   [
-    //     OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
-    //     correspondingAddress,
-    //     await orandECVRF.getAddress(),
-    //     await orocleV2Proxy.getAddress(),
-    //     200,
-    //   ],
-    // );
     const orandProviderV3Proxy = await hre.zkUpgrades.deployProxy(
       deployer.zkWallet,
       orandProviderV3Artifact,
@@ -97,9 +90,11 @@ task('deploy:zk', 'Deploy Orochi Network contracts').setAction(
     });
 
     await orocleV2Proxy.transferOwnership(OWNER);
+    await sleep(10);
     await hre.zkUpgrades.admin.changeProxyAdmin(await orocleV2Proxy.getAddress(), OWNER, deployer.zkWallet);
-
+    await sleep(10);
     await orandProviderV3Proxy.transferOwnership(OWNER);
+    await sleep(10);
     await hre.zkUpgrades.admin.changeProxyAdmin(await orandProviderV3Proxy.getAddress(), OWNER, deployer.zkWallet);
 
     console.log(
@@ -119,9 +114,9 @@ task('deploy:zk', 'Deploy Orochi Network contracts').setAction(
       'Is orand service operator  correct?',
       correspondingAddress === (await orandProviderV3Proxy.getOperator()),
     );
-    console.log('Is OrocleV1 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[0]));
-    console.log('Is OrocleV1 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[1]));
-    console.log('Is OrocleV1 owner correct?', OWNER === (await orocleV2Proxy.owner()));
+    console.log('Is OrocleV2 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[0]));
+    console.log('Is OrocleV2 operator correct?', await orocleV2Proxy.isOperator(OPERATORS[1]));
+    console.log('Is OrocleV2 owner correct?', OWNER === (await orocleV2Proxy.owner()));
     console.log('Is OrandProviderV2 owner correct?', OWNER === (await orandProviderV3Proxy.owner()));
   },
 );

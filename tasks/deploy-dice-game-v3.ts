@@ -13,8 +13,8 @@ task('deploy:dice-game-v3', 'Deploy dice game contracts').setAction(
     await deployer.contractDeploy<DiceGameV3>(
       'orochi/DiceGameV3',
       [],
-      '0x3eAF9da360dA944105599cdB7833712346af6DF1',
-      '0x70523434ee6a9870410960E2615406f8F9850676',
+      '0xD7a2643c1d9C3E6069f90DbAabd9D58825C7A2b9', // provider
+      '0xd26Ea014930305B498C5826cF0712F877CCAF93f', // orocle
     );
     await deployer.printReport();
   },

@@ -84,6 +84,11 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
+    arbitrumTest: {
+      url: 'https://sepolia-rollup.arbitrum.io/rpc',
+      chainId: 421614,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
     polygon: {
       url: 'https://rpc-mainnet.matic.quiknode.pro',
       chainId: 137,

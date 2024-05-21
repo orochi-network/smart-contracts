@@ -152,10 +152,10 @@ contract DiceGameV3 is IOrandConsumerV3, Ownable {
     return (fulfilled, totalGame);
   }
 
-	function isFulfilled() external view returns (bool) {
-		if (fulfilled < totalGame){
-			return false;
-		}
-		return true;
-	}
+  function isFulfilled() external view returns (bool) {
+    if (fulfilled < totalGame) {
+      return false;
+    }
+    return true;
+  }
 }
