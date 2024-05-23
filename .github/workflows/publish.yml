@@ -45,5 +45,9 @@ jobs:
           if [ ${FIXED_NPM_VERSION} -ge ${FIXED_PACKAGE_NUMBER} ]; then
             echo "Ignore ${PACKAGE_NAME} since no changes"
           else
+            cd ../
+            yarn
+            yarn run build:all
+            cd ./package
             npm run release
           fi

@@ -26,6 +26,15 @@ function cpTypes(src, dst) {
   );
 }
 
+function cpAbi(src, dst) {
+  if (fs.existsSync(dst)) {
+    fs.unlinkSync(dst);
+  }
+  const { abi } = readJson(src);
+  tsFileList.push(dst);
+  fs.writeFileSync(dst, `export const ${path.basename(dst, '.ts')} = ${JSON.stringify(abi, null, '  ')};`);
+}
+
 cp('../typechain-types/common.ts', './src/common.ts');
 cp('../contracts/orand-v2/interfaces/IOrandConsumerV2.sol', './IOrandConsumerV2.sol');
 cp('../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol', './IOrocleAggregatorV1.sol');
