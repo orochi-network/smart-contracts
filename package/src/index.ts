@@ -15,4 +15,4 @@ export * from './AbiERC721';
 export * from './AbiOrocleV1';
 export * from './AbiOrandProviderV2';
 export * from './AbiOrocleV2';
-export * as OrandProviderV3Package from './OrandProviderV3';
+export * from './AbiOrandProviderV3';

@@ -95,9 +95,6 @@ fs.writeFileSync(
       .join('\n'),
     tsFileList
       .map((e) => {
-        if (e.includes('OrandProviderV3')) {
-          return `export * as OrandProviderV3Package from './OrandProviderV3';`;
-        }
         return `export * from '${e.replace('.ts', '').replace('./src/', './')}';`;
       })
       .join('\n'),
