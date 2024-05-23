@@ -23,7 +23,7 @@ import type {
   TypedContractMethod,
 } from "./common";
 
-export declare namespace IOrandECDSAV2 {
+export declare namespace IOrandECDSAV3 {
   export type OrandECDSAProofStruct = {
     signer: AddressLike;
     receiverAddress: AddressLike;
@@ -44,7 +44,7 @@ export declare namespace IOrandECDSAV2 {
   };
 }
 
-export declare namespace IOrandProviderV2 {
+export declare namespace IOrandProviderV3 {
   export type ECVRFProofStruct = {
     gamma: [BigNumberish, BigNumberish];
     c: BigNumberish;
@@ -77,7 +77,7 @@ export declare namespace IOrandProviderV2 {
   };
 }
 
-export interface OrandProviderV2Interface extends Interface {
+export interface OrandProviderV3Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "decomposeProof"
@@ -92,6 +92,7 @@ export interface OrandProviderV2Interface extends Interface {
       | "getPublicKey"
       | "getPublicKeyDigest"
       | "getTotalEpoch"
+      | "initialize"
       | "owner"
       | "publish"
       | "publishFraudProof"
@@ -106,6 +107,8 @@ export interface OrandProviderV2Interface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "ExternalError"
+      | "Initialized"
       | "NewEpoch"
       | "OwnershipTransferred"
       | "SetBatchingLimit"
@@ -121,7 +124,7 @@ export interface OrandProviderV2Interface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "genesis",
-    values: [BytesLike, IOrandProviderV2.ECVRFProofStruct]
+    values: [BytesLike, IOrandProviderV3.ECVRFProofStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "getCurrentEpoch",
@@ -160,14 +163,24 @@ export interface OrandProviderV2Interface extends Interface {
     functionFragment: "getTotalEpoch",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [
+      [BigNumberish, BigNumberish],
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      BigNumberish
+    ]
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "publish",
-    values: [AddressLike, IOrandProviderV2.ECVRFProofStruct]
+    values: [AddressLike, IOrandProviderV3.ECVRFProofStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "publishFraudProof",
-    values: [BytesLike, IOrandProviderV2.ECVRFProofStruct]
+    values: [BytesLike, IOrandProviderV3.ECVRFProofStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -195,7 +208,7 @@ export interface OrandProviderV2Interface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "verifyEpoch",
-    values: [BytesLike, IOrandProviderV2.ECVRFProofStruct]
+    values: [BytesLike, IOrandProviderV3.ECVRFProofStruct]
   ): string;
 
   decodeFunctionResult(
@@ -240,6 +253,7 @@ export interface OrandProviderV2Interface extends Interface {
     functionFragment: "getTotalEpoch",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "publish", data: BytesLike): Result;
   decodeFunctionResult(
@@ -274,6 +288,30 @@ export interface OrandProviderV2Interface extends Interface {
     functionFragment: "verifyEpoch",
     data: BytesLike
   ): Result;
+}
+
+export namespace ExternalErrorEvent {
+  export type InputTuple = [receiverAddress: AddressLike];
+  export type OutputTuple = [receiverAddress: string];
+  export interface OutputObject {
+    receiverAddress: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace NewEpochEvent {
@@ -381,11 +419,11 @@ export namespace SetNewPublicKeyEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface OrandProviderV2 extends BaseContract {
-  connect(runner?: ContractRunner | null): OrandProviderV2;
+export interface OrandProviderV3 extends BaseContract {
+  connect(runner?: ContractRunner | null): OrandProviderV3;
   waitForDeployment(): Promise<this>;
 
-  interface: OrandProviderV2Interface;
+  interface: OrandProviderV3Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -426,12 +464,12 @@ export interface OrandProviderV2 extends BaseContract {
 
   decomposeProof: TypedContractMethod<
     [proof: BytesLike],
-    [IOrandECDSAV2.OrandECDSAProofStructOutput],
+    [IOrandECDSAV3.OrandECDSAProofStructOutput],
     "view"
   >;
 
   genesis: TypedContractMethod<
-    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV2.ECVRFProofStruct],
+    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV3.ECVRFProofStruct],
     [boolean],
     "nonpayable"
   >;
@@ -468,19 +506,31 @@ export interface OrandProviderV2 extends BaseContract {
 
   getTotalEpoch: TypedContractMethod<[receiver: AddressLike], [bigint], "view">;
 
+  initialize: TypedContractMethod<
+    [
+      publicKey: [BigNumberish, BigNumberish],
+      operator: AddressLike,
+      ecvrfAddress: AddressLike,
+      oracleAddress: AddressLike,
+      maxBatchingLimit: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   owner: TypedContractMethod<[], [string], "view">;
 
   publish: TypedContractMethod<
     [
       receiverAddress: AddressLike,
-      ecvrfProof: IOrandProviderV2.ECVRFProofStruct
+      ecvrfProof: IOrandProviderV3.ECVRFProofStruct
     ],
     [boolean],
     "nonpayable"
   >;
 
   publishFraudProof: TypedContractMethod<
-    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV2.ECVRFProofStruct],
+    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV3.ECVRFProofStruct],
     [boolean],
     "nonpayable"
   >;
@@ -518,17 +568,17 @@ export interface OrandProviderV2 extends BaseContract {
   >;
 
   verifyEpoch: TypedContractMethod<
-    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV2.ECVRFProofStruct],
+    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV3.ECVRFProofStruct],
     [
       [
-        IOrandECDSAV2.OrandECDSAProofStructOutput,
+        IOrandECDSAV3.OrandECDSAProofStructOutput,
         bigint,
         boolean,
         boolean,
         bigint,
         bigint
       ] & {
-        ecdsaProof: IOrandECDSAV2.OrandECDSAProofStructOutput;
+        ecdsaProof: IOrandECDSAV3.OrandECDSAProofStructOutput;
         currentEpochNumber: bigint;
         isEpochLinked: boolean;
         isValidDualProof: boolean;
@@ -547,13 +597,13 @@ export interface OrandProviderV2 extends BaseContract {
     nameOrSignature: "decomposeProof"
   ): TypedContractMethod<
     [proof: BytesLike],
-    [IOrandECDSAV2.OrandECDSAProofStructOutput],
+    [IOrandECDSAV3.OrandECDSAProofStructOutput],
     "view"
   >;
   getFunction(
     nameOrSignature: "genesis"
   ): TypedContractMethod<
-    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV2.ECVRFProofStruct],
+    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV3.ECVRFProofStruct],
     [boolean],
     "nonpayable"
   >;
@@ -592,6 +642,19 @@ export interface OrandProviderV2 extends BaseContract {
     nameOrSignature: "getTotalEpoch"
   ): TypedContractMethod<[receiver: AddressLike], [bigint], "view">;
   getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [
+      publicKey: [BigNumberish, BigNumberish],
+      operator: AddressLike,
+      ecvrfAddress: AddressLike,
+      oracleAddress: AddressLike,
+      maxBatchingLimit: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -599,7 +662,7 @@ export interface OrandProviderV2 extends BaseContract {
   ): TypedContractMethod<
     [
       receiverAddress: AddressLike,
-      ecvrfProof: IOrandProviderV2.ECVRFProofStruct
+      ecvrfProof: IOrandProviderV3.ECVRFProofStruct
     ],
     [boolean],
     "nonpayable"
@@ -607,7 +670,7 @@ export interface OrandProviderV2 extends BaseContract {
   getFunction(
     nameOrSignature: "publishFraudProof"
   ): TypedContractMethod<
-    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV2.ECVRFProofStruct],
+    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV3.ECVRFProofStruct],
     [boolean],
     "nonpayable"
   >;
@@ -640,17 +703,17 @@ export interface OrandProviderV2 extends BaseContract {
   getFunction(
     nameOrSignature: "verifyEpoch"
   ): TypedContractMethod<
-    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV2.ECVRFProofStruct],
+    [fraudProof: BytesLike, ecvrfProof: IOrandProviderV3.ECVRFProofStruct],
     [
       [
-        IOrandECDSAV2.OrandECDSAProofStructOutput,
+        IOrandECDSAV3.OrandECDSAProofStructOutput,
         bigint,
         boolean,
         boolean,
         bigint,
         bigint
       ] & {
-        ecdsaProof: IOrandECDSAV2.OrandECDSAProofStructOutput;
+        ecdsaProof: IOrandECDSAV3.OrandECDSAProofStructOutput;
         currentEpochNumber: bigint;
         isEpochLinked: boolean;
         isValidDualProof: boolean;
@@ -661,6 +724,20 @@ export interface OrandProviderV2 extends BaseContract {
     "view"
   >;
 
+  getEvent(
+    key: "ExternalError"
+  ): TypedContractEvent<
+    ExternalErrorEvent.InputTuple,
+    ExternalErrorEvent.OutputTuple,
+    ExternalErrorEvent.OutputObject
+  >;
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
   getEvent(
     key: "NewEpoch"
   ): TypedContractEvent<
@@ -712,6 +789,28 @@ export interface OrandProviderV2 extends BaseContract {
   >;
 
   filters: {
+    "ExternalError(address)": TypedContractEvent<
+      ExternalErrorEvent.InputTuple,
+      ExternalErrorEvent.OutputTuple,
+      ExternalErrorEvent.OutputObject
+    >;
+    ExternalError: TypedContractEvent<
+      ExternalErrorEvent.InputTuple,
+      ExternalErrorEvent.OutputTuple,
+      ExternalErrorEvent.OutputObject
+    >;
+
+    "Initialized(uint8)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
     "NewEpoch(address,uint96,uint256)": TypedContractEvent<
       NewEpochEvent.InputTuple,
       NewEpochEvent.OutputTuple,

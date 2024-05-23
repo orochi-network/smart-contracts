@@ -107,3 +107,8 @@ artifacts/
 cache/
 flatten/
 .env*
+cache-zk
+deployments-zk
+artifacts-zk
+.upgradable
+.openzeppelin

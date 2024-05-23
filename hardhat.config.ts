@@ -3,6 +3,11 @@ import { HardhatUserConfig } from 'hardhat/types';
 import { env } from './env';
 import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
+import '@matterlabs/hardhat-zksync';
+import '@matterlabs/hardhat-zksync-deploy';
+import '@matterlabs/hardhat-zksync-solc';
+
+const isZkSolc = process.env.USE_ZKSOLC === 'true';
 
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
@@ -28,6 +33,10 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   gasReporter: {
     enabled: true,
+  },
+  zksolc: {
+    version: '1.4.1',
+    settings: {},
   },
   networks: {
     sepolia: {
@@ -75,6 +84,11 @@ const config: HardhatUserConfig = {
       chainId: 42161,
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
+    arbitrumTest: {
+      url: 'https://sepolia-rollup.arbitrum.io/rpc',
+      chainId: 421614,
+      accounts: { mnemonic: env.OROCHI_MNEMONIC },
+    },
     polygon: {
       url: 'https://rpc-mainnet.matic.quiknode.pro',
       chainId: 137,
@@ -96,7 +110,7 @@ const config: HardhatUserConfig = {
       accounts: { mnemonic: env.OROCHI_MNEMONIC },
     },
     bnbChainTest: {
-      url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+      url: 'https://bsc-testnet-rpc.publicnode.com',
       chainId: 97,
       accounts: {
         mnemonic: env.OROCHI_MNEMONIC,
@@ -109,8 +123,54 @@ const config: HardhatUserConfig = {
         mnemonic: env.OROCHI_MNEMONIC,
       },
     },
+    moonbeamTest: {
+      url: 'https://rpc.api.moonbase.moonbeam.network',
+      chainId: 1287,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    saakuruTest: {
+      url: 'https://rpc.testnet.oasys.games/',
+      chainId: 9372,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    zkFairTest: {
+      url: 'https://testnet-rpc.zkfair.io',
+      chainId: 43851,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    zircuitTest: {
+      url: `https://zircuit1.p2pify.com/`,
+      chainId: 48899,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    xLayerTest: {
+      url: `https://testrpc.xlayer.tech/`,
+      chainId: 195,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+    zkLinkTest: {
+      url: `https://sepolia.rpc.zklink.io`,
+      zksync: true,
+      ethNetwork: 'https://sepolia.rpc.zklink.io',
+      chainId: 810181,
+      accounts: {
+        mnemonic: env.OROCHI_MNEMONIC,
+      },
+    },
+
     // Hard hat network
     hardhat: {
+      zksync: isZkSolc,
       chainId: 911,
       hardfork: 'london',
       blockGasLimit: 30000000,
