@@ -74,8 +74,8 @@ cpAbi('../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json'
 cpAbi('../artifacts/contracts/orocle-v1/OrocleV1.sol/OrocleV1.json', './src/AbiOrocleV1.ts');
 cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json', './src/AbiOrandProviderV2.ts');
 
-cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/OrocleV2.ts');
-cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/OrandProviderV3.ts');
+cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/AbiOrocleV2.ts');
+cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/AbiOrandProviderV3.ts');
 
 cpTypes('../typechain-types/contracts/orosign/OrosignMasterV1.ts', './src/OrosignMasterV1.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignV1.ts', './src/OrosignV1.ts');

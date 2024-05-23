@@ -14,5 +14,5 @@ export * from './AbiERC20';
 export * from './AbiERC721';
 export * from './AbiOrocleV1';
 export * from './AbiOrandProviderV2';
-export * from './OrocleV2';
+export * from './AbiOrocleV2';
 export * as OrandProviderV3Package from './OrandProviderV3';
