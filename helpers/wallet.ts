@@ -1,8 +1,13 @@
 /* eslint-disable no-await-in-loop */
 import '@nomicfoundation/hardhat-ethers';
-import { Wallet, ethers } from 'ethers';
+import { HDNodeWallet, Wallet, ethers } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { Wallet as zkSyncWallet, Provider } from 'zksync-ethers';
 import { env } from '../env';
+
+export function getZkSyncWallet(wallet: HDNodeWallet, provider: Provider) {
+  return new zkSyncWallet(wallet.privateKey);
+}
 
 export async function getWallet(hre: HardhatRuntimeEnvironment, chainId: bigint): Promise<ethers.HDNodeWallet> {
   if (chainId === 911n) {

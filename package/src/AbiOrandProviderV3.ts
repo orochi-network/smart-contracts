@@ -1,35 +1,4 @@
-export const AbiOrandProviderV2 = [
-  {
-    "inputs": [
-      {
-        "internalType": "uint256[2]",
-        "name": "publicKey",
-        "type": "uint256[2]"
-      },
-      {
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "ecvrfAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "oracleAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxBatchingLimit",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
+export const AbiOrandProviderV3 = [
   {
     "inputs": [
       {
@@ -44,6 +13,17 @@ export const AbiOrandProviderV2 = [
       }
     ],
     "name": "InvalidAlphaValue",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "signerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidECDSAProof",
     "type": "error"
   },
   {
@@ -99,6 +79,32 @@ export const AbiOrandProviderV2 = [
     ],
     "name": "OutOfRange",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiverAddress",
+        "type": "address"
+      }
+    ],
+    "name": "ExternalError",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -278,7 +284,7 @@ export const AbiOrandProviderV2 = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct IOrandECDSAV2.OrandECDSAProof",
+        "internalType": "struct IOrandECDSAV3.OrandECDSAProof",
         "name": "ecdsaProof",
         "type": "tuple"
       }
@@ -336,7 +342,7 @@ export const AbiOrandProviderV2 = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct IOrandProviderV2.ECVRFProof",
+        "internalType": "struct IOrandProviderV3.ECVRFProof",
         "name": "ecvrfProof",
         "type": "tuple"
       }
@@ -512,6 +518,39 @@ export const AbiOrandProviderV2 = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256[2]",
+        "name": "publicKey",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "ecvrfAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "oracleAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxBatchingLimit",
+        "type": "uint256"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "owner",
     "outputs": [
@@ -574,7 +613,7 @@ export const AbiOrandProviderV2 = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct IOrandProviderV2.ECVRFProof",
+        "internalType": "struct IOrandProviderV3.ECVRFProof",
         "name": "ecvrfProof",
         "type": "tuple"
       }
@@ -640,7 +679,7 @@ export const AbiOrandProviderV2 = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct IOrandProviderV2.ECVRFProof",
+        "internalType": "struct IOrandProviderV3.ECVRFProof",
         "name": "ecvrfProof",
         "type": "tuple"
       }
@@ -802,7 +841,7 @@ export const AbiOrandProviderV2 = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct IOrandProviderV2.ECVRFProof",
+        "internalType": "struct IOrandProviderV3.ECVRFProof",
         "name": "ecvrfProof",
         "type": "tuple"
       }
@@ -832,7 +871,7 @@ export const AbiOrandProviderV2 = [
             "type": "uint256"
           }
         ],
-        "internalType": "struct IOrandECDSAV2.OrandECDSAProof",
+        "internalType": "struct IOrandECDSAV3.OrandECDSAProof",
         "name": "ecdsaProof",
         "type": "tuple"
       },
