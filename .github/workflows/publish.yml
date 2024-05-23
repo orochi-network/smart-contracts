@@ -47,7 +47,6 @@ jobs:
           else
             cd ../
             yarn
-            pwd
             yarn run build:all
             cd ./package
             npm run release

@@ -4,6 +4,10 @@ const path = require('path');
 const tsFileList = [];
 const typesList = [];
 
+function readJson(filename) {
+  return JSON.parse(fs.readFileSync(filename).toString());
+}
+
 function cp(src, dst) {
   if (fs.existsSync(dst)) {
     fs.unlinkSync(dst);
