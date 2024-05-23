@@ -2,8 +2,6 @@ name: Publish Orochi Smart Contracts
 on:
   push:
     branches: ['main']
-  pull_request:
-    branches: ['main']
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
