@@ -1,7 +1,7 @@
 name: Publish Orochi Smart Contracts
 on:
   push:
-    branches: ['release']
+    branches: ['main']
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
@@ -13,6 +13,9 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -22,36 +25,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: git fetch --prune --unshallow
-
-      - name: Get previous version from Git history
-        id: get_previous_number
+      - name: Publish smart contracts
+        env:
+          NPM_TOKEN: ${{ env.NPM_TOKEN }}
         run: |
-          PREVIOUS_VERSION=$(git describe --tags --abbrev=0 2>/dev/null|| echo "0.0.0")
-          PREVIOUS_NUMBER=$(echo $PREVIOUS_VERSION | sed 's/[^0-9]//g')
-          echo "previous_number=${PREVIOUS_NUMBER}" >> "$GITHUB_OUTPUT"
-      - name: Check if package.json version is newer
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          CURRENT_NUMBER=$(echo $CURRENT_VERSION | sed 's/[^0-9]//g')
-          PREVIOUS_NUMBER=${{ steps.get_previous_number.outputs.previous_number }}
-          max_length=$((${#PREVIOUS_NUMBER} > ${#CURRENT_NUMBER} ? ${#PREVIOUS_NUMBER} : ${#CURRENT_NUMBER}))
-          FIXED_CURRENT_VERSION=$(echo $CURRENT_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#CURRENT_NUMBER})))))
-          FIXED_PREVIOUS_VERSION=$(echo $PREVIOUS_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PREVIOUS_NUMBER})))))
-          if [ ${FIXED_PREVIOUS_VERSION} -ge ${FIXED_CURRENT_VERSION} ]; then
-            echo "Error: Package.json version is not newer than the previous version."
-            exit 1
-          else
-            echo "Package.json version is newer than the previous version."
-          fi
-      - name: Install dependencies
-        run: |
-          npm i
-          npm run prepack
-      - name: Publish package to NPM
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
-          npm publish --access public
-          git tag $CURRENT_VERSION
-          git push origin --tags
+          cd ./package 
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          NPM_VERSION=$(npm show "$PACKAGE_NAME" version 2>/dev/null || echo 0.0.0)
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          NPM_NUMBER=$(echo $NPM_VERSION | sed 's/[^0-9]//g')
+          PACKAGE_NUMBER=$(echo $PACKAGE_VERSION | sed 's/[^0-9]//g')
+          max_length=$((${#NPM_NUMBER} > ${#PACKAGE_NUMBER} ? ${#NPM_NUMBER} : ${#PACKAGE_NUMBER}))
+          FIXED_NPM_VERSION=$(echo $NPM_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#NPM_NUMBER})))))
+          FIXED_PACKAGE_NUMBER=$(echo $PACKAGE_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PACKAGE_NUMBER})))))
+
+          if [ ${FIXED_NPM_VERSION} -ge ${FIXED_PACKAGE_NUMBER} ]; then
+            echo "Ignore ${PACKAGE_NAME} since no changes"
+          else
+            cd ../
+            yarn
+            yarn run build:all
+            cd ./package
+            npm run release
+          fi

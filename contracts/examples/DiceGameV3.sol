@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '@orochi-network/contracts/IOrandConsumerV3.sol';
-import '@orochi-network/contracts/IOrocleAggregatorV2.sol';
+import '../orand-v3/interfaces/IOrandConsumerV3.sol';
+import '../orocle-v2/interfaces/IOrocleAggregatorV2.sol';
 
 error WrongGuessingValue(uint128 guessing);
 

@@ -12,7 +12,7 @@ contract TestERC721 is ERC721, Ownable {
 
   constructor() ERC721('TestBigO', 'TestO') {}
 
-  function mintNFT(address recipient) public returns (uint256) onlyOwner {
+  function mintNFT(address recipient) public onlyOwner returns (uint256) {
     _tokenIds.increment();
     uint256 newTokenId = _tokenIds.current();
     _mint(recipient, newTokenId);
