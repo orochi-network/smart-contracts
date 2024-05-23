@@ -47,8 +47,7 @@ jobs:
           else
             cd ../
             yarn
-            cp ./contracts/orocle-v2/interfaces/IOrocleAggregatorV2.sol ./node_modules/@orochi-network/IOrocleAggregatorV2.sol
-            cp ./contracts/orocle-v2/interfaces/IOrandConsumerV3.sol ./node_modules/@orochi-network/IOrandConsumerV3.sol
+            pwd
             yarn run build:all
             cd ./package
             npm run release
