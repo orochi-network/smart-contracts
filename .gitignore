@@ -112,3 +112,5 @@ deployments-zk
 artifacts-zk
 .upgradable
 .openzeppelin
+.DS_Store
+salt.bin
