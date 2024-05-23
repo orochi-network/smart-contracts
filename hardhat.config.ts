@@ -68,7 +68,7 @@ const config: HardhatUserConfig = {
       chainId: 1,
     },
     binance: {
-      url: 'https://bnb.api.onfinality.io/public',
+      url: 'https://bsc-rpc.publicnode.com',
       chainId: 56,
     },
     arbitrum: {
@@ -122,6 +122,10 @@ const config: HardhatUserConfig = {
     xLayerTest: {
       url: `https://testrpc.xlayer.tech/`,
       chainId: 195,
+    },
+    xLayerMain: {
+      url: `https://rpc.xlayer.tech/`,
+      chainId: 196,
     },
     zkLinkTest: {
       url: `https://sepolia.rpc.zklink.io`,
