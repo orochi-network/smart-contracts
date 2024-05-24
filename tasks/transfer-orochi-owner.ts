@@ -51,27 +51,28 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     */
     // Deploy Provider
 
-    (await orocleV2Proxy.connect(account).transferOwnership(OWNER)).wait();
-    await sleep(10);
+    // (await orocleV2Proxy.connect(account).transferOwnership(OWNER)).wait();
+    // await sleep(10);
 
-    let nonce = await ethers.provider.getTransactionCount(account.address);
-    console.log('🚀 ~ nonce:', nonce);
-    await upgrades.admin
-      .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
-        silent: false,
-        txOverrides: {
-          nonce: nonce + 1,
-        },
-      })
-      .then();
-    nonce = nonce + 3;
-    await sleep(10);
+    // let nonce = await ethers.provider.getTransactionCount(account.address);
+    // console.log('🚀 ~ nonce:', nonce);
+    // await upgrades.admin
+    //   .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
+    //     silent: false,
+    //     txOverrides: {
+    //       nonce: nonce + 1,
+    //     },
+    //   })
+    //   .then();
+    // nonce = nonce + 3;
+    // await sleep(10);
     (await orandProviderV3Proxy.connect(account).transferOwnership(OWNER)).wait();
+    console.log('Transfer orandProviderV3Proxy success');
     await sleep(10);
     await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
       silent: false,
       txOverrides: {
-        nonce,
+        // nonce,
       },
     });
 
