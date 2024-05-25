@@ -8,7 +8,7 @@ import { HexString, OrandEncoding } from '@orochi-network/utilities';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Provider, Wallet } from 'zksync-ethers';
+import { Provider } from 'zksync-ethers';
 import { env } from '../env';
 import { getWallet, getZkSyncWallet } from '../helpers/wallet';
 
