@@ -52,7 +52,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     // Deploy Provider
 
     (await orocleV2Proxy.connect(account).transferOwnership(OWNER)).wait();
-    await sleep(10);
+    await sleep(15);
 
     let nonce = await ethers.provider.getTransactionCount(account.address);
     console.log('🚀 ~ nonce:', nonce);
@@ -65,9 +65,11 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       })
       .then();
     nonce = nonce + 3;
-    await sleep(10);
+    console.log('Transfer orocleV2Proxy successfully');
+    await sleep(15);
     (await orandProviderV3Proxy.connect(account).transferOwnership(OWNER)).wait();
-    await sleep(10);
+    console.log('Transfer orandProviderV3Proxy successfully');
+    await sleep(15);
     await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
       silent: false,
       txOverrides: {
