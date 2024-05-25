@@ -68,12 +68,12 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     // await sleep(10);
     (await orandProviderV3Proxy.connect(account).transferOwnership(OWNER)).wait();
     console.log('Transfer orandProviderV3Proxy success');
-    await sleep(15);
+    await sleep(10);
     await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
       silent: false,
-      // txOverrides: {
-      //   nonce,
-      // },
+      txOverrides: {
+        // nonce,
+      },
     });
 
     console.log(
