@@ -34,10 +34,11 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     }
     console.log('Owner:', OWNER);
 
-    const orocleV2Proxy = (await hre.ethers.getContractAt('OrocleV2', OROCLE_V2_ADDRESS)) as OrocleV2;
+    const orocleV2Proxy = (await hre.ethers.getContractAt('OrocleV2', OROCLE_V2_ADDRESS, account)) as OrocleV2;
     const orandProviderV3Proxy = (await hre.ethers.getContractAt(
       'OrandProviderV3',
       ORAND_PROVIDER_ADDRESS,
+      account,
     )) as OrandProviderV3;
 
     console.log('Deployer:', account.address);
@@ -53,10 +54,10 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     */
     // Deploy Provider
 
-    (await orocleV2Proxy.connect(account).transferOwnership(OWNER)).wait();
+    (await orocleV2Proxy.transferOwnership(OWNER)).wait();
     await sleep(15);
 
-    let nonce = await ethers.provider.getTransactionCount(account.address);
+    let nonce = await provider.getTransactionCount(account.address);
     console.log('🚀 ~ nonce:', nonce);
     await upgrades.admin
       .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
@@ -69,7 +70,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     nonce = nonce + 3;
     console.log('Transfer orocleV2Proxy successfully');
     await sleep(15);
-    (await orandProviderV3Proxy.connect(account).transferOwnership(OWNER)).wait();
+    (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
     console.log('Transfer orandProviderV3Proxy successfully');
     await sleep(15);
     await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
