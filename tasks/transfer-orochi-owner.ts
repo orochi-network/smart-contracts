@@ -6,6 +6,7 @@ import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { getWallet } from '../helpers/wallet';
 import { OrandProviderV3, OrocleV2 } from '../typechain-types';
+import EthJsonRpc from '../helpers/provider';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
@@ -20,7 +21,8 @@ const sleep = async (seconds: number) => {
 task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
-    const { chainId } = await hre.ethers.provider.getNetwork();
+    const provider = new EthJsonRpc(hre.network.config.url);
+    const { chainId } = await provider.getNetwork();
     const account = await getWallet(hre, chainId);
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     const { ethers, upgrades } = hre;
