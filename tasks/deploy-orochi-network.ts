@@ -6,8 +6,10 @@ import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { HexString, OrandEncoding } from '@orochi-network/utilities';
 import { getWallet } from '../helpers/wallet';
+import { Wallet } from 'ethers';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
+const PRIVATE_KEY = '';
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -16,7 +18,8 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     // Get deployer account
     const { chainId } = await hre.ethers.provider.getNetwork();
-    const account = await getWallet(hre, chainId);
+    // const account = await getWallet(hre, chainId);
+    const account = new Wallet(PRIVATE_KEY);
     const { ethers, upgrades } = hre;
     const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
 
