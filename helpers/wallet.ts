@@ -25,7 +25,7 @@ export async function getWallet(hre: HardhatRuntimeEnvironment, chainId: bigint)
     );
     console.log('Recovered master wallet:', masterWallet.address, 'path:', masterWallet.path);
     const wallet = masterWallet.deriveChild(chainId);
-    // console.log('private key', wallet.privateKey);
+    console.log('private key', wallet.privateKey);
     console.log(
       `--------------------
 Deployer's Wallet > ChainID: ${chainId.toString().padEnd(16, ' ')} Address: ${wallet.address} Path: ${wallet.path}`,
