@@ -3,8 +3,9 @@ import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { getWallet } from '../helpers/wallet';
+import { env } from '../env';
 
-const ADDRESS = '';
+const ADDRESS = env.OROCHI_OWNER;
 
 task('wipe', 'Wipe wallet').setAction(async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
   const { chainId } = await hre.ethers.provider.getNetwork();

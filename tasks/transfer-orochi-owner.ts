@@ -54,30 +54,30 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     */
     // Deploy Provider
 
-    // (await orocleV2Proxy.transferOwnership(OWNER)).wait();
-    // await sleep(15);
+    (await orocleV2Proxy.transferOwnership(OWNER)).wait();
+    await sleep(15);
 
-    // let nonce = await provider.getTransactionCount(account.address);
-    // console.log('🚀 ~ nonce:', nonce);
-    // await upgrades.admin
-    //   .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
-    //     silent: false,
-    //     txOverrides: {
-    //       nonce: nonce + 1,
-    //     },
-    //   })
-    //   .then();
-    // nonce = nonce + 3;
-    // console.log('Transfer orocleV2Proxy successfully');
-    // await sleep(15);
+    let nonce = await provider.getTransactionCount(account.address);
+    console.log('🚀 ~ nonce:', nonce);
+    await upgrades.admin
+      .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
+        silent: false,
+        txOverrides: {
+          nonce: nonce + 1,
+        },
+      })
+      .then();
+    nonce = nonce + 3;
+    console.log('Transfer orocleV2Proxy successfully');
+    await sleep(15);
     (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
     console.log('Transfer orandProviderV3Proxy successfully');
     await sleep(15);
     await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
       silent: false,
-      // txOverrides: {
-      //   nonce,
-      // },
+      txOverrides: {
+        nonce,
+      },
     });
 
     console.log(
