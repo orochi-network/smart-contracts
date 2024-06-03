@@ -6,8 +6,9 @@ import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { getWallet } from '../helpers/wallet';
 import { OrandProviderV3, OrocleV2 } from '../typechain-types';
-import { CHAIN_NEED_CUSTOM_ESTIMATE_GAS, CHAIN_NEED_CUSTOM_PROVIDER } from './deploy-orochi-network';
+
 import EthJsonRpc from '../helpers/provider';
+import { CHAIN_NEED_CUSTOM_PROVIDER, GAS_LESS_BLOCK_CHAIN } from './deploy-orochi-network';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
@@ -25,11 +26,11 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       throw new Error('Invalid chainId');
     }
     const needCustomProvider = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
-    const needCustomEstimateGas = CHAIN_NEED_CUSTOM_ESTIMATE_GAS.includes(hre.network.config.chainId);
+    const isGasLessBlockchain = GAS_LESS_BLOCK_CHAIN.includes(hre.network.config.chainId);
     const provider = needCustomProvider ? new EthJsonRpc(hre.network.config.url) : hre.ethers.provider;
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     const { chainId } = await provider.getNetwork();
-    const account = needCustomEstimateGas
+    const account = isGasLessBlockchain
       ? (await getWallet(hre, chainId)).connect(provider)
       : await getWallet(hre, chainId);
 
@@ -62,7 +63,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       )
     */
     // Deploy Provider
-    if (needCustomEstimateGas) {
+    if (isGasLessBlockchain) {
       const latestBlock = await provider.getBlock('latest');
       console.log('🚀 ~ latestBlock:', latestBlock);
       // const transferOracleEncode = orocleV2Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
@@ -74,7 +75,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       //   data: transferOracleEncode,
       // });
 
-      // // (await orocleV2Proxy.transferOwnership(OWNER)).wait();
+      (await orocleV2Proxy.transferOwnership(OWNER)).wait();
       // console.log('Transfer orocleV2Proxy successfully');
       // await sleep(10);
 

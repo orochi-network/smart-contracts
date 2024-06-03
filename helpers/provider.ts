@@ -1,22 +1,27 @@
+import axios, { AxiosResponse } from 'axios';
 import {
   FetchRequest,
   JsonRpcApiProvider,
   JsonRpcApiProviderOptions,
   JsonRpcPayload,
-  JsonRpcProvider,
   JsonRpcResult,
   Networkish,
   Provider,
 } from 'ethers';
 import { Fill } from 'noqueue';
-import axios, { AxiosResponse } from 'axios';
 
 export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
   #connect: FetchRequest;
 
   private url: string = '';
+  private needCustomEstimateGas: boolean;
 
-  constructor(url?: string | FetchRequest, network?: Networkish, options?: JsonRpcApiProviderOptions) {
+  constructor(
+    url?: string | FetchRequest,
+    network?: Networkish,
+    options?: JsonRpcApiProviderOptions,
+    isGasLessBlockchain: boolean = false,
+  ) {
     if (url == null) {
       url = 'http://localhost:8545';
     }
@@ -28,6 +33,7 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
     } else {
       this.#connect = url.clone();
     }
+    this.needCustomEstimateGas = isGasLessBlockchain;
   }
 
   public static _getConnection(): FetchRequest {
@@ -43,6 +49,16 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
     const headers = {
       'Content-Type': 'application/json',
     };
+
+    if (this.needCustomEstimateGas) {
+      if (payload.method === 'eth_estimateGas') {
+        return {
+          id: payload.id,
+          result: '0',
+        };
+      }
+    }
+
     const result: AxiosResponse<JsonRpcResult> = await axios.request({
       method: 'POST',
       headers,
