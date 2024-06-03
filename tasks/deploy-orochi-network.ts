@@ -10,6 +10,7 @@ import EthJsonRpc from '../helpers/provider';
 
 export const CHAIN_NEED_CUSTOM_PROVIDER = [196, 7225878];
 export const GAS_LESS_BLOCK_CHAIN = [7225878];
+export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = '11000000n';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
@@ -59,11 +60,29 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Deploy ECVRF
     const latestBlock = await provider.getBlock('latest');
     console.log('🚀 ~ latestBlock:', latestBlock);
-    const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
+    const orandECVRF = await (
+      await orandECVRFV3Factory.deploy(
+        isGasLessBlockchain
+          ? {
+              gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+            }
+          : undefined,
+      )
+    ).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
-    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
+    const orocleV2Proxy = await upgrades.deployProxy(
+      orocleV2Factory,
+      [OPERATORS],
+      isGasLessBlockchain
+        ? {
+            txOverrides: {
+              gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+            },
+          }
+        : undefined,
+    );
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
@@ -87,6 +106,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         await orocleV2Proxy.getAddress(),
         200,
       ],
+      isGasLessBlockchain ? { txOverrides: { gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN } } : undefined,
     );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();
