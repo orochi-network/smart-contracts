@@ -8,13 +8,17 @@ import { getWallet } from '../helpers/wallet';
 import { OrandProviderV3, OrocleV2 } from '../typechain-types';
 
 import EthJsonRpc from '../helpers/provider';
-import { CHAIN_NEED_CUSTOM_PROVIDER, GAS_LESS_BLOCK_CHAIN } from './deploy-orochi-network';
+import {
+  CHAIN_NEED_CUSTOM_PROVIDER,
+  GAS_LESS_BLOCK_CHAIN,
+  GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+} from './deploy-orochi-network';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 // CHANGE OROCLE & ORAND ADDRESS BEFORE RUN THIS TASK
-const OROCLE_V2_ADDRESS = '0x5C27491559b3E438b18024A2d5C6f307fBD9Ba15';
-const ORAND_PROVIDER_ADDRESS = '0x3CEA68A48c01Ff0759C3df54324b4E3B6F284303';
+const OROCLE_V2_ADDRESS = '0xfa59E81714BE6A453057A76DAF7Cb619B05CD877';
+const ORAND_PROVIDER_ADDRESS = '0x0370D689959Bc692D0C46C41Bdd2Bc4B22599Ef0';
 
 const sleep = async (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
@@ -63,83 +67,49 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       )
     */
     // Deploy Provider
-    if (isGasLessBlockchain) {
-      const latestBlock = await provider.getBlock('latest');
-      console.log('🚀 ~ latestBlock:', latestBlock);
-      // const transferOracleEncode = orocleV2Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
-      // await account.sendTransaction({
-      //   from: account.address,
-      //   to: OROCLE_V2_ADDRESS,
-      //   chainId,
-      //   gasLimit: latestBlock?.gasLimit,
-      //   data: transferOracleEncode,
-      // });
+    (
+      await orocleV2Proxy.transferOwnership(
+        OWNER,
+        isGasLessBlockchain
+          ? {
+              gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+            }
+          : {},
+      )
+    ).wait();
 
-      (await orocleV2Proxy.transferOwnership(OWNER)).wait();
-      // console.log('Transfer orocleV2Proxy successfully');
-      // await sleep(10);
+    console.log('Transfer orocleV2Proxy successfully');
+    await sleep(10);
 
-      await upgrades.admin
-        .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
-          silent: false,
-          txOverrides: {
-            gasLimit: latestBlock?.gasLimit,
-          },
-        })
-        .then();
-      await sleep(10);
-
-      const transferOrandEncoded = orandProviderV3Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
-
-      await account.sendTransaction({
-        from: account.address,
-        to: ORAND_PROVIDER_ADDRESS,
-        chainId,
-        gasLimit: latestBlock?.gasLimit,
-        data: transferOrandEncoded,
-      });
-
-      // (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
-
-      await sleep(10);
-
-      await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
+    let nonce = await ethers.provider.getTransactionCount(account.address);
+    console.log('🚀 ~ nonce:', nonce);
+    await upgrades.admin
+      .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
         silent: false,
         txOverrides: {
-          gasLimit: latestBlock?.gasLimit,
+          nonce: nonce + 1,
+          gasLimit: isGasLessBlockchain ? GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN : null,
         },
-      });
-    } else {
-      (await orocleV2Proxy.transferOwnership(OWNER)).wait();
-      console.log('Transfer orocleV2Proxy successfully');
-      await sleep(10);
+      })
+      .then();
+    nonce = nonce + 3;
+    await sleep(10);
 
-      let nonce = await ethers.provider.getTransactionCount(account.address);
-      console.log('🚀 ~ nonce:', nonce);
-      const latestBlock = await provider.getBlock('latest');
-      console.log('🚀 ~ latestBlock:', latestBlock);
-      await upgrades.admin
-        .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
-          silent: false,
-          txOverrides: {
-            nonce: nonce + 1,
-          },
-        })
-        .then();
-      nonce = nonce + 3;
-      await sleep(10);
+    (
+      await orandProviderV3Proxy.transferOwnership(OWNER, {
+        gasLimit: isGasLessBlockchain ? GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN : null,
+      })
+    ).wait();
 
-      (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
+    await sleep(10);
 
-      await sleep(10);
-
-      await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
-        silent: false,
-        txOverrides: {
-          nonce,
-        },
-      });
-    }
+    await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
+      silent: false,
+      txOverrides: {
+        nonce,
+        gasLimit: isGasLessBlockchain ? GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN : null,
+      },
+    });
 
     console.log(
       `Corresponding address: ${correspondingAddress} , is valid publicKey?:`,

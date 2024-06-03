@@ -49,7 +49,6 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
     const headers = {
       'Content-Type': 'application/json',
     };
-    console.log(`Request to: ${this.url} payload:`, payload);
 
     if (this.isGasLessBlockchain && payload.method === 'eth_estimateGas') {
       return {
