@@ -10,7 +10,7 @@ import EthJsonRpc from '../helpers/provider';
 
 export const CHAIN_NEED_CUSTOM_PROVIDER = [196, 7225878];
 export const GAS_LESS_BLOCK_CHAIN = [7225878];
-export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = '11000000n';
+export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = 11000000n;
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
