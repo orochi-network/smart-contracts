@@ -54,6 +54,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     console.log('Deployer:', account.address);
     // Deploy ECVRF
     const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
+    console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
     const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
