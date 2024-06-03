@@ -116,7 +116,7 @@ const config: HardhatUserConfig = {
       chainId: 247253,
     },
     saakuruMain: {
-      url: '	https://rpc.mainnet.oasys.games/',
+      url: 'https://rpc.mainnet.oasys.games/',
       chainId: 248,
     },
     zkFairTest: {
