@@ -58,15 +58,13 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Setup deployer
     console.log('Deployer:', account.address);
     // Deploy ECVRF
-    const latestBlock = await provider.getBlock('latest');
-    console.log('🚀 ~ latestBlock:', latestBlock);
     const orandECVRF = await (
       await orandECVRFV3Factory.deploy(
         isGasLessBlockchain
           ? {
               gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
             }
-          : undefined,
+          : {},
       )
     ).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
@@ -81,7 +79,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
               gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
             },
           }
-        : undefined,
+        : {},
     );
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
@@ -106,7 +104,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         await orocleV2Proxy.getAddress(),
         200,
       ],
-      isGasLessBlockchain ? { txOverrides: { gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN } } : undefined,
+      isGasLessBlockchain ? { txOverrides: { gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN } } : {},
     );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();
