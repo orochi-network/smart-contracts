@@ -5,7 +5,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { getWallet } from '../helpers/wallet';
 import { env } from '../env';
 
-const ADDRESS = env.OROCHI_OWNER;
+const ADDRESS = '0xbf4C063f5A5c39d5920d76cB9531b7aBcCe433Ab';
 
 task('wipe', 'Wipe wallet').setAction(async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
   const { chainId } = await hre.ethers.provider.getNetwork();
