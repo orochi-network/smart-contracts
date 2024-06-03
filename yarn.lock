@@ -4643,6 +4643,11 @@ nopt@3.x:
   dependencies:
     abbrev "1"
 
+noqueue@^4.0.7:
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/noqueue/-/noqueue-4.0.7.tgz#f87666d3b2c5cce0b128390359b7339afdf7c78d"
+  integrity sha512-l3novarpPotJraWzU34ODMuaXqIBY/MDqwp38IP/2TxZmdJMXsyCM0sEfaTQ8f5vL+QiWJ5lzkk0GG/WCrKnFQ==
+
 normalize-path@^3.0.0, normalize-path@~3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/normalize-path/-/normalize-path-3.0.0.tgz"

@@ -6,17 +6,28 @@ import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { HexString, OrandEncoding } from '@orochi-network/utilities';
 import { getWallet } from '../helpers/wallet';
+import EthJsonRpc from '../helpers/provider';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
+const CHAIN_NEED_CUSTOM_PROVIDER = [196, 7225878];
+
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
+    if (!hre.network.config.chainId) {
+      throw new Error('Invalid chainId');
+    }
     // Public key
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     // Get deployer account
-    const { chainId } = await hre.ethers.provider.getNetwork();
-    const account = await getWallet(hre, chainId);
+    const needCustomProvider = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
+    const provider = needCustomProvider ? new EthJsonRpc(hre.network.config.url) : hre.ethers.provider;
+
+    const { chainId } = await provider.getNetwork();
+    const account = needCustomProvider
+      ? await getWallet(hre, chainId)
+      : (await getWallet(hre, chainId)).connect(provider);
     const { ethers, upgrades } = hre;
     const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
 
@@ -35,9 +46,9 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     //m/44'/60'/0'/0/0
     //m/44'/60'/0'/0/0/0
 
-    const orandECVRFV3Factory = (await ethers.getContractFactory('OrandECVRFV3')).connect(account);
-    const orandProviderV3Factory = (await ethers.getContractFactory('OrandProviderV3')).connect(account);
-    const orocleV2Factory = (await ethers.getContractFactory('OrocleV2')).connect(account);
+    const orandECVRFV3Factory = await ethers.getContractFactory('OrandECVRFV3', account);
+    const orandProviderV3Factory = await ethers.getContractFactory('OrandProviderV3', account);
+    const orocleV2Factory = await ethers.getContractFactory('OrocleV2', account);
 
     // Setup deployer
     console.log('Deployer:', account.address);

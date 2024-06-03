@@ -7,7 +7,7 @@ import { env } from '../env';
 import EncryptionKey from './encryption';
 
 export function getZkSyncWallet(wallet: HDNodeWallet, provider: Provider) {
-  return new zkSyncWallet(wallet.privateKey);
+  return new zkSyncWallet(wallet.privateKey, provider);
 }
 
 export async function getWallet(hre: HardhatRuntimeEnvironment, chainId: bigint): Promise<ethers.HDNodeWallet> {

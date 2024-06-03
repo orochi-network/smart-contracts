@@ -115,12 +115,8 @@ const config: HardhatUserConfig = {
       url: 'https://rpc-testnet.saakuru.network',
       chainId: 247253,
     },
-    saakuruMain: {
-      url: 'https://rpc.mainnet.oasys.games/',
-      chainId: 248,
-    },
     saakuruMainL2: {
-      url: 'https://rpc.saakuru.network',
+      url: 'https://rpc-vip.saakuru.network/orochi-x78z5h69j5zfjc26uadt1sjc6h37xd0i',
       chainId: 7225878,
     },
     zkFairTest: {
@@ -134,6 +130,10 @@ const config: HardhatUserConfig = {
     xLayerTest: {
       url: `https://testrpc.xlayer.tech/`,
       chainId: 195,
+    },
+    xLayerMain: {
+      url: `https://rpc.xlayer.tech/`,
+      chainId: 196,
     },
     zkLinkTest: {
       url: `https://sepolia.rpc.zklink.io`,
