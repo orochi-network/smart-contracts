@@ -12,7 +12,9 @@ task('wipe', 'Wipe wallet').setAction(async (_taskArgs: any, hre: HardhatRuntime
 
   const wallet = await getWallet(hre, chainId);
   const balance = await hre.ethers.provider.getBalance(wallet.address);
+  console.log('🚀 ~ task ~ balance:', balance);
   let { gasPrice } = await hre.ethers.provider.getFeeData();
+  console.log('🚀 ~ task ~ gasPrice:', gasPrice);
   if (!gasPrice) {
     gasPrice = 10n ** 9n;
   }
