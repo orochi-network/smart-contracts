@@ -76,7 +76,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
 
       // // (await orocleV2Proxy.transferOwnership(OWNER)).wait();
       // console.log('Transfer orocleV2Proxy successfully');
-      await sleep(10);
+      // await sleep(10);
 
       await upgrades.admin
         .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
