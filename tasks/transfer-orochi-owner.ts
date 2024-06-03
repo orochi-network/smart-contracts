@@ -10,8 +10,8 @@ import { OrandProviderV3, OrocleV2 } from '../typechain-types';
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 // CHANGE OROCLE & ORAND ADDRESS BEFORE RUN THIS TASK
-const OROCLE_V2_ADDRESS = '0xd08b82d793025E4e210D40Dc2298Fd5204835ED7';
-const ORAND_PROVIDER_ADDRESS = '0x976b1E268D0b06540d3428b5970cA0c3e17eE315';
+const OROCLE_V2_ADDRESS = '0x6eFAA86dD3177d75d161A99e2c103409927f3C49';
+const ORAND_PROVIDER_ADDRESS = '0x635eB277805AFADDd720B873dfE87F8fc01b24e4';
 
 const sleep = async (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
