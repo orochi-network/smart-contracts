@@ -116,7 +116,7 @@ const config: HardhatUserConfig = {
       chainId: 247253,
     },
     saakuruMainL2: {
-      url: 'https://rpc-vip.saakuru.network/orochi-x78z5h69j5zfjc26uadt1sjc6h37xd0i',
+      url: 'https://rpc-vip.saakuru.network/orochi-x78z5h69j5zfjc26uadt1sjc6h37xd0i/',
       chainId: 7225878,
     },
     zkFairTest: {
