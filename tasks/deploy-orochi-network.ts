@@ -59,7 +59,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Deploy ECVRF
     const latestBlock = await provider.getBlock('latest');
     console.log('🚀 ~ latestBlock:', latestBlock);
-    const orandECVRF = await await orandECVRFV3Factory.deploy();
+    const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle

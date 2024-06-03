@@ -14,7 +14,7 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
   #connect: FetchRequest;
 
   private url: string = '';
-  private needCustomEstimateGas: boolean;
+  private isGasLessBlockchain: boolean;
 
   constructor(
     url?: string | FetchRequest,
@@ -33,7 +33,7 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
     } else {
       this.#connect = url.clone();
     }
-    this.needCustomEstimateGas = isGasLessBlockchain;
+    this.isGasLessBlockchain = isGasLessBlockchain;
   }
 
   public static _getConnection(): FetchRequest {
@@ -49,14 +49,13 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
     const headers = {
       'Content-Type': 'application/json',
     };
+    console.log(`Request to: ${this.url} payload:`, payload);
 
-    if (this.needCustomEstimateGas) {
-      if (payload.method === 'eth_estimateGas') {
-        return {
-          id: payload.id,
-          result: '0',
-        };
-      }
+    if (this.isGasLessBlockchain && payload.method === 'eth_estimateGas') {
+      return {
+        id: payload.id,
+        result: '0',
+      };
     }
 
     const result: AxiosResponse<JsonRpcResult> = await axios.request({
