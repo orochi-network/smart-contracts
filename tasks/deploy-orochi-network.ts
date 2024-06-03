@@ -10,18 +10,20 @@ import EthJsonRpc from '../helpers/provider';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
-const CHAIN_NEED_CUSTOM_PROVIDER = [196, 7225878];
+export const CHAIN_NEED_CUSTOM_PROVIDER = [196, 7225878];
+export const CHAIN_NEED_CUSTOM_ESTIMATE_GAS = [7225878];
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     if (!hre.network.config.chainId) {
       throw new Error('Invalid chainId');
     }
+    const needCustomProvider = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
+    const needCustomEstimateGas = CHAIN_NEED_CUSTOM_ESTIMATE_GAS.includes(hre.network.config.chainId);
     // Public key
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     // Get deployer account
-    const needCustomProvider = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
     const provider = needCustomProvider ? new EthJsonRpc(hre.network.config.url) : hre.ethers.provider;
 
     const { chainId } = await provider.getNetwork();
@@ -55,19 +57,23 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Deploy ECVRF
     const latestBlock = await provider.getBlock('latest');
     console.log('🚀 ~ latestBlock:', latestBlock);
-    const orandECVRF = await (
-      await orandECVRFV3Factory.deploy({
-        gasLimit: latestBlock?.gasLimit,
-      })
-    ).waitForDeployment();
+    const orandECVRF = needCustomEstimateGas
+      ? await (
+          await orandECVRFV3Factory.deploy({
+            gasLimit: latestBlock?.gasLimit,
+          })
+        ).waitForDeployment()
+      : await (await orandECVRFV3Factory.deploy()).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
-    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS], {
-      txOverrides: {
-        gasLimit: latestBlock?.gasLimit,
-      },
-    });
+    const orocleV2Proxy = needCustomEstimateGas
+      ? await upgrades.deployProxy(orocleV2Factory, [OPERATORS], {
+          txOverrides: {
+            gasLimit: latestBlock?.gasLimit,
+          },
+        })
+      : await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
@@ -81,22 +87,34 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       )
     */
     // Deploy Provider
-    const orandProviderV3Proxy = await upgrades.deployProxy(
-      orandProviderV3Factory,
-      // We going to skip 0x04 -> Pubkey format from libsecp256k1
-      [
-        OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
-        correspondingAddress,
-        await orandECVRF.getAddress(),
-        await orocleV2Proxy.getAddress(),
-        200,
-      ],
-      {
-        txOverrides: {
-          gasLimit: latestBlock?.gasLimit,
-        },
-      },
-    );
+    const orandProviderV3Proxy = needCustomEstimateGas
+      ? await upgrades.deployProxy(
+          orandProviderV3Factory,
+          // We going to skip 0x04 -> Pubkey format from libsecp256k1
+          [
+            OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
+            correspondingAddress,
+            await orandECVRF.getAddress(),
+            await orocleV2Proxy.getAddress(),
+            200,
+          ],
+          {
+            txOverrides: {
+              gasLimit: latestBlock?.gasLimit,
+            },
+          },
+        )
+      : await upgrades.deployProxy(
+          orandProviderV3Factory,
+          // We going to skip 0x04 -> Pubkey format from libsecp256k1
+          [
+            OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
+            correspondingAddress,
+            await orandECVRF.getAddress(),
+            await orocleV2Proxy.getAddress(),
+            200,
+          ],
+        );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();
     console.table({
