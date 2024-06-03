@@ -53,11 +53,19 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Setup deployer
     console.log('Deployer:', account.address);
     // Deploy ECVRF
-    const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
+    const orandECVRF = await (
+      await orandECVRFV3Factory.deploy({
+        gasLimit: '0x1000000',
+      })
+    ).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
-    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
+    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS], {
+      txOverrides: {
+        gasLimit: '0x1000000',
+      },
+    });
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
@@ -81,6 +89,11 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         await orocleV2Proxy.getAddress(),
         200,
       ],
+      {
+        txOverrides: {
+          gasLimit: '0x1000000',
+        },
+      },
     );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();
