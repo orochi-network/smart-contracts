@@ -53,18 +53,19 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Setup deployer
     console.log('Deployer:', account.address);
     // Deploy ECVRF
+    const latestBlock = await provider.getBlock('latest');
+    console.log('🚀 ~ latestBlock:', latestBlock);
     const orandECVRF = await (
       await orandECVRFV3Factory.deploy({
-        gasLimit: '0x1000000',
+        gasLimit: latestBlock?.gasLimit,
       })
     ).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
-    const { gasPrice } = await provider.getFeeData();
 
     // Deploy Orocle
     const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS], {
       txOverrides: {
-        gasPrice,
+        gasLimit: latestBlock?.gasLimit,
       },
     });
     await orocleV2Proxy.waitForDeployment();
@@ -92,7 +93,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       ],
       {
         txOverrides: {
-          gasPrice,
+          gasLimit: latestBlock?.gasLimit,
         },
       },
     );
