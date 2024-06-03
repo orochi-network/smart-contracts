@@ -29,7 +29,10 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     const provider = needCustomProvider ? new EthJsonRpc(hre.network.config.url) : hre.ethers.provider;
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     const { chainId } = await provider.getNetwork();
-    const account = await getWallet(hre, chainId);
+    const account = needCustomEstimateGas
+      ? (await getWallet(hre, chainId)).connect(provider)
+      : await getWallet(hre, chainId);
+
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     const { ethers, upgrades } = hre;
     const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
@@ -59,54 +62,89 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       )
     */
     // Deploy Provider
+    if (needCustomEstimateGas) {
+      const latestBlock = await provider.getBlock('latest');
+      console.log('🚀 ~ latestBlock:', latestBlock);
+      const transferOracleEncode = orocleV2Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
+      await account.sendTransaction({
+        from: account.address,
+        to: OROCLE_V2_ADDRESS,
+        chainId,
+        gasLimit: latestBlock?.gasLimit,
+        data: transferOracleEncode,
+      });
 
-    (await orocleV2Proxy.transferOwnership(OWNER)).wait();
-    console.log('Transfer orocleV2Proxy successfully');
-    await sleep(10);
+      // (await orocleV2Proxy.transferOwnership(OWNER)).wait();
+      console.log('Transfer orocleV2Proxy successfully');
+      await sleep(10);
 
-    let nonce = await ethers.provider.getTransactionCount(account.address);
-    console.log('🚀 ~ nonce:', nonce);
-    const latestBlock = await provider.getBlock('latest');
-    console.log('🚀 ~ latestBlock:', latestBlock);
-    needCustomEstimateGas
-      ? await upgrades.admin
-          .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
-            silent: false,
-            txOverrides: {
-              nonce: nonce + 1,
-              gasLimit: latestBlock?.gasLimit,
-            },
-          })
-          .then()
-      : await upgrades.admin
-          .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
-            silent: false,
-            txOverrides: {
-              nonce: nonce + 1,
-            },
-          })
-          .then();
-    nonce = nonce + 3;
-    await sleep(10);
+      let nonce = await ethers.provider.getTransactionCount(account.address);
+      console.log('🚀 ~ nonce:', nonce);
 
-    (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
-
-    await sleep(10);
-
-    needCustomEstimateGas
-      ? await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
+      await upgrades.admin
+        .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
           silent: false,
           txOverrides: {
-            nonce,
+            nonce: nonce + 1,
             gasLimit: latestBlock?.gasLimit,
           },
         })
-      : await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
+        .then();
+      nonce = nonce + 3;
+      await sleep(10);
+
+      const transferOrandEncoded = orandProviderV3Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
+
+      await account.sendTransaction({
+        from: account.address,
+        to: ORAND_PROVIDER_ADDRESS,
+        chainId,
+        gasLimit: latestBlock?.gasLimit,
+        data: transferOrandEncoded,
+      });
+
+      // (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
+
+      await sleep(10);
+
+      await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
+        silent: false,
+        txOverrides: {
+          nonce,
+          gasLimit: latestBlock?.gasLimit,
+        },
+      });
+    } else {
+      (await orocleV2Proxy.transferOwnership(OWNER)).wait();
+      console.log('Transfer orocleV2Proxy successfully');
+      await sleep(10);
+
+      let nonce = await ethers.provider.getTransactionCount(account.address);
+      console.log('🚀 ~ nonce:', nonce);
+      const latestBlock = await provider.getBlock('latest');
+      console.log('🚀 ~ latestBlock:', latestBlock);
+      await upgrades.admin
+        .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
           silent: false,
           txOverrides: {
-            nonce,
+            nonce: nonce + 1,
           },
-        });
+        })
+        .then();
+      nonce = nonce + 3;
+      await sleep(10);
+
+      (await orandProviderV3Proxy.transferOwnership(OWNER)).wait();
+
+      await sleep(10);
+
+      await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
+        silent: false,
+        txOverrides: {
+          nonce,
+        },
+      });
+    }
 
     console.log(
       `Corresponding address: ${correspondingAddress} , is valid publicKey?:`,
