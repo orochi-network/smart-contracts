@@ -65,32 +65,27 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     if (needCustomEstimateGas) {
       const latestBlock = await provider.getBlock('latest');
       console.log('🚀 ~ latestBlock:', latestBlock);
-      const transferOracleEncode = orocleV2Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
-      await account.sendTransaction({
-        from: account.address,
-        to: OROCLE_V2_ADDRESS,
-        chainId,
-        gasLimit: latestBlock?.gasLimit,
-        data: transferOracleEncode,
-      });
+      // const transferOracleEncode = orocleV2Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
+      // await account.sendTransaction({
+      //   from: account.address,
+      //   to: OROCLE_V2_ADDRESS,
+      //   chainId,
+      //   gasLimit: latestBlock?.gasLimit,
+      //   data: transferOracleEncode,
+      // });
 
-      // (await orocleV2Proxy.transferOwnership(OWNER)).wait();
-      console.log('Transfer orocleV2Proxy successfully');
+      // // (await orocleV2Proxy.transferOwnership(OWNER)).wait();
+      // console.log('Transfer orocleV2Proxy successfully');
       await sleep(10);
-
-      let nonce = await ethers.provider.getTransactionCount(account.address);
-      console.log('🚀 ~ nonce:', nonce);
 
       await upgrades.admin
         .transferProxyAdminOwnership(await orocleV2Proxy.getAddress(), OWNER, account, {
           silent: false,
           txOverrides: {
-            nonce: nonce + 1,
             gasLimit: latestBlock?.gasLimit,
           },
         })
         .then();
-      nonce = nonce + 3;
       await sleep(10);
 
       const transferOrandEncoded = orandProviderV3Proxy.interface.encodeFunctionData('transferOwnership', [OWNER]);
@@ -110,7 +105,6 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       await upgrades.admin.transferProxyAdminOwnership(await orandProviderV3Proxy.getAddress(), OWNER, account, {
         silent: false,
         txOverrides: {
-          nonce,
           gasLimit: latestBlock?.gasLimit,
         },
       });
