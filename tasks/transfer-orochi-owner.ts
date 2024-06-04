@@ -31,7 +31,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     if (!account.provider) {
       throw new Error('Invalid provider');
     }
-    const txOverrides =
+    const gasOverrides =
       account.provider instanceof EthJsonRpc && account.provider.isGasLessBlockchain
         ? {
             gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
@@ -67,7 +67,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       )
     */
     // Deploy Provider
-    (await orocleV2Proxy.transferOwnership(OWNER, txOverrides)).wait();
+    (await orocleV2Proxy.transferOwnership(OWNER, { gasLimit: gasOverrides.gasLimit })).wait();
 
     console.log('Transfer orocleV2Proxy successfully');
     await sleep(10);
@@ -79,14 +79,14 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
         silent: false,
         txOverrides: {
           nonce: nonce + 1,
-          gasLimit: txOverrides.gasLimit,
+          gasLimit: gasOverrides.gasLimit,
         },
       })
       .then();
     nonce = nonce + 3;
     await sleep(10);
 
-    (await orandProviderV3Proxy.transferOwnership(OWNER, txOverrides)).wait();
+    (await orandProviderV3Proxy.transferOwnership(OWNER, { gasLimit: gasOverrides.gasLimit })).wait();
 
     await sleep(10);
 
@@ -94,7 +94,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       silent: false,
       txOverrides: {
         nonce,
-        gasLimit: txOverrides.gasLimit,
+        gasLimit: gasOverrides.gasLimit,
       },
     });
 
