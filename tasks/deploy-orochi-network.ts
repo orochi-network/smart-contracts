@@ -6,6 +6,9 @@ import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
 import { HexString, OrandEncoding } from '@orochi-network/utilities';
 import { getWallet } from '../helpers/wallet';
+import EthJsonRpc from '../helpers/provider';
+
+export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = 1000000n;
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
@@ -15,8 +18,20 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     // Get deployer account
+
     const { chainId } = await hre.ethers.provider.getNetwork();
     const account = await getWallet(hre, chainId);
+    if (!account.provider) {
+      throw new Error('Invalid provider');
+    }
+
+    const gasOverrides =
+      account.provider instanceof EthJsonRpc && account.provider.isGasLessBlockchain
+        ? {
+            gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+          }
+        : {};
+
     const { ethers, upgrades } = hre;
     const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
 
@@ -35,17 +50,18 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     //m/44'/60'/0'/0/0
     //m/44'/60'/0'/0/0/0
 
-    const orandECVRFV3Factory = (await ethers.getContractFactory('OrandECVRFV3')).connect(account);
-    const orandProviderV3Factory = (await ethers.getContractFactory('OrandProviderV3')).connect(account);
-    const orocleV2Factory = (await ethers.getContractFactory('OrocleV2')).connect(account);
+    const orandECVRFV3Factory = await ethers.getContractFactory('OrandECVRFV3', account);
+    const orandProviderV3Factory = await ethers.getContractFactory('OrandProviderV3', account);
+    const orocleV2Factory = await ethers.getContractFactory('OrocleV2', account);
 
     // Setup deployer
     console.log('Deployer:', account.address);
     // Deploy ECVRF
     const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
+    console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
-    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
+    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS], { txOverrides: gasOverrides });
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
@@ -69,6 +85,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         await orocleV2Proxy.getAddress(),
         200,
       ],
+      { txOverrides: gasOverrides },
     );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();

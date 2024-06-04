@@ -111,6 +111,14 @@ const config: HardhatUserConfig = {
       url: 'https://rpc.testnet.oasys.games/',
       chainId: 9372,
     },
+    saakuruTestL2: {
+      url: 'https://rpc-testnet.saakuru.network',
+      chainId: 247253,
+    },
+    saakuruMainL2: {
+      url: 'https://rpc.saakuru.network',
+      chainId: 7225878,
+    },
     zkFairTest: {
       url: 'https://testnet-rpc.zkfair.io',
       chainId: 43851,
@@ -122,6 +130,10 @@ const config: HardhatUserConfig = {
     xLayerTest: {
       url: `https://testrpc.xlayer.tech/`,
       chainId: 195,
+    },
+    xLayerMain: {
+      url: `https://rpc.xlayer.tech/`,
+      chainId: 196,
     },
     zkLinkTest: {
       url: `https://sepolia.rpc.zklink.io`,
