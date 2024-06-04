@@ -1,18 +1,13 @@
 /* eslint-disable no-await-in-loop */
 import '@nomicfoundation/hardhat-ethers';
+import { getAddress, isAddress, keccak256 } from 'ethers';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { env } from '../env';
-import { getAddress, isAddress, keccak256 } from 'ethers';
 import { getWallet } from '../helpers/wallet';
 import { OrandProviderV3, OrocleV2 } from '../typechain-types';
-
+import { GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN } from './deploy-orochi-network';
 import EthJsonRpc from '../helpers/provider';
-import {
-  CHAIN_NEED_CUSTOM_PROVIDER,
-  GAS_LESS_BLOCK_CHAIN,
-  GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
-} from './deploy-orochi-network';
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
@@ -29,14 +24,16 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     if (!hre.network.config.chainId) {
       throw new Error('Invalid chainId');
     }
-    const needCustomProvider = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
-    const isGasLessBlockchain = GAS_LESS_BLOCK_CHAIN.includes(hre.network.config.chainId);
-    const provider = needCustomProvider ? new EthJsonRpc(hre.network.config.url) : hre.ethers.provider;
+
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
-    const { chainId } = await provider.getNetwork();
-    const account = isGasLessBlockchain
-      ? (await getWallet(hre, chainId)).connect(provider)
-      : await getWallet(hre, chainId);
+    const { chainId } = await hre.ethers.provider.getNetwork();
+    const { wallet: account, provider } = await getWallet(hre, chainId);
+    const txOverrides =
+      provider instanceof EthJsonRpc && provider.isGasLessBlockchain
+        ? {
+            gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+          }
+        : {};
 
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     const { ethers, upgrades } = hre;
@@ -67,16 +64,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       )
     */
     // Deploy Provider
-    (
-      await orocleV2Proxy.transferOwnership(
-        OWNER,
-        isGasLessBlockchain
-          ? {
-              gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
-            }
-          : {},
-      )
-    ).wait();
+    (await orocleV2Proxy.transferOwnership(OWNER, txOverrides)).wait();
 
     console.log('Transfer orocleV2Proxy successfully');
     await sleep(10);
@@ -88,18 +76,14 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
         silent: false,
         txOverrides: {
           nonce: nonce + 1,
-          gasLimit: isGasLessBlockchain ? GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN : null,
+          gasLimit: txOverrides.gasLimit,
         },
       })
       .then();
     nonce = nonce + 3;
     await sleep(10);
 
-    (
-      await orandProviderV3Proxy.transferOwnership(OWNER, {
-        gasLimit: isGasLessBlockchain ? GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN : null,
-      })
-    ).wait();
+    (await orandProviderV3Proxy.transferOwnership(OWNER, txOverrides)).wait();
 
     await sleep(10);
 
@@ -107,7 +91,7 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
       silent: false,
       txOverrides: {
         nonce,
-        gasLimit: isGasLessBlockchain ? GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN : null,
+        gasLimit: txOverrides.gasLimit,
       },
     });
 

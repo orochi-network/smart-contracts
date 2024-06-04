@@ -14,7 +14,7 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
   #connect: FetchRequest;
 
   private url: string = '';
-  private isGasLessBlockchain: boolean;
+  public isGasLessBlockchain: boolean;
 
   constructor(
     url?: string | FetchRequest,

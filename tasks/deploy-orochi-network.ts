@@ -8,31 +8,26 @@ import { HexString, OrandEncoding } from '@orochi-network/utilities';
 import { getWallet } from '../helpers/wallet';
 import EthJsonRpc from '../helpers/provider';
 
-export const CHAIN_NEED_CUSTOM_PROVIDER = [196, 7225878];
-export const GAS_LESS_BLOCK_CHAIN = [7225878];
 export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = 11000000n;
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
-    if (!hre.network.config.chainId) {
-      throw new Error('Invalid chainId');
-    }
-    const needCustomProvider = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
-    const isGasLessBlockchain = CHAIN_NEED_CUSTOM_PROVIDER.includes(hre.network.config.chainId);
     // Public key
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     // Get deployer account
-    const provider = needCustomProvider
-      ? new EthJsonRpc(hre.network.config.url, undefined, undefined, isGasLessBlockchain)
-      : hre.ethers.provider;
 
-    const { chainId } = await provider.getNetwork();
-    const account = needCustomProvider
-      ? await getWallet(hre, chainId)
-      : (await getWallet(hre, chainId)).connect(provider);
+    const { chainId } = await hre.ethers.provider.getNetwork();
+    const { wallet: account, provider } = await getWallet(hre, chainId);
+    const txOverrides =
+      provider instanceof EthJsonRpc && provider.isGasLessBlockchain
+        ? {
+            gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
+          }
+        : {};
+
     const { ethers, upgrades } = hre;
     const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
 
@@ -58,29 +53,11 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Setup deployer
     console.log('Deployer:', account.address);
     // Deploy ECVRF
-    const orandECVRF = await (
-      await orandECVRFV3Factory.deploy(
-        isGasLessBlockchain
-          ? {
-              gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
-            }
-          : {},
-      )
-    ).waitForDeployment();
+    const orandECVRF = await (await orandECVRFV3Factory.deploy(txOverrides)).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
-    const orocleV2Proxy = await upgrades.deployProxy(
-      orocleV2Factory,
-      [OPERATORS],
-      isGasLessBlockchain
-        ? {
-            txOverrides: {
-              gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
-            },
-          }
-        : {},
-    );
+    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS], { txOverrides });
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
@@ -104,7 +81,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         await orocleV2Proxy.getAddress(),
         200,
       ],
-      isGasLessBlockchain ? { txOverrides: { gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN } } : {},
+      { txOverrides },
     );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();
