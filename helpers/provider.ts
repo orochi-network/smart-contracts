@@ -63,7 +63,6 @@ export class EthJsonRpc extends JsonRpcApiProvider implements Provider {
       url: this.url,
       data: payload,
     });
-    console.log(`Request to: ${this.url} payload:`, payload, result.data);
     return result.data;
   }
 }
