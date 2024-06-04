@@ -20,9 +20,13 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Get deployer account
 
     const { chainId } = await hre.ethers.provider.getNetwork();
-    const { wallet: account, provider } = await getWallet(hre, chainId);
+    const account = await getWallet(hre, chainId);
+    if (!account.provider) {
+      throw new Error('Invalid provider');
+    }
+
     const txOverrides =
-      provider instanceof EthJsonRpc && provider.isGasLessBlockchain
+      account.provider instanceof EthJsonRpc && account.provider.isGasLessBlockchain
         ? {
             gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
           }
@@ -53,7 +57,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Setup deployer
     console.log('Deployer:', account.address);
     // Deploy ECVRF
-    const orandECVRF = await (await orandECVRFV3Factory.deploy(txOverrides)).waitForDeployment();
+    const orandECVRF = await (await orandECVRFV3Factory.deploy()).waitForDeployment();
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle

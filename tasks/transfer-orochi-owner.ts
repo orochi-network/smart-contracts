@@ -27,9 +27,12 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
 
     let pk = env.OROCHI_PUBLIC_KEY.replace(/^0x/gi, '').trim();
     const { chainId } = await hre.ethers.provider.getNetwork();
-    const { wallet: account, provider } = await getWallet(hre, chainId);
+    const account = await getWallet(hre, chainId);
+    if (!account.provider) {
+      throw new Error('Invalid provider');
+    }
     const txOverrides =
-      provider instanceof EthJsonRpc && provider.isGasLessBlockchain
+      account.provider instanceof EthJsonRpc && account.provider.isGasLessBlockchain
         ? {
             gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
           }

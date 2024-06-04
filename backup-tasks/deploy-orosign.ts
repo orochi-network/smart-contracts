@@ -11,7 +11,7 @@ import { getFee, getWallet } from '../helpers/wallet';
 task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     const { chainId } = await hre.ethers.provider.getNetwork();
-    const { wallet: account } = await getWallet(hre, chainId);
+    const account = await getWallet(hre, chainId);
     const networkName = hre.network.name;
 
     const deploymentRecord = `${__dirname}/deployed.json`;

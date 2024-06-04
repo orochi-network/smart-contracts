@@ -23,9 +23,9 @@ task('deploy:zk', 'Deploy Orochi Network contracts with zkSolc').setAction(
     const OWNER = env.OROCHI_OWNER.trim();
     const provider = new Provider(hre.network.config.url);
     const { chainId } = await provider.getNetwork();
-    const { wallet: legacyWallet } = await getWallet(hre, chainId);
+    const account = await getWallet(hre, chainId);
 
-    const wallet = getZkSyncWallet(legacyWallet, provider);
+    const wallet = getZkSyncWallet(account, provider);
     const deployer = new Deployer(hre, wallet);
     console.log('Deployer:', deployer.zkWallet, deployer.ethWallet);
 

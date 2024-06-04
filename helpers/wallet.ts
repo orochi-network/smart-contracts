@@ -6,12 +6,6 @@ import { Wallet as zkSyncWallet, Provider } from 'zksync-ethers';
 import { env } from '../env';
 import EncryptionKey from './encryption';
 import EthJsonRpc from './provider';
-import { HardhatEthersProvider } from '@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider';
-
-interface IGetWallet {
-  wallet: ethers.HDNodeWallet;
-  provider: HardhatEthersProvider | EthJsonRpc;
-}
 
 export const CHAIN_NEED_CUSTOM_PROVIDER = [196n, 7225878n];
 export const GAS_LESS_BLOCK_CHAIN = [7225878n];
@@ -20,16 +14,13 @@ export function getZkSyncWallet(wallet: HDNodeWallet, provider: Provider) {
   return new zkSyncWallet(wallet.privateKey, provider);
 }
 
-export async function getWallet(hre: HardhatRuntimeEnvironment, chainId: bigint): Promise<IGetWallet> {
+export async function getWallet(hre: HardhatRuntimeEnvironment, chainId: bigint): Promise<HDNodeWallet> {
   if (chainId === 911n) {
     const wallet = (await hre.ethers.getSigners())[0] as any;
     console.log(
       `ChainID: ${chainId.toString().padEnd(16, ' ')} Address: ${wallet.address} Path: m/44'/60'/0'/0/${chainId}`,
     );
-    return {
-      wallet,
-      provider: hre.ethers.provider,
-    };
+    return wallet;
   } else {
     if (!hre.network.config.chainId) {
       throw new Error('Invalid chainId');
@@ -51,9 +42,6 @@ export async function getWallet(hre: HardhatRuntimeEnvironment, chainId: bigint)
       `--------------------
 Deployer's Wallet > ChainID: ${chainId.toString().padEnd(16, ' ')} Address: ${wallet.address} Path: ${wallet.path}`,
     );
-    return {
-      wallet: needCustomProvider ? wallet.connect(provider) : wallet,
-      provider,
-    };
+    return needCustomProvider ? wallet.connect(provider) : wallet;
   }
 }

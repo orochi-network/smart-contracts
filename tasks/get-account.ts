@@ -7,7 +7,7 @@ import { getWallet } from '../helpers/wallet';
 task('get:account', 'Get accounts').setAction(async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
   const { chainId, name } = await hre.ethers.provider.getNetwork();
   console.log('Chain name:', name);
-  const { wallet } = await getWallet(hre, chainId);
+  const wallet = await getWallet(hre, chainId);
   return wallet;
 });
 
