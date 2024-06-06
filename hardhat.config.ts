@@ -55,6 +55,10 @@ const config: HardhatUserConfig = {
       url: 'https://evm-rpc-arctic-1.sei-apis.com',
       chainId: 713715,
     },
+    seimain: {
+      url: 'https://evm-rpc.sei-apis.com',
+      chainId: 1329,
+    },
     a8main: {
       url: 'https://rpc.ancient8.gg',
       chainId: 888888888,
