@@ -110,7 +110,7 @@ docker compose up -d
 
 ```
 
-4. After all docker container successfully created, wait 10 seconds then go below link to check the result or can check it via docker logs.
+4. After all docker container successfully created, wait 10 seconds then go below link to check the result or check it via docker logs.
 
 ```
 http://localhost:8888/result.json
