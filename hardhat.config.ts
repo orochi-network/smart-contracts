@@ -145,6 +145,10 @@ const config: HardhatUserConfig = {
       ethNetwork: 'https://sepolia.rpc.zklink.io',
       chainId: 810181,
     },
+    mantaTest: {
+      url: `https://pacific-rpc.sepolia-testnet.manta.network/http`,
+      chainId: 3441006,
+    },
 
     // Hard hat network
     hardhat: {
