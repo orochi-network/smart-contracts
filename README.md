@@ -87,7 +87,7 @@ yarn test
 npx hardhat create:wallet
 ```
 
-2. Make sure to these variables exist in .env file with right format
+2. Make sure these variables exist in .env file in right format
 
 ```
 OROCHI_PUBLIC_KEY=""
