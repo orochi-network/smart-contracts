@@ -116,7 +116,7 @@ docker compose up -d
 http://localhost:8888/result.json
 ```
 
-Local node will be run at
+On the local node, all operators will receive 100 ETH. Address of local node:
 
 ```
 http://localhost:8545
