@@ -1,0 +1,12 @@
+.openzeppelin
+.upgradable
+artifacts
+artifacts-zk
+cache
+cache-zk
+deployments-zk
+flattern
+node_modules
+typechain-types
+salt.bin
+output

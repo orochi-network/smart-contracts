@@ -1,0 +1,36 @@
+services:
+  local-node:
+    build:
+      dockerfile: ./docker/local-node.dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./.env/:/home/node/app/.env
+      - ./output:/home/node/app/output
+    ports:
+      - 8545:8545
+    networks:
+      - node-network
+  deploy-contracts:
+    build:
+      dockerfile: ./docker/deploy-contract.dockerfile
+    volumes:
+      - ./.env/:/home/node/app/.env
+      - ./output:/home/node/app/output
+    depends_on:
+      - local-node
+    networks:
+      - node-network
+  local-nginx:
+    image: nginx
+    ports:
+      - 8888:80
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./output:/home/node/app/output
+    depends_on:
+      - deploy-contracts
+      - local-node
+
+networks:
+  node-network:
+    driver: bridge

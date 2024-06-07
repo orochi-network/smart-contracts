@@ -114,3 +114,4 @@ artifacts-zk
 .openzeppelin
 .DS_Store
 salt.bin
+output
