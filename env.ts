@@ -14,6 +14,8 @@ const OROCHI_CONFIGURATION = {
   OROCHI_OWNER: '',
   OROCHI_OPERATOR: '',
   OROCHI_ENCRYPTED_PASSPHRASE: '',
+  LOCAL_RPC: '',
+  LOCAL_OROCHI_OPERATOR: '',
 };
 
 export type TEnvironment = typeof OROCHI_CONFIGURATION;
@@ -59,6 +61,7 @@ function load(): any {
   console.log('Corresponding address:', cleaned['OROCHI_CORRESPONDING_ADDRESS']);
 
   cleaned.OROCHI_FORK = cleaned.OROCHI_FORK || false;
+  cleaned.LOCAL_RPC = cleaned.LOCAL_RPC || 'http://127.0.0.1:8545';
   return cleaned;
 }
 

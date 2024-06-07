@@ -79,6 +79,49 @@ To test
 yarn test
 ```
 
+## Run a local node & deploy OrocleV2 and OrandProviderV3
+
+1. For the first time, run this script to create your own wallet passphrase. Remember to type your passphrase
+
+```
+npx hardhat create:wallet
+```
+
+2. Make sure to these variables exist in .env file with right format
+
+```
+OROCHI_PUBLIC_KEY=""
+
+OROCHI_CORRESPONDING_ADDRESS=""
+
+OROCHI_OWNER=""
+
+OROCHI_MNEMONIC=""
+
+OROCHI_OPERATOR=""
+
+LOCAL_RPC="http://smart-contracts-local-node-1:8545"
+```
+
+3. Run docker compose file to create a local node & automatically deploy smart contracts
+
+```
+docker compose up -d
+
+```
+
+4. After all docker container successfully created, wait 10 seconds then go below link to check the result or can check it via docker logs.
+
+```
+http://localhost:8888/result.json
+```
+
+Local node will be run at
+
+```
+http://localhost:8545
+```
+
 ## License
 
 Orochi Network's source code licensed under [Apache License 2.0](./LICENSE)

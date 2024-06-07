@@ -104,7 +104,7 @@ const config: HardhatUserConfig = {
       chainId: 97,
     },
     local: {
-      url: 'http://127.0.0.1:8545',
+      url: env.LOCAL_RPC,
       chainId: 911,
     },
     moonbeamTest: {

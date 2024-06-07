@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
+import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { env } from '../env';
 import { getAddress, isAddress, keccak256 } from 'ethers';
@@ -9,8 +10,7 @@ import { getWallet } from '../helpers/wallet';
 import EthJsonRpc from '../helpers/provider';
 
 export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = 1000000n;
-
-const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
+const filePath = './output/result.json';
 
 task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -20,6 +20,10 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Get deployer account
 
     const { chainId } = await hre.ethers.provider.getNetwork();
+    const OPERATORS =
+      chainId === 911n
+        ? env.LOCAL_OROCHI_OPERATOR.split(',').map((op) => op.trim())
+        : env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
     const account = await getWallet(hre, chainId);
     if (!account.provider) {
       throw new Error('Invalid provider');
@@ -111,6 +115,22 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       'Is orand service operator  correct?',
       correspondingAddress === (await orandProviderV3Proxy.getOperator()),
     );
+    if (chainId === 911n) {
+      const data = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : '';
+      if (data) {
+        const parseData = JSON.parse(data);
+        fs.writeFileSync(
+          filePath,
+          JSON.stringify({
+            ...parseData,
+            orandECVRF: await orandECVRF.getAddress(),
+            OrocleV2: await orocleV2Proxy.getAddress(),
+            OrandProviderV3: await orandProviderV3Proxy.getAddress(),
+          }),
+        );
+        console.log('Everything done now');
+      }
+    }
   },
 );
 
