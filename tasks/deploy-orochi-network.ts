@@ -117,6 +117,11 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     );
     if (chainId === 911n) {
       const data = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : '';
+      const DiceGameV3Factory = await ethers.getContractFactory('DiceGameV3', account);
+      const diceGame = await DiceGameV3Factory.deploy(
+        await orandProviderV3Proxy.getAddress(),
+        await orocleV2Proxy.getAddress(),
+      );
       if (data) {
         const parseData = JSON.parse(data);
         fs.writeFileSync(
@@ -126,6 +131,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
             orandECVRF: await orandECVRF.getAddress(),
             OrocleV2: await orocleV2Proxy.getAddress(),
             OrandProviderV3: await orandProviderV3Proxy.getAddress(),
+            DiceGame: await diceGame.getAddress(),
           }),
         );
         console.log('Everything done now');
