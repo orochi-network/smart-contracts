@@ -13,23 +13,20 @@ task('generate:local-operator', 'Generate operator address only in local network
     if (hre.network.config.chainId !== 911) {
       throw new Error('Not in local network. Do nothing');
     }
+    const { chainId } = hre.network.config;
     const dataTable = [];
     const wallet = ethers.Wallet.createRandom();
     const [master] = await hre.ethers.getSigners();
     for (let i = 0; i < 5; i += 1) {
-      const newWallet = wallet.deriveChild(i);
+      const appId = 0;
+      const childIndex = appId * 256 + i;
+      const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
       dataTable.push({
         path: newWallet.path,
-        address: await newWallet.getAddress(),
+        address: (await newWallet.getAddress()).toLowerCase(),
       });
     }
-    for (let i = 100; i < 105; i += 1) {
-      const newWallet = wallet.deriveChild(i);
-      dataTable.push({
-        path: newWallet.path,
-        address: await newWallet.getAddress(),
-      });
-    }
+
     const fileContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
     if (fileContent.indexOf('LOCAL_OROCHI_OPERATOR') === -1) {
       console.log('Generate new local orocle operator');
