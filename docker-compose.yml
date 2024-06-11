@@ -22,6 +22,7 @@ services:
       - node-network
   local-nginx:
     image: nginx
+    restart: unless-stopped
     ports:
       - 8888:80
     volumes:
