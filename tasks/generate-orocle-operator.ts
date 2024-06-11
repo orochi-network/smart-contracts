@@ -4,6 +4,7 @@ import fs from 'fs';
 import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ethers } from 'ethers';
+import { env } from '../env';
 
 const envPath = '.env';
 const resultPath = './output/result.json';
@@ -17,21 +18,23 @@ task('generate:local-operator', 'Generate operator address only in local network
     const dataTable = [];
     const wallet = ethers.Wallet.createRandom();
     const [master] = await hre.ethers.getSigners();
-    for (let i = 0; i < 5; i += 1) {
-      const appId = 0;
-      const childIndex = appId * 256 + i;
-      const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
-      dataTable.push({
-        path: newWallet.path,
-        address: (await newWallet.getAddress()).toLowerCase(),
-      });
+    for (let appId = 0; appId < 2; appId += 1) {
+      for (let i = 0; i < 5; i += 1) {
+        const childIndex = appId * 256 + i;
+        const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
+        dataTable.push({
+          path: newWallet.path,
+          address: (await newWallet.getAddress()).toLowerCase(),
+        });
+      }
     }
 
     const fileContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
     if (fileContent.indexOf('LOCAL_OROCHI_OPERATOR') === -1) {
       console.log('Generate new local orocle operator');
-      const orochiOperator = `${dataTable[0].address},${dataTable[1].address}`;
+      const orochiOperator = `${dataTable[5].address},${dataTable[6].address}`;
       const content = {
+        orochiPublicKey: env.OROCHI_PUBLIC_KEY,
         operatorPassphrase: wallet.mnemonic?.phrase.trim(),
         localOrochiOperator: orochiOperator,
         allOperator: dataTable,
