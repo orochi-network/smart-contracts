@@ -8,6 +8,8 @@ import { env } from '../env';
 
 const envPath = '.env';
 const resultPath = './output/result.json';
+const ORAND_APP_ID = 0;
+const ASSET_PRICE_APP_ID = 1;
 
 task('generate:local-operator', 'Generate operator address only in local network').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -18,38 +20,44 @@ task('generate:local-operator', 'Generate operator address only in local network
     const dataTable = [];
     const wallet = ethers.Wallet.createRandom();
     const [master] = await hre.ethers.getSigners();
-    const orandAppId = 0;
-    const assetPriceAppId = 1;
 
     for (let i = 0; i < 5; i += 1) {
-      const childOrandId = orandAppId * 256 + i;
-      const childAssetPriceId = assetPriceAppId * 256 + i;
+      const childOrandId = ORAND_APP_ID * 256 + i;
+      const childAssetPriceId = ASSET_PRICE_APP_ID * 256 + i;
       const orandWallet = wallet.derivePath(`${chainId}/${childOrandId}`);
       const assetPriceWallet = wallet.derivePath(`${chainId}/${childAssetPriceId}`);
       dataTable.push({
         path: orandWallet.path,
         address: (await orandWallet.getAddress()).toLowerCase(),
+        chainId,
+        childIndex: childOrandId,
       });
       dataTable.push({
         path: assetPriceWallet.path,
         address: (await assetPriceWallet.getAddress()).toLowerCase(),
+        chainId,
+        childIndex: childAssetPriceId,
       });
     }
+
+    const sortDataTable = dataTable.sort((a, b) => {
+      return a.childIndex - b.childIndex;
+    });
 
     const fileContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
     if (fileContent.indexOf('LOCAL_OROCHI_OPERATOR') === -1) {
       console.log('Generate new local orocle operator');
-      const orochiOperator = `${dataTable[5].address},${dataTable[6].address}`;
+      const orochiOperator = `${sortDataTable[5].address},${sortDataTable[6].address}`;
       const content = {
         orochiPublicKey: env.OROCHI_PUBLIC_KEY,
         operatorPassphrase: wallet.mnemonic?.phrase.trim(),
         localOrochiOperator: orochiOperator,
-        allOperator: dataTable,
+        allOperator: sortDataTable,
         walletCreatedByLocalNode: await master.getAddress(),
       };
       fs.appendFileSync(envPath, `\nLOCAL_OROCHI_OPERATOR="${orochiOperator}"\n`);
       fs.writeFileSync(resultPath, JSON.stringify(content));
-      console.table(dataTable);
+      console.table(sortDataTable);
     } else {
       console.log('Local operator existed');
     }
