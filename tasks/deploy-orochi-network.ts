@@ -20,10 +20,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     // Get deployer account
 
     const { chainId } = await hre.ethers.provider.getNetwork();
-    const OPERATORS =
-      chainId === 911n
-        ? env.LOCAL_OROCHI_OPERATOR.split(',').map((op) => op.trim())
-        : env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
+    const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
     const account = await getWallet(hre, chainId);
     if (!account.provider) {
       throw new Error('Invalid provider');

@@ -7,7 +7,6 @@ import { ethers } from 'ethers';
 import { env } from '../env';
 
 const ENV_PATH = `${__dirname}/../.env`;
-const RESULT_PATH = `${__dirname}/../output/result.json`;
 const ORAND_APP_ID = 0;
 const ASSET_PRICE_APP_ID = 1;
 
@@ -48,8 +47,7 @@ task('generate:local-operator', 'Generate operator address only in local network
       throw new Error('.env file not found');
     }
 
-    const fileContent = fs.readFileSync(ENV_PATH, 'utf-8');
-    if (fileContent.indexOf('LOCAL_OROCHI_OPERATOR') === -1) {
+    if (!env.OROCHI_OPERATOR) {
       console.log('Generate new local orocle operator');
       const orochiOperator = `${sortDataTable[5].address},${sortDataTable[6].address}`;
       const content = {
@@ -59,8 +57,8 @@ task('generate:local-operator', 'Generate operator address only in local network
         allOperator: sortDataTable,
         walletCreatedByLocalNode: master.address.toLowerCase(),
       };
-      fs.appendFileSync(ENV_PATH, `\nLOCAL_OROCHI_OPERATOR="${orochiOperator}"\n`);
-      fs.writeFileSync(RESULT_PATH, JSON.stringify(content));
+      fs.appendFileSync(ENV_PATH, `\nOROCHI_OPERATOR="${orochiOperator}"\n`);
+      fs.writeFileSync(env.RESULT_PATH, JSON.stringify(content));
       console.table(sortDataTable);
     } else {
       console.log('Local operator existed');

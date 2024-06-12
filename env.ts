@@ -15,7 +15,7 @@ const OROCHI_CONFIGURATION = {
   OROCHI_OPERATOR: '',
   OROCHI_ENCRYPTED_PASSPHRASE: '',
   LOCAL_RPC: '',
-  LOCAL_OROCHI_OPERATOR: '',
+  RESULT_PATH: './output/result.json',
 };
 
 export type TEnvironment = typeof OROCHI_CONFIGURATION;
@@ -44,9 +44,10 @@ function load(): any {
   }
   console.log('Owner is:', cleaned['OROCHI_OWNER']);
   if (!cleaned['OROCHI_OPERATOR'].split(',').every((e: string) => isAddress(e))) {
-    throw new Error('Invalid operator address');
+    console.log('Error: Can not load operator address at initial');
+  } else {
+    console.log('Operators are:', cleaned['OROCHI_OPERATOR']);
   }
-  console.log('Operators are:', cleaned['OROCHI_OPERATOR']);
   if (!HexString.isHexStringLike(cleaned['OROCHI_PUBLIC_KEY']) || cleaned['OROCHI_PUBLIC_KEY'].length !== 130) {
     throw new Error('Invalid public key');
   }
