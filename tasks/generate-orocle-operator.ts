@@ -6,8 +6,8 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ethers } from 'ethers';
 import { env } from '../env';
 
-const envPath = '.env';
-const resultPath = './output/result.json';
+const ENV_PATH = `${__dirname}/../.env`;
+const RESULT_PATH = `${__dirname}/../output/result.json`;
 const ORAND_APP_ID = 0;
 const ASSET_PRICE_APP_ID = 1;
 
@@ -44,7 +44,11 @@ task('generate:local-operator', 'Generate operator address only in local network
       return a.childIndex - b.childIndex;
     });
 
-    const fileContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    if (!fs.existsSync(ENV_PATH)) {
+      throw new Error('.env file not found');
+    }
+
+    const fileContent = fs.readFileSync(ENV_PATH, 'utf-8');
     if (fileContent.indexOf('LOCAL_OROCHI_OPERATOR') === -1) {
       console.log('Generate new local orocle operator');
       const orochiOperator = `${sortDataTable[5].address},${sortDataTable[6].address}`;
@@ -55,8 +59,8 @@ task('generate:local-operator', 'Generate operator address only in local network
         allOperator: sortDataTable,
         walletCreatedByLocalNode: master.address.toLowerCase(),
       };
-      fs.appendFileSync(envPath, `\nLOCAL_OROCHI_OPERATOR="${orochiOperator}"\n`);
-      fs.writeFileSync(resultPath, JSON.stringify(content));
+      fs.appendFileSync(ENV_PATH, `\nLOCAL_OROCHI_OPERATOR="${orochiOperator}"\n`);
+      fs.writeFileSync(RESULT_PATH, JSON.stringify(content));
       console.table(sortDataTable);
     } else {
       console.log('Local operator existed');
