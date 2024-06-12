@@ -28,13 +28,13 @@ task('generate:local-operator', 'Generate operator address only in local network
       const assetPriceWallet = wallet.derivePath(`${chainId}/${childAssetPriceId}`);
       dataTable.push({
         path: orandWallet.path,
-        address: (await orandWallet.getAddress()).toLowerCase(),
+        address: orandWallet.address.toLowerCase(),
         chainId,
         childIndex: childOrandId,
       });
       dataTable.push({
         path: assetPriceWallet.path,
-        address: (await assetPriceWallet.getAddress()).toLowerCase(),
+        address: assetPriceWallet.address.toLowerCase(),
         chainId,
         childIndex: childAssetPriceId,
       });
@@ -53,7 +53,7 @@ task('generate:local-operator', 'Generate operator address only in local network
         operatorPassphrase: wallet.mnemonic?.phrase.trim(),
         localOrochiOperator: orochiOperator,
         allOperator: sortDataTable,
-        walletCreatedByLocalNode: await master.getAddress(),
+        walletCreatedByLocalNode: master.address.toLowerCase(),
       };
       fs.appendFileSync(envPath, `\nLOCAL_OROCHI_OPERATOR="${orochiOperator}"\n`);
       fs.writeFileSync(resultPath, JSON.stringify(content));
