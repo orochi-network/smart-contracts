@@ -18,15 +18,24 @@ task('generate:local-operator', 'Generate operator address only in local network
     const dataTable = [];
     const wallet = ethers.Wallet.createRandom();
     const [master] = await hre.ethers.getSigners();
-    for (let appId = 0; appId < 2; appId += 1) {
-      for (let i = 0; i < 5; i += 1) {
-        const childIndex = appId * 256 + i;
-        const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
-        dataTable.push({
-          path: newWallet.path,
-          address: (await newWallet.getAddress()).toLowerCase(),
-        });
-      }
+    const orandAppId = 0; // Orand Operator
+
+    for (let i = 0; i < 5; i += 1) {
+      const childIndex = orandAppId * 256 + i;
+      const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
+      dataTable.push({
+        path: newWallet.path,
+        address: (await newWallet.getAddress()).toLowerCase(),
+      });
+    }
+    const assetPriceAppId = 1;
+    for (let i = 0; i < 5; i += 1) {
+      const childIndex = assetPriceAppId * 256 + i;
+      const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
+      dataTable.push({
+        path: newWallet.path,
+        address: (await newWallet.getAddress()).toLowerCase(),
+      });
     }
 
     const fileContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
