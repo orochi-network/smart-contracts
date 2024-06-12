@@ -18,23 +18,21 @@ task('generate:local-operator', 'Generate operator address only in local network
     const dataTable = [];
     const wallet = ethers.Wallet.createRandom();
     const [master] = await hre.ethers.getSigners();
-    const orandAppId = 0; // Orand Operator
+    const orandAppId = 0;
+    const assetPriceAppId = 1;
 
     for (let i = 0; i < 5; i += 1) {
-      const childIndex = orandAppId * 256 + i;
-      const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
+      const childOrandId = orandAppId * 256 + i;
+      const childAssetPriceId = assetPriceAppId * 256 + i;
+      const orandWallet = wallet.derivePath(`${chainId}/${childOrandId}`);
+      const assetPriceWallet = wallet.derivePath(`${chainId}/${childAssetPriceId}`);
       dataTable.push({
-        path: newWallet.path,
-        address: (await newWallet.getAddress()).toLowerCase(),
+        path: orandWallet.path,
+        address: (await orandWallet.getAddress()).toLowerCase(),
       });
-    }
-    const assetPriceAppId = 1;
-    for (let i = 0; i < 5; i += 1) {
-      const childIndex = assetPriceAppId * 256 + i;
-      const newWallet = wallet.derivePath(`${chainId}/${childIndex}`);
       dataTable.push({
-        path: newWallet.path,
-        address: (await newWallet.getAddress()).toLowerCase(),
+        path: assetPriceWallet.path,
+        address: (await assetPriceWallet.getAddress()).toLowerCase(),
       });
     }
 
