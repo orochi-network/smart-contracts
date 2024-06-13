@@ -17,7 +17,7 @@ task('generate:local-operator', 'Generate operator address only in local network
     }
     const { chainId } = hre.network.config;
     const dataTable = [];
-    const wallet = ethers.Wallet.createRandom();
+    const wallet = ethers.Wallet.fromPhrase(env.OROCHI_MNEMONIC);
     const [master] = await hre.ethers.getSigners();
 
     for (let i = 0; i < 5; i += 1) {
