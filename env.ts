@@ -16,6 +16,7 @@ const OROCHI_CONFIGURATION = {
   OROCHI_ENCRYPTED_PASSPHRASE: '',
   LOCAL_RPC: '',
   RESULT_PATH: './output/result.json',
+  OROCHI_MNEMONIC: '',
 };
 
 export type TEnvironment = typeof OROCHI_CONFIGURATION;
