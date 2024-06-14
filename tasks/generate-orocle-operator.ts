@@ -7,8 +7,6 @@ import { ethers } from 'ethers';
 import { env } from '../env';
 
 const ENV_PATH = `${__dirname}/../.env`;
-const ORAND_APP_ID = 0;
-const ASSET_PRICE_APP_ID = 1;
 
 task('generate:local-operator', 'Generate operator address only in local network').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -16,32 +14,22 @@ task('generate:local-operator', 'Generate operator address only in local network
       throw new Error('Not in local network. Do nothing');
     }
     const { chainId } = hre.network.config;
-    const dataTable = [];
     const wallet = ethers.Wallet.fromPhrase(env.OROCHI_MNEMONIC);
     const [master] = await hre.ethers.getSigners();
 
-    for (let i = 0; i < 5; i += 1) {
-      const childOrandId = ORAND_APP_ID * 256 + i;
-      const childAssetPriceId = ASSET_PRICE_APP_ID * 256 + i;
-      const orandWallet = wallet.derivePath(`${chainId}/${childOrandId}`);
-      const assetPriceWallet = wallet.derivePath(`${chainId}/${childAssetPriceId}`);
-      dataTable.push({
-        path: orandWallet.path,
-        address: orandWallet.address.toLowerCase(),
-        chainId,
-        childIndex: childOrandId,
-      });
-      dataTable.push({
-        path: assetPriceWallet.path,
-        address: assetPriceWallet.address.toLowerCase(),
-        chainId,
-        childIndex: childAssetPriceId,
-      });
-    }
-
-    const sortDataTable = dataTable.sort((a, b) => {
-      return a.childIndex - b.childIndex;
-    });
+    const dataTable = [0, 1, 2, 3, 4]
+      .map((e) => [e, 256 + e])
+      .flat()
+      .map((child) => {
+        const newWallet = wallet.deriveChild(child);
+        return {
+          path: newWallet.path,
+          address: newWallet.address.toLowerCase(),
+          chainId,
+          childIndex: child,
+        };
+      })
+      .sort((a, b) => a.childIndex - b.childIndex);
 
     if (!fs.existsSync(ENV_PATH)) {
       throw new Error('.env file not found');
@@ -49,17 +37,16 @@ task('generate:local-operator', 'Generate operator address only in local network
 
     if (!env.OROCHI_OPERATOR) {
       console.log('Generate new local orocle operator');
-      const orochiOperator = `${sortDataTable[5].address},${sortDataTable[6].address}`;
+      const orochiOperator = `${dataTable[5].address},${dataTable[6].address}`;
       const content = {
         orochiPublicKey: env.OROCHI_PUBLIC_KEY,
         operatorPassphrase: wallet.mnemonic?.phrase.trim(),
         localOrochiOperator: orochiOperator,
-        allOperator: sortDataTable,
+        allOperator: dataTable,
         walletCreatedByLocalNode: master.address.toLowerCase(),
       };
       fs.appendFileSync(ENV_PATH, `\nOROCHI_OPERATOR="${orochiOperator}"\n`);
       fs.writeFileSync(env.RESULT_PATH, JSON.stringify(content));
-      console.table(sortDataTable);
     } else {
       console.log('Local operator existed');
     }

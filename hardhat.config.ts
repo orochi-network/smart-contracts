@@ -40,7 +40,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     sepolia: {
-      url: 'https://eth-sepolia.api.onfinality.io/public',
+      url: 'https://rpc.sepolia.org',
       chainId: 11155111,
     },
     u2: {
@@ -95,6 +95,10 @@ const config: HardhatUserConfig = {
       url: 'https://fantom-mainnet.public.blastapi.io',
       chainId: 250,
     },
+    ftmTest: {
+      url: 'https://fantom-testnet.publicnode.com',
+      chainId: 4002,
+    },
     okexchain: {
       url: 'https://exchainrpc.okex.org',
       chainId: 66,
@@ -148,6 +152,10 @@ const config: HardhatUserConfig = {
     mantaTest: {
       url: `https://pacific-rpc.sepolia-testnet.manta.network/http`,
       chainId: 3441006,
+    },
+    layerEdgeTest: {
+      url: `https://testnet-rpc.layeredge.io`,
+      chainId: 3456,
     },
 
     // Hard hat network
