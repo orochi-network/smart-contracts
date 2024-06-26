@@ -2,10 +2,10 @@ import fs from 'fs';
 import { HardhatUserConfig } from 'hardhat/types';
 import { env } from './env';
 import '@nomicfoundation/hardhat-toolbox';
-import '@openzeppelin/hardhat-upgrades';
 import '@matterlabs/hardhat-zksync';
 import '@matterlabs/hardhat-zksync-deploy';
 import '@matterlabs/hardhat-zksync-solc';
+import '@openzeppelin/hardhat-upgrades';
 
 const isZkSolc = process.env.USE_ZKSOLC === 'true';
 
@@ -178,6 +178,60 @@ const config: HardhatUserConfig = {
           }
         : undefined,
     },
+  },
+  sourcify: {
+    enabled: false,
+  },
+  etherscan: {
+    apiKey: {
+      saakuruMainL2: 'random_string',
+      binance: env.BSC_API_KEY,
+      a8main: 'random_string',
+      u2umain: 'random_string',
+      xLayerMain: env.X_LAYER_API_KEY,
+    },
+    customChains: [
+      {
+        network: 'saakuruMainL2',
+        chainId: 7225878,
+        urls: {
+          apiURL: 'https://explorer.saakuru.network/api',
+          browserURL: 'https://explorer.saakuru.network/',
+        },
+      },
+      {
+        network: 'binance',
+        chainId: 56,
+        urls: {
+          apiURL: 'https://api.bscscan.com/api',
+          browserURL: 'https://bscscan.com/',
+        },
+      },
+      {
+        network: 'a8main',
+        chainId: 888888888,
+        urls: {
+          apiURL: 'https://scan.ancient8.gg/api',
+          browserURL: 'https://scan.ancient8.gg',
+        },
+      },
+      {
+        network: 'u2umain',
+        chainId: 39,
+        urls: {
+          apiURL: 'https://u2uscan.xyz/api',
+          browserURL: 'https://u2uscan.xyz',
+        },
+      },
+      {
+        network: 'xLayerMain',
+        chainId: 196,
+        urls: {
+          apiURL: 'https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/XLAYER',
+          browserURL: 'https://www.oklink.com/xlayer',
+        },
+      },
+    ],
   },
   solidity: {
     compilers,
