@@ -31,4 +31,9 @@ contract XOroV2 is ERC1155, Ownable {
     require(false, 'Transfer not allowed');
     return super.safeBatchTransferFrom(from, to, ids, amounts, data);
   }
+
+  function setApprovalForAll(address operator, bool approved) public virtual override {
+    require(false, 'Transfer not allowed');
+    return super.setApprovalForAll(operator, approved);
+  }
 }
