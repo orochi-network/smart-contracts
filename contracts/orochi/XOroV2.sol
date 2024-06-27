@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract XOroV2 is ERC1155, Ownable {
   uint8 public constant TOKEN_ID = 1;
-  constructor() ERC1155('https://api.example.com/metadata/{id}.json') {}
+  constructor() ERC1155('https://metadata.orochi.network/x-oro-v2/{id}.json') {}
 
   function mint(address to, uint256 amount) public onlyOwner {
     _mint(to, TOKEN_ID, amount, '');

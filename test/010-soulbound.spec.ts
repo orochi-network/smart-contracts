@@ -4,7 +4,7 @@ import Deployer from '../helpers/deployer';
 import { XOroV2 } from '../typechain-types';
 import { expect } from 'chai';
 
-const API_METADATA = 'https://api.example.com/metadata/{id}.json';
+const METADATA_API = 'https://metadata.orochi.network/x-oro-v2/{id}.json';
 const TOKEN_ID = '1';
 
 let accounts: SignerWithAddress[];
@@ -16,8 +16,8 @@ let fakeOwner: SignerWithAddress;
 
 let contract: XOroV2;
 
-describe.only('Soulbound', function () {
-  it('Souldbound must be deployed correctly', async () => {
+describe.only('Soulbound token', function () {
+  it('Souldbound token must be deployed correctly', async () => {
     const network = await hre.ethers.provider.getNetwork();
     accounts = await hre.ethers.getSigners();
     [deployerSigner, player01, player02, player03, fakeOwner] = accounts;
@@ -26,8 +26,7 @@ describe.only('Soulbound', function () {
     contract = await deployer.contractDeploy<XOroV2>('orochi/XOroV2', []);
     expect(await contract.owner()).eq(deployerSigner.address);
     expect(await contract.TOKEN_ID()).eq(TOKEN_ID);
-    const r = await contract.uri(1);
-    console.log(r);
+    expect(await contract.uri(TOKEN_ID)).eq(METADATA_API);
 
     await contract.mint(player01.address, '20');
     await contract.mint(deployerSigner.address, '20');
@@ -68,5 +67,37 @@ describe.only('Soulbound', function () {
     ).to.revertedWith('Transfer not allowed');
     expect(await contract.balance(player01)).eq('20');
     expect(await contract.balance(player02)).eq('1');
+    expect(await contract.balance(deployerSigner)).eq('20');
+  });
+
+  it("Player 1 can't batch transfer to player 2", async () => {
+    await expect(
+      contract.connect(player01).safeBatchTransferFrom(player01, player02, [TOKEN_ID], ['12'], ethers.toUtf8Bytes('')),
+    ).to.revertedWith('Transfer not allowed');
+  });
+
+  it('Current owner can transfer ownership to another owner', async () => {
+    await contract.connect(deployerSigner).transferOwnership(fakeOwner);
+    expect(await contract.owner()).eq(fakeOwner.address);
+  });
+
+  it("Old owner can't mint token anymore", async () => {
+    await expect(contract.connect(deployerSigner).mint(player01, '10')).to.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+    expect(await contract.balance(player01)).eq('20');
+    await contract.connect(fakeOwner).mint(player02, '15');
+    await contract.connect(fakeOwner).transferOwnership(deployerSigner);
+    expect(await contract.owner()).eq(deployerSigner);
+    expect(await contract.balance(player02)).eq('16');
+  });
+
+  it('Token can call balanceOfBatch correctly', async () => {
+    console.log(await contract.balanceOfBatch([player01, player02, player03], [TOKEN_ID, TOKEN_ID, TOKEN_ID]));
+    expect(await contract.balanceOfBatch([player01, player02, player03], [TOKEN_ID, TOKEN_ID, TOKEN_ID])).to.deep.eq([
+      20n,
+      16n,
+      15n,
+    ]);
   });
 });
