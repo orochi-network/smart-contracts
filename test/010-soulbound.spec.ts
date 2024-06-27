@@ -41,20 +41,21 @@ describe.only('Soulbound token', function () {
   });
 
   it('Only owner can mint token', async () => {
-    await expect(contract.connect(fakeOwner).mint(player01, '100')).to.be.revertedWith(
-      'Ownable: caller is not the owner',
-    );
+    await expect(contract.connect(fakeOwner).mint(player01, '100')).to.revertedWith('Ownable: caller is not the owner');
     expect(await contract.balance(player01)).eq('20');
   });
 
   it("Player 1 can't approve transfer token", async () => {
-    await expect(contract.connect(player01).setApprovalForAll(player02, true)).to.revertedWith('Transfer not allowed');
+    await expect(contract.connect(player01).setApprovalForAll(player02, true)).to.revertedWithCustomError(
+      contract,
+      'AccessDenied',
+    );
   });
 
   it("Player 1 can't transfer token to player 2", async () => {
     await expect(
       contract.connect(player01).safeTransferFrom(player01, player02, TOKEN_ID, '5', ethers.toUtf8Bytes('')),
-    ).to.revertedWith('Transfer not allowed');
+    ).to.revertedWithCustomError(contract, 'AccessDenied');
     expect(await contract.balance(player01)).eq('20');
     expect(await contract.balance(player02)).eq('1');
   });
@@ -64,7 +65,7 @@ describe.only('Soulbound token', function () {
       contract
         .connect(deployerSigner)
         .safeTransferFrom(deployerSigner, player01, TOKEN_ID, '5', ethers.toUtf8Bytes('')),
-    ).to.revertedWith('Transfer not allowed');
+    ).to.revertedWithCustomError(contract, 'AccessDenied');
     expect(await contract.balance(player01)).eq('20');
     expect(await contract.balance(player02)).eq('1');
     expect(await contract.balance(deployerSigner)).eq('20');
@@ -73,7 +74,7 @@ describe.only('Soulbound token', function () {
   it("Player 1 can't batch transfer to player 2", async () => {
     await expect(
       contract.connect(player01).safeBatchTransferFrom(player01, player02, [TOKEN_ID], ['12'], ethers.toUtf8Bytes('')),
-    ).to.revertedWith('Transfer not allowed');
+    ).to.revertedWithCustomError(contract, 'AccessDenied');
   });
 
   it('Current owner can transfer ownership to another owner', async () => {
@@ -99,5 +100,26 @@ describe.only('Soulbound token', function () {
       16n,
       15n,
     ]);
+  });
+
+  it('Only owner can run batchMint', async () => {
+    const packedData = [];
+    const data = [
+      { amount: 2n, beneficiary: player01.address },
+      { amount: 5n, beneficiary: player02.address },
+      { amount: 100n, beneficiary: player03.address },
+    ];
+    for (let i = 0; i < data.length; i += 1) {
+      const amount = data[i].amount << 160n;
+      packedData.push(amount | BigInt(data[i].beneficiary));
+    }
+    await expect(contract.connect(fakeOwner).batchMint([...packedData])).to.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+    await contract.connect(deployerSigner).batchMint([...packedData]);
+
+    expect(await contract.balance(player01)).eq(22);
+    expect(await contract.balance(player02)).eq(21);
+    expect(await contract.balance(player03)).eq(115);
   });
 });
