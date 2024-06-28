@@ -35,14 +35,14 @@ describe.only('Soulbound token', function () {
   });
 
   it('All player must have their correct token amount', async () => {
-    expect(await contract.balance(player01)).eq('20');
-    expect(await contract.balance(player02)).eq('1');
-    expect(await contract.balance(player03)).eq('15');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('1');
+    expect(await contract.balanceOf(player03, TOKEN_ID)).eq('15');
   });
 
   it('Only owner can mint token', async () => {
     await expect(contract.connect(fakeOwner).mint(player01, '100')).to.revertedWith('Ownable: caller is not the owner');
-    expect(await contract.balance(player01)).eq('20');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
   });
 
   it("Player 1 can't approve transfer token", async () => {
@@ -56,8 +56,8 @@ describe.only('Soulbound token', function () {
     await expect(
       contract.connect(player01).safeTransferFrom(player01, player02, TOKEN_ID, '5', ethers.toUtf8Bytes('')),
     ).to.revertedWithCustomError(contract, 'AccessDenied');
-    expect(await contract.balance(player01)).eq('20');
-    expect(await contract.balance(player02)).eq('1');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('1');
   });
 
   it("Contract owner can't transfer token to player 1", async () => {
@@ -66,9 +66,9 @@ describe.only('Soulbound token', function () {
         .connect(deployerSigner)
         .safeTransferFrom(deployerSigner, player01, TOKEN_ID, '5', ethers.toUtf8Bytes('')),
     ).to.revertedWithCustomError(contract, 'AccessDenied');
-    expect(await contract.balance(player01)).eq('20');
-    expect(await contract.balance(player02)).eq('1');
-    expect(await contract.balance(deployerSigner)).eq('20');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('1');
+    expect(await contract.balanceOf(deployerSigner, TOKEN_ID)).eq('20');
   });
 
   it("Player 1 can't batch transfer to player 2", async () => {
@@ -86,11 +86,11 @@ describe.only('Soulbound token', function () {
     await expect(contract.connect(deployerSigner).mint(player01, '10')).to.revertedWith(
       'Ownable: caller is not the owner',
     );
-    expect(await contract.balance(player01)).eq('20');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
     await contract.connect(fakeOwner).mint(player02, '15');
     await contract.connect(fakeOwner).transferOwnership(deployerSigner);
     expect(await contract.owner()).eq(deployerSigner);
-    expect(await contract.balance(player02)).eq('16');
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('16');
   });
 
   it('Token can call balanceOfBatch correctly', async () => {
@@ -118,8 +118,8 @@ describe.only('Soulbound token', function () {
     );
     await contract.connect(deployerSigner).batchMint([...packedData]);
 
-    expect(await contract.balance(player01)).eq(22);
-    expect(await contract.balance(player02)).eq(21);
-    expect(await contract.balance(player03)).eq(115);
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(22);
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(21);
+    expect(await contract.balanceOf(player03, TOKEN_ID)).eq(115);
   });
 });
