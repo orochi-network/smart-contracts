@@ -149,6 +149,11 @@ const config: HardhatUserConfig = {
       ethNetwork: 'https://sepolia.rpc.zklink.io',
       chainId: 810181,
     },
+    zulutest: {
+      url: 'https://rpc-testnet.zulunetwork.io',
+      ethNetwork: '', // NOTE: As ZULU is a bitcoin Layer2, so this param should be empty.
+      zksync: true,
+    },
     mantaTest: {
       url: `https://pacific-rpc.sepolia-testnet.manta.network/http`,
       chainId: 3441006,
@@ -156,6 +161,14 @@ const config: HardhatUserConfig = {
     layerEdgeTest: {
       url: `https://testnet-rpc.layeredge.io`,
       chainId: 3456,
+    },
+    lightLinkTest: {
+      url: 'https://replicator.pegasus.lightlink.io/rpc/v1',
+      chainId: 1891,
+    },
+    lightLinkMain: {
+      url: 'https://replicator.phoenix.lightlink.io/rpc/v1',
+      chainId: 1890,
     },
 
     // Hard hat network
