@@ -12,8 +12,8 @@ import EthJsonRpc from '../helpers/provider';
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
 // CHANGE OROCLE & ORAND ADDRESS BEFORE RUN THIS TASK
-const OROCLE_V2_ADDRESS = '0xfa59E81714BE6A453057A76DAF7Cb619B05CD877';
-const ORAND_PROVIDER_ADDRESS = '0x0370D689959Bc692D0C46C41Bdd2Bc4B22599Ef0';
+const OROCLE_V2_ADDRESS = '0xbA7f3cb53aA2De189b60c815Bca11ad9AEb2BA7E';
+const ORAND_PROVIDER_ADDRESS = '0x6f24d4da6b9bBdbE4d5F2e3C663c8F1C617bdf13';
 
 const sleep = async (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
