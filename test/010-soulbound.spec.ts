@@ -5,6 +5,7 @@ import { XOroV2 } from '../typechain-types';
 import { expect } from 'chai';
 
 const METADATA_API = 'https://metadata.orochi.network/x-oro-v2/{id}.json';
+const NEW_METADATA_API = 'https://metadata.orochi.network/x-oro-v3/{id}.json';
 const TOKEN_ID = 1n;
 const NEW_TOKEN_ID = 2n;
 const ANOTHER_TOKEN_ID = 3n;
@@ -24,13 +25,16 @@ let contract: XOroV2;
 
 const packData = (amount: bigint, address: string): bigint => (amount << 160n) | BigInt(address);
 
-describe('Soulbound token', function () {
+describe.only('Soulbound token', function () {
   it('Souldbound token must be deployed correctly', async () => {
     accounts = await hre.ethers.getSigners();
     [deployerSigner, player01, player02, player03, newOwner, operator1, operator2, fakeOperator, operator3] = accounts;
     const deployer: Deployer = Deployer.getInstance(hre);
     deployer.connect(deployerSigner);
-    contract = await deployer.contractDeploy<XOroV2>('orochi/XOroV2', [], [operator1.address, operator2.address]);
+    contract = await deployer.contractDeploy<XOroV2>('orochi/XOroV2', [], METADATA_API, [
+      operator1.address,
+      operator2.address,
+    ]);
     const packedData = [];
     const data = [
       {
@@ -229,5 +233,12 @@ describe('Soulbound token', function () {
     await contract.connect(operator3).batchBurn(NEW_TOKEN_ID, [packData(1n, player02.address)]);
     expect(await contract.balanceOf(player01, TOKEN_ID)).to.eq(10n);
     expect(await contract.balanceOf(player02, NEW_TOKEN_ID)).to.eq(5n);
+  });
+
+  it('Only owner can set new metadata url', async () => {
+    await contract.connect(deployerSigner).setURI(NEW_METADATA_API);
+    expect(await contract.uri(TOKEN_ID)).eq(NEW_METADATA_API);
+    await expect(contract.connect(operator1).setURI(METADATA_API)).to.revertedWith('Ownable: caller is not the owner');
+    await expect(contract.connect(newOwner).setURI(METADATA_API)).to.revertedWith('Ownable: caller is not the owner');
   });
 });
