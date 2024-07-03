@@ -153,6 +153,10 @@ const config: HardhatUserConfig = {
       url: `https://pacific-rpc.sepolia-testnet.manta.network/http`,
       chainId: 3441006,
     },
+    mantaMain: {
+      url: `https://pacific-rpc.manta.network/http`,
+      chainId: 169,
+    },
     layerEdgeTest: {
       url: `https://testnet-rpc.layeredge.io`,
       chainId: 3456,
