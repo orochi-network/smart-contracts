@@ -20,6 +20,7 @@ contract XOroV2 is ERC1155, Ownable, Operatable {
   }
 
   //====================[  Internal  ]====================
+
   function _unpack(uint256 value) internal pure returns (uint96, address) {
     return (uint96(value >> 160), address(uint160(value)));
   }
