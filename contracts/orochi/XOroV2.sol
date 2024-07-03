@@ -7,8 +7,6 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 error AccessDenied();
 
 contract XOroV2 is ERC1155, Ownable {
-  uint8 public constant TOKEN_ID = 1;
-
   modifier accessDenied() {
     revert AccessDenied();
     _;
@@ -16,14 +14,14 @@ contract XOroV2 is ERC1155, Ownable {
 
   constructor() ERC1155('https://metadata.orochi.network/x-oro-v2/{id}.json') {}
 
-  function mint(address to, uint256 amount) external onlyOwner {
-    _mint(to, TOKEN_ID, amount, '');
+  function mint(address to, uint256 tokenId, uint256 amount) external onlyOwner {
+    _mint(to, tokenId, amount, '');
   }
 
-  function batchMint(uint256[] calldata packedData) external onlyOwner {
+  function batchMint(uint256 tokenId, uint256[] calldata packedData) external onlyOwner {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address to) = _unpack(packedData[i]);
-      _mint(to, TOKEN_ID, amount, '');
+      _mint(to, tokenId, amount, '');
     }
   }
 

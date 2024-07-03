@@ -5,7 +5,9 @@ import { XOroV2 } from '../typechain-types';
 import { expect } from 'chai';
 
 const METADATA_API = 'https://metadata.orochi.network/x-oro-v2/{id}.json';
-const TOKEN_ID = '1';
+const TOKEN_ID = 1n;
+const NEW_TOKEN_ID = 2n;
+const ANOTHER_TOKEN_ID = 3n;
 
 let accounts: SignerWithAddress[];
 let deployerSigner: SignerWithAddress;
@@ -25,24 +27,27 @@ describe.only('Soulbound token', function () {
     deployer.connect(deployerSigner);
     contract = await deployer.contractDeploy<XOroV2>('orochi/XOroV2', []);
     expect(await contract.owner()).eq(deployerSigner.address);
-    expect(await contract.TOKEN_ID()).eq(TOKEN_ID);
     expect(await contract.uri(TOKEN_ID)).eq(METADATA_API);
+    expect(await contract.uri(NEW_TOKEN_ID)).eq(METADATA_API);
+    expect(await contract.uri(ANOTHER_TOKEN_ID)).eq(METADATA_API);
 
-    await contract.mint(player01.address, '20');
-    await contract.mint(deployerSigner.address, '20');
-    await contract.mint(player02.address, '1');
-    await contract.mint(player03.address, '15');
+    await contract.mint(player01.address, 1n, 20n);
+    await contract.mint(deployerSigner.address, 1n, 20n);
+    await contract.mint(player02.address, 1n, 1n);
+    await contract.mint(player03.address, 1n, 15n);
   });
 
   it('All player must have their correct token amount', async () => {
-    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
-    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('1');
-    expect(await contract.balanceOf(player03, TOKEN_ID)).eq('15');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(20n);
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(1n);
+    expect(await contract.balanceOf(player03, TOKEN_ID)).eq(15n);
   });
 
   it('Only owner can mint token', async () => {
-    await expect(contract.connect(fakeOwner).mint(player01, '100')).to.revertedWith('Ownable: caller is not the owner');
-    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
+    await expect(contract.connect(fakeOwner).mint(player01, TOKEN_ID, 100n)).to.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(20n);
   });
 
   it("Player 1 can't approve transfer token", async () => {
@@ -56,24 +61,22 @@ describe.only('Soulbound token', function () {
     await expect(
       contract.connect(player01).safeTransferFrom(player01, player02, TOKEN_ID, '5', ethers.toUtf8Bytes('')),
     ).to.revertedWithCustomError(contract, 'AccessDenied');
-    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
-    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('1');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(20n);
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(1n);
   });
 
   it("Contract owner can't transfer token to player 1", async () => {
     await expect(
-      contract
-        .connect(deployerSigner)
-        .safeTransferFrom(deployerSigner, player01, TOKEN_ID, '5', ethers.toUtf8Bytes('')),
+      contract.connect(deployerSigner).safeTransferFrom(deployerSigner, player01, TOKEN_ID, 5n, ethers.toUtf8Bytes('')),
     ).to.revertedWithCustomError(contract, 'AccessDenied');
-    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
-    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('1');
-    expect(await contract.balanceOf(deployerSigner, TOKEN_ID)).eq('20');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(20n);
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(1n);
+    expect(await contract.balanceOf(deployerSigner, TOKEN_ID)).eq(20n);
   });
 
   it("Player 1 can't batch transfer to player 2", async () => {
     await expect(
-      contract.connect(player01).safeBatchTransferFrom(player01, player02, [TOKEN_ID], ['12'], ethers.toUtf8Bytes('')),
+      contract.connect(player01).safeBatchTransferFrom(player01, player02, [TOKEN_ID], [12n], ethers.toUtf8Bytes('')),
     ).to.revertedWithCustomError(contract, 'AccessDenied');
   });
 
@@ -83,14 +86,14 @@ describe.only('Soulbound token', function () {
   });
 
   it("Old owner can't mint token anymore", async () => {
-    await expect(contract.connect(deployerSigner).mint(player01, '10')).to.revertedWith(
+    await expect(contract.connect(deployerSigner).mint(player01, TOKEN_ID, 10n)).to.revertedWith(
       'Ownable: caller is not the owner',
     );
-    expect(await contract.balanceOf(player01, TOKEN_ID)).eq('20');
-    await contract.connect(fakeOwner).mint(player02, '15');
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(20n);
+    await contract.connect(fakeOwner).mint(player02, TOKEN_ID, 15n);
     await contract.connect(fakeOwner).transferOwnership(deployerSigner);
     expect(await contract.owner()).eq(deployerSigner);
-    expect(await contract.balanceOf(player02, TOKEN_ID)).eq('16');
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(16n);
   });
 
   it('Token can call balanceOfBatch correctly', async () => {
@@ -105,21 +108,75 @@ describe.only('Soulbound token', function () {
   it('Only owner can run batchMint', async () => {
     const packedData = [];
     const data = [
-      { amount: 2n, beneficiary: player01.address },
-      { amount: 5n, beneficiary: player02.address },
-      { amount: 100n, beneficiary: player03.address },
+      { amount: 2n, to: player01.address },
+      { amount: 5n, to: player02.address },
+      { amount: 100n, to: player03.address },
     ];
     for (let i = 0; i < data.length; i += 1) {
       const amount = data[i].amount << 160n;
-      packedData.push(amount | BigInt(data[i].beneficiary));
+      packedData.push(amount | BigInt(data[i].to));
     }
-    await expect(contract.connect(fakeOwner).batchMint([...packedData])).to.revertedWith(
+    await expect(contract.connect(fakeOwner).batchMint(TOKEN_ID, [...packedData])).to.revertedWith(
       'Ownable: caller is not the owner',
     );
-    await contract.connect(deployerSigner).batchMint([...packedData]);
+    await contract.connect(deployerSigner).batchMint(TOKEN_ID, [...packedData]);
 
-    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(22);
-    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(21);
-    expect(await contract.balanceOf(player03, TOKEN_ID)).eq(115);
+    expect(await contract.balanceOf(player01, TOKEN_ID)).eq(22n);
+    expect(await contract.balanceOf(player02, TOKEN_ID)).eq(21n);
+    expect(await contract.balanceOf(player03, TOKEN_ID)).eq(115n);
+  });
+
+  it('Only owner can mint other tokenId', async () => {
+    await expect(contract.connect(fakeOwner).mint(player01, NEW_TOKEN_ID, 100n)).to.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+    await expect(contract.connect(fakeOwner).mint(player01, ANOTHER_TOKEN_ID, 100n)).to.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+    await contract.connect(deployerSigner).mint(player01, NEW_TOKEN_ID, 100n);
+    await contract.connect(deployerSigner).mint(player02, NEW_TOKEN_ID, 1n);
+
+    expect(
+      await contract.balanceOfBatch([player01, player02, player03], [NEW_TOKEN_ID, NEW_TOKEN_ID, NEW_TOKEN_ID]),
+    ).to.deep.eq([100n, 1n, 0n]);
+
+    expect(await contract.balanceOfBatch([player01, player02, player03], [TOKEN_ID, TOKEN_ID, TOKEN_ID])).to.deep.eq([
+      22n,
+      21n,
+      115n,
+    ]);
+
+    expect(
+      await contract.balanceOfBatch(
+        [player01, player02, player03],
+        [ANOTHER_TOKEN_ID, ANOTHER_TOKEN_ID, ANOTHER_TOKEN_ID],
+      ),
+    ).to.deep.eq([0n, 0n, 0n]);
+  });
+
+  it('Only owner can run batch mint and it should works correctly with another tokenId', async () => {
+    const packedData = [];
+    const data = [
+      { amount: 4n, to: player01.address },
+      { amount: 5n, to: player02.address },
+      { amount: 10n, to: player03.address },
+    ];
+    for (let i = 0; i < data.length; i += 1) {
+      const amount = data[i].amount << 160n;
+      packedData.push(amount | BigInt(data[i].to));
+    }
+    await expect(contract.connect(fakeOwner).batchMint(NEW_TOKEN_ID, [...packedData])).to.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+    await contract.connect(deployerSigner).batchMint(NEW_TOKEN_ID, [...packedData]);
+    expect(
+      await contract.balanceOfBatch([player01, player02, player03], [NEW_TOKEN_ID, NEW_TOKEN_ID, NEW_TOKEN_ID]),
+    ).to.deep.eq([104n, 6n, 10n]);
+    expect(
+      await contract.balanceOfBatch(
+        [player01, player02, player03],
+        [ANOTHER_TOKEN_ID, ANOTHER_TOKEN_ID, ANOTHER_TOKEN_ID],
+      ),
+    ).to.deep.eq([0n, 0n, 0n]);
   });
 });
