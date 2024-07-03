@@ -6,9 +6,9 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '../libraries/Operatable.sol';
 
 contract XOroV2 is ERC1155, Ownable, Operatable {
-  // Event: Access denied
+  // Error: Access denied
   error AccessDenied();
-  // Only allow operator to mint & burn token
+  // Disable token transfer
   modifier accessDenied() {
     revert AccessDenied();
     _;

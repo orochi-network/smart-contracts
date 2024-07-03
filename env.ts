@@ -20,6 +20,7 @@ const OROCHI_CONFIGURATION = {
   X_LAYER_API_KEY: '',
   BSC_API_KEY: '',
   VERBOSE_SILENT: 'false',
+  OROCHI_METADATA_URL: '',
 };
 
 export type TEnvironment = typeof OROCHI_CONFIGURATION;
