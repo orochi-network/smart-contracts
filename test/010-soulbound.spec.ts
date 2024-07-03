@@ -18,7 +18,7 @@ let fakeOwner: SignerWithAddress;
 
 let contract: XOroV2;
 
-describe.only('Soulbound token', function () {
+describe('Soulbound token', function () {
   it('Souldbound token must be deployed correctly', async () => {
     const network = await hre.ethers.provider.getNetwork();
     accounts = await hre.ethers.getSigners();
