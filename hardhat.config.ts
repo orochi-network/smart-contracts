@@ -91,6 +91,10 @@ const config: HardhatUserConfig = {
       url: 'https://optimism-mainnet.public.blastapi.io',
       chainId: 10,
     },
+    optimismTest: {
+      url: 'https://sepolia.optimism.io',
+      chainId: 11155420,
+    },
     fantom: {
       url: 'https://fantom-mainnet.public.blastapi.io',
       chainId: 250,
@@ -160,6 +164,26 @@ const config: HardhatUserConfig = {
     layerEdgeTest: {
       url: `https://testnet-rpc.layeredge.io`,
       chainId: 3456,
+    },
+    baseMain: {
+      url: `https://base-rpc.publicnode.com`,
+      chainId: 8453,
+    },
+    baseTest: {
+      url: `https://base-sepolia-rpc.publicnode.com`,
+      chainId: 84532,
+    },
+    morphHoleskyTest: {
+      url: `https://rpc-quicknode-holesky.morphl2.io`,
+      chainId: 2810,
+    },
+    scrollTest: {
+      url: `https://sepolia-rpc.scroll.io/`,
+      chainId: 534351,
+    },
+    wanchainTest: {
+      url: `https://gwan-ssl.wandevs.org:46891`,
+      chainId: 999,
     },
 
     // Hard hat network
