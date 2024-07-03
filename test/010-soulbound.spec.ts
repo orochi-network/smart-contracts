@@ -25,7 +25,7 @@ let contract: XOroV2;
 
 const packData = (amount: bigint, address: string): bigint => (amount << 160n) | BigInt(address);
 
-describe.only('Soulbound token', function () {
+describe('Soulbound token', function () {
   it('Souldbound token must be deployed correctly', async () => {
     accounts = await hre.ethers.getSigners();
     [deployerSigner, player01, player02, player03, newOwner, operator1, operator2, fakeOperator, operator3] = accounts;
