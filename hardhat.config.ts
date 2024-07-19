@@ -7,7 +7,8 @@ import '@matterlabs/hardhat-zksync-deploy';
 import '@matterlabs/hardhat-zksync-solc';
 import '@openzeppelin/hardhat-upgrades';
 
-const isZkSolc = process.env.USE_ZKSOLC === 'true';
+const isZkSolc = true;
+console.log('🚀 ~ isZkSolc:', isZkSolc);
 
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
@@ -184,6 +185,26 @@ const config: HardhatUserConfig = {
     wanchainTest: {
       url: `https://gwan-ssl.wandevs.org:46891`,
       chainId: 999,
+    },
+    lightlinkMain: {
+      url: `https://replicator.phoenix.lightlink.io/rpc/v1`,
+      chainId: 1890,
+    },
+    lightlinkTest: {
+      url: `https://replicator.pegasus.lightlink.io/rpc/v1`,
+      chainId: 1891,
+    },
+    zkSyncTest: {
+      url: `https://sepolia.era.zksync.dev`,
+      chainId: 300,
+      zksync: true,
+      ethNetwork: 'https://sepolia.era.zksync.dev',
+    },
+    zkSyncMain: {
+      url: `https://mainnet.era.zksync.io`,
+      chainId: 324,
+      zksync: true,
+      ethNetwork: 'https://mainnet.era.zksync.io',
     },
 
     // Hard hat network
