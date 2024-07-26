@@ -1,42 +1,42 @@
-const fs = require('fs');
-const path = require('path');
+import { readFileSync, existsSync, unlinkSync, copyFileSync, writeFileSync } from 'fs';
+import { basename } from 'path';
 
 const tsFileList = [];
 const typesList = [];
 
 function readJson(filename) {
-  return JSON.parse(fs.readFileSync(filename).toString());
+  return JSON.parse(readFileSync(filename).toString());
 }
 
 function cp(src, dst) {
-  if (fs.existsSync(dst)) {
-    fs.unlinkSync(dst);
+  if (existsSync(dst)) {
+    unlinkSync(dst);
   }
-  fs.copyFileSync(src, dst);
+  copyFileSync(src, dst);
 }
 
 function cpTypes(src, dst) {
-  if (fs.existsSync(dst)) {
-    fs.unlinkSync(dst);
+  if (existsSync(dst)) {
+    unlinkSync(dst);
   }
-  const content = fs.readFileSync(src).toString();
+  const content = readFileSync(src).toString();
   typesList.push(dst);
-  fs.writeFileSync(
+  writeFileSync(
     dst,
     content
-      .replace('from "../../common";', 'from "./common";')
-      .replace('from "../../../common";', 'from "./common";')
-      .replace('from "../../../../common";', 'from "./common";'),
+      .replace('from "../../common";', 'from "./common.js";')
+      .replace('from "../../../common";', 'from "./common.js";')
+      .replace('from "../../../../common";', 'from "./common.js";'),
   );
 }
 
 function cpAbi(src, dst) {
-  if (fs.existsSync(dst)) {
-    fs.unlinkSync(dst);
+  if (existsSync(dst)) {
+    unlinkSync(dst);
   }
   const { abi } = readJson(src);
   tsFileList.push(dst);
-  fs.writeFileSync(dst, `export const ${path.basename(dst, '.ts')} = ${JSON.stringify(abi, null, '  ')};`);
+  writeFileSync(dst, `export const ${basename(dst, '.ts')} = ${JSON.stringify(abi, null, '  ')};`);
 }
 
 cp('../typechain-types/common.ts', './src/common.ts');
@@ -67,15 +67,15 @@ cpTypes('../typechain-types/contracts/orand-v2/OrandProviderV2.ts', './src/Orand
 cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts');
 cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
 
-fs.writeFileSync(
+writeFileSync(
   './src/index.ts',
   [
     typesList
-      .map((e) => `export { ${path.basename(e, '.ts')} } from '${e.replace('.ts', '').replace('./src/', './')}';`)
+      .map((e) => `export { ${basename(e, '.ts')} } from '${e.replace('.ts', '.js').replace('./src/', './')}';`)
       .join('\n'),
     tsFileList
       .map((e) => {
-        return `export * from '${e.replace('.ts', '').replace('./src/', './')}';`;
+        return `export * from '${e.replace('.ts', '.js').replace('./src/', './')}';`;
       })
       .join('\n'),
   ].join('\n'),
