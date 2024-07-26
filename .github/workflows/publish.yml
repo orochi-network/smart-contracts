@@ -49,7 +49,7 @@ jobs:
           else
             cd ../
             yarn
-            yarn run build:all
+            yarn run build
             cd ./package
             npm run release
           fi
