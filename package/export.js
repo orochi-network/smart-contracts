@@ -59,7 +59,7 @@ cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json'
 
 cpTypes('../typechain-types/contracts/orosign/OrosignMasterV1.ts', './src/OrosignMasterV1.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignV1.ts', './src/OrosignV1.ts');
-cpTypes('../typechain-types/contracts/multicast/MultiCast.sol/Multicast.ts', './src/Multicast.ts');
+cpTypes('../typechain-types/contracts/multicast/Multicast.ts', './src/Multicast.ts');
 cpTypes('../typechain-types/@openzeppelin/contracts/token/ERC20/ERC20.ts', './src/ERC20.ts');
 cpTypes('../typechain-types/@openzeppelin/contracts/token/ERC721/ERC721.ts', './src/ERC721.ts');
 cpTypes('../typechain-types/contracts/orocle-v1/OrocleV1.ts', './src/OrocleV1.ts');
