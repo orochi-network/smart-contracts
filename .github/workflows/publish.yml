@@ -25,6 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Prepare environment
+        env:
+          DEV_ENV_VARS: ${{ secrets.DEV_ENV_VARS }}
+        run: echo $DEV_ENV_VARS | base64 -d >> .env
       - name: Publish smart contracts
         env:
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
