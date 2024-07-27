@@ -1,25 +1,25 @@
 {
   "name": "@orochi-network/contracts",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "Orochi smart contracts for on-chain verification",
-  "types": "./build/esm/index.d.ts",
-  "module": "./build/esm/index.js",
   "main": "./build/cjs/index.js",
+  "module": "./build/esm/index.js",
+  "types": "./build/esm/index.d.ts",
+  "type": "module",
   "files": [
     "**/*.sol",
     "build"
   ],
   "scripts": {
-    "build:esm": "tsc",
-    "build:cjs": "tsc --module commonjs --sourceMap false --declaration false --outDir build/cjs",
-    "build": "node ./export && rm -rf build && npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:cjs": "tsc --project tsconfig.cjs.json",
+    "build": "rm -rf ./build && npm run build:esm && npm run build:cjs",
     "release": "node ./export && npm run build && npm publish --access public"
   },
   "exports": {
     ".": {
-      "types": "./build/esm/index.d.ts",
-      "default": "./build/cjs/index.js",
-      "import": "./build/esm/index.js"
+      "import": "./build/esm/index.js",
+      "default": "./build/cjs/index.js"
     }
   },
   "keywords": [

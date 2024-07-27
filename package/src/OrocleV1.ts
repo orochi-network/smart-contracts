@@ -21,7 +21,7 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from "./common.js";
 
 export interface OrocleV1Interface extends Interface {
   getFunction(
