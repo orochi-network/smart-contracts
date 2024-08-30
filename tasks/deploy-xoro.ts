@@ -21,9 +21,6 @@ task('deploy:xoro', 'Deploy XORO token').setAction(async (_, hre: HardhatRuntime
     }
     console.log(`Operator [${i}]:`, OPERATORS[i]);
   }
-  if (!env.OROCHI_METADATA_URL) {
-    throw new Error('Invalid orochi metadata uri');
-  }
 
   await deployer.contractDeploy<XORO>('token/XORO', [], TOKEN_NAME, TOKEN_SYMBOL, OPERATORS);
   await deployer.printReport();
