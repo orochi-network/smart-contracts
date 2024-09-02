@@ -139,6 +139,10 @@ const config: HardhatUserConfig = {
       url: `https://zircuit1.p2pify.com/`,
       chainId: 48899,
     },
+    zircuitMain: {
+      url: `https://zircuit1-mainnet.p2pify.com/`,
+      chainId: 48900,
+    },
     xLayerTest: {
       url: `https://testrpc.xlayer.tech/`,
       chainId: 195,
@@ -182,8 +186,80 @@ const config: HardhatUserConfig = {
       chainId: 534351,
     },
     wanchainTest: {
-      url: `https://gwan-ssl.wandevs.org:46891`,
+      url: 'https://gwan-ssl.wandevs.org:46891',
       chainId: 999,
+    },
+    bitlayerMain: {
+      url: `https://rpc.bitlayer.org`,
+      chainId: 200901,
+    },
+    bitlayerTest: {
+      url: `https://testnet-rpc.bitlayer.org`,
+      chainId: 200810,
+    },
+    etherLinkMain: {
+      url: `https://node.mainnet.etherlink.com`,
+      chainId: 42793,
+    },
+    etherLinkTest: {
+      url: 'https://node.ghostnet.etherlink.com',
+      chainId: 128123,
+    },
+    zkSyncMain: {
+      url: 'https://mainnet.era.zksync.io',
+      chainId: 324,
+    },
+    zkSyncTest: {
+      url: 'https://sepolia.era.zksync.dev',
+      chainId: 300,
+    },
+    corechainTest: {
+      url: 'https://rpc.test.btcs.network',
+      chainId: 1115,
+    },
+    corechainMain: {
+      url: 'https://rpc.ankr.com/core',
+      chainId: 1116,
+    },
+    lumiaTest: {
+      url: 'https://testnet-rpc.lumia.org',
+      chainId: 1952959480,
+    },
+    reactiveTest: {
+      url: 'https://kopli-rpc.rkt.ink',
+      chainId: 5318008,
+    },
+    ioTexMain: {
+      chainId: 4689,
+      url: 'https://babel-api.mainnet.iotex.io',
+    },
+    ioTexTest: {
+      chainId: 4690,
+      url: 'https://babel-api.testnet.iotex.io',
+    },
+    shardeumTest: {
+      chainId: 8082,
+      url: 'https://atomium.shardeum.org/',
+    },
+    b2Test: {
+      chainId: 1123,
+      url: 'https://rpc.ankr.com/b2_testnet',
+    },
+    b2Main: {
+      chainId: 223,
+      url: 'https://mainnet.b2-rpc.com',
+    },
+    gnosisChainMain: {
+      chainId: 100,
+      url: 'https://rpc.gnosischain.com',
+    },
+    gnosisChainTest: {
+      chainId: 10200,
+      url: 'https://rpc.chiadochain.net',
+    },
+    polygonMain: {
+      chainId: ,
+      url: 'https://rpc.chiadochain.net',
     },
 
     // Hard hat network
