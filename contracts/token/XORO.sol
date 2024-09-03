@@ -8,6 +8,7 @@ import '../libraries/Operatable.sol';
 contract XORO is ERC20, Ownable, Operatable {
   // Error: Access denied
   error AccessDenied();
+
   // Disable token transfer
   modifier accessDenied() {
     revert AccessDenied();
@@ -43,40 +44,79 @@ contract XORO is ERC20, Ownable, Operatable {
   //====================[  Operator  ]====================
 
   // Mint token in packed data
-  function batchMint(uint256[] calldata packedData) external onlyOperator {
+  function batchMint(uint256[] calldata packedData) external onlyOperator returns(uint256) {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address to) = _unpack(packedData[i]);
       _mint(to, amount);
     }
+    return packedData.length;
   }
 
   // Burn token in packed data
-  function batchBurn(uint256[] calldata packedData) external onlyOperator {
+  function batchBurn(uint256[] calldata packedData) external onlyOperator returns(uint256) {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address from) = _unpack(packedData[i]);
       _burn(from, amount);
     }
+    return packedData.length;
   }
 
-  //====================[  Public  ]====================
+  //====================[  Disabled  ]====================
 
-  //  Disable transfer
+  /**
+   * @dev See {IERC20-transfer}. This method is disabled
+   *
+   * Requirements:
+   *
+   * - `to` cannot be the zero address.
+   * - the caller must have a balance of at least `amount`.
+   */
   function transfer(address to, uint256 amount) public override accessDenied returns (bool) {}
 
-  //  Disable approve
+  /**
+   * @dev See {IERC20-approve}. This method is disabled
+   *
+   * Requirements:
+   *
+   * - `to` cannot be the zero address.
+   * - the caller must have a balance of at least `amount`.
+   */
   function approve(address to, uint256 amount) public override accessDenied returns (bool) {}
 
-  //  Disable transferFrom
+  /**
+   * @dev See {IERC20-transferFrom}. This method is disabled
+   *
+   * Requirements:
+   * - `from` cannot be the zero address.
+   * - `to` cannot be the zero address.
+   * - the caller must have a balance of at least `amount`.
+   */
   function transferFrom(address from, address to, uint256 amount) public override accessDenied returns (bool) {}
 
-  //  Disable increaseAllowance
+  /**
+   * @dev See {IERC20-increaseAllowance}. This method is disabled
+   *
+   * Requirements:
+   * - `from` cannot be the zero address.
+   * - the caller must have a balance of at least `amount`.
+   */
   function increaseAllowance(address from, uint256 amount) public override accessDenied returns (bool) {}
 
-  //  Disable decreaseAllowance
+  /**
+   * @dev See {IERC20-decreaseAllowance}. This method is disabled
+   *
+   * Requirements:
+   * - `from` cannot be the zero address.
+   * - the caller must have a balance of at least `amount`.
+   */
   function decreaseAllowance(address from, uint256 amount) public override accessDenied returns (bool) {}
 
-  // Decimals for this token is 0
-  function decimals() public view virtual override returns (uint8) {
+  //====================[  Public View  ]====================
+
+  /**
+   * @dev Returns the decimals places of the token.
+   */
+  function decimals() public pure override returns (uint8) {
     return 0;
   }
 }
