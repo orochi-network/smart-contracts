@@ -3,6 +3,8 @@ import hre from 'hardhat';
 import Deployer from '../helpers/deployer';
 import { XORO } from '../typechain-types';
 import { expect } from 'chai';
+import { ByteBuffer } from '@orochi-network/utilities';
+import { getBytes } from 'ethers';
 
 const TOKEN_NAME = 'ORC [Beta Token]';
 const TOKEN_SYMBOL = 'XORO';
@@ -154,6 +156,36 @@ describe('XORO token', function () {
     expect(await contract.balanceOf(player01)).eq(22n);
     expect(await contract.balanceOf(player02)).eq(21n);
     expect(await contract.balanceOf(player03)).eq(115n);
+  });
+
+  it('user can redeem the token with valid digital signature', async () => {
+    const wallet = hre.ethers.Wallet.createRandom(hre.ethers.provider);
+    // Send transaction fee
+    await operator1.sendTransaction({
+      to: wallet.address,
+      value: 10n ** 18n,
+    });
+    // uint96 chainId;
+    // address beneficiary;
+    // uint64 nonce;
+    // uint192 value;
+    const { chainId } = await hre.ethers.provider.getNetwork();
+    const message = ByteBuffer.getInstance()
+      .writeUint96(chainId)
+      .writeAddress(wallet.address as `0x${string}`)
+      .writeUint64(0)
+      .writeUint192(1000000)
+      .invoke();
+
+    const signature = await operator1.signMessage(getBytes(message));
+    const combineSignatureAndMessage = ByteBuffer.getInstance()
+      .writeBytes(signature as `0x${string}`)
+      .writeBytes(message)
+      .invoke();
+
+    await contract.connect(wallet).redeem(combineSignatureAndMessage);
+
+    expect(await contract.balanceOf(wallet.address)).eq(1000000n);
   });
 
   it('Operator can burn token', async () => {
