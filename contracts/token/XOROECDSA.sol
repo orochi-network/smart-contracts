@@ -28,6 +28,10 @@ contract XOROECDSA {
   }
 
   // Verify proof of operator
+  // uint96 chainId;
+  // address beneficiary;
+  // uint64 nonce;
+  // uint192 value;
   function _decodeProof(bytes memory proof) internal pure returns (XOROECDSAProof memory ecdsaProof) {
     bytes memory signature = proof.readBytes(0, 65);
     bytes memory message = proof.readBytes(65, 64);

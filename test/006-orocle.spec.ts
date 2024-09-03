@@ -44,43 +44,43 @@ describe('OrocleV1', function () {
       const data = OrocleEncoding.encodeTokenPrice([
         {
           symbol: 'BTC',
-          price: 42000n * 10n ** 9n,
+          price: 42000n * 10n ** 18n,
         },
         {
           symbol: 'ETH',
-          price: 2000n * 10n ** 9n,
+          price: 2000n * 10n ** 18n,
         },
         {
           symbol: 'DOT',
-          price: 6n * 10n ** 9n,
+          price: 6n * 10n ** 18n,
         },
         {
           symbol: 'MINA',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
         {
           symbol: 'USDT',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
         {
           symbol: 'USDC',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
         {
           symbol: 'USA',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
         {
           symbol: 'USB',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
         {
           symbol: 'USG',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
         {
           symbol: 'USS',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
       ]);
 
@@ -93,19 +93,19 @@ describe('OrocleV1', function () {
       const data = OrocleEncoding.encodeTokenPrice([
         {
           symbol: 'BTC',
-          price: 42000n * 10n ** 9n,
+          price: 42000n * 10n ** 18n,
         },
         {
           symbol: 'ETH',
-          price: 2000n * 10n ** 9n,
+          price: 2000n * 10n ** 18n,
         },
         {
           symbol: 'DOT',
-          price: 6n * 10n ** 9n,
+          price: 6n * 10n ** 18n,
         },
         {
           symbol: 'MINA',
-          price: 1n * 10n ** 9n,
+          price: 1n * 10n ** 18n,
         },
       ]);
 
@@ -126,20 +126,20 @@ describe('OrocleV1', function () {
     const data = OrocleEncoding.encodeTokenPrice([
       {
         symbol: 'BTC',
-        price: 42000n * 10n ** 9n,
+        price: 42000n * 10n ** 18n,
       },
       {
         symbol: 'ETH',
-        price: 2000n * 10n ** 9n,
+        price: 2000n * 10n ** 18n,
       },
       {
         symbol: 'DOT',
-        price: 6n * 10n ** 9n,
+        price: 6n * 10n ** 18n,
       },
 
       {
         symbol: 'MINA',
-        price: 1n * 10n ** 9n,
+        price: 1n * 10n ** 18n,
       },
       ...tokens,
     ]);
