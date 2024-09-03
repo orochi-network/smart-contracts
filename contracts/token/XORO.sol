@@ -4,8 +4,9 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '../libraries/Operatable.sol';
+import './XOROECDSA.sol';
 
-contract XORO is ERC20, Ownable, Operatable {
+contract XORO is ERC20, Ownable, Operatable, XOROECDSA {
   // Error: Access denied
   error AccessDenied();
 
@@ -44,7 +45,7 @@ contract XORO is ERC20, Ownable, Operatable {
   //====================[  Operator  ]====================
 
   // Mint token in packed data
-  function batchMint(uint256[] calldata packedData) external onlyOperator returns(uint256) {
+  function batchMint(uint256[] calldata packedData) external onlyOperator returns (uint256) {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address to) = _unpack(packedData[i]);
       _mint(to, amount);
@@ -53,12 +54,42 @@ contract XORO is ERC20, Ownable, Operatable {
   }
 
   // Burn token in packed data
-  function batchBurn(uint256[] calldata packedData) external onlyOperator returns(uint256) {
+  function batchBurn(uint256[] calldata packedData) external onlyOperator returns (uint256) {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address from) = _unpack(packedData[i]);
       _burn(from, amount);
     }
     return packedData.length;
+  }
+
+  //====================[  Operator  ]====================
+
+  // Every one can claim token with a valid ECDSA proof by Orochi Network
+  function redeem(bytes memory proof) external returns (uint256) {
+    XOROECDSAProof memory ecdsa = _decodeProof(proof);
+
+    // Signer must be operator
+    if (!_isOperator(ecdsa.signer)) {
+      revert InvalidSignature(ecdsa.signer);
+    }
+
+    // Nonce must be valid
+    if (!_verifyNonce(ecdsa.beneficiary, ecdsa.nonce)) {
+      revert InvalidNonce(ecdsa.beneficiary, ecdsa.nonce);
+    }
+
+    // Chain Id must be correct
+    if (uint(ecdsa.chainId) != block.chainid) {
+      revert InvalidChain(ecdsa.chainId);
+    }
+
+    // Mint the token for beneficiary
+    _mint(ecdsa.beneficiary, ecdsa.value);
+
+    // Increase his nonce
+    _increaseNonce(ecdsa.beneficiary);
+
+    return ecdsa.value;
   }
 
   //====================[  Disabled  ]====================
