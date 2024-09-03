@@ -63,7 +63,7 @@ contract XORO is ERC20, Ownable, Operatable, XOROECDSA, ReentrancyGuard {
     return packedData.length;
   }
 
-  //====================[  Operator  ]====================
+  //====================[  User  ]====================
 
   // Every one can claim token with a valid ECDSA proof by Orochi Network
   function redeem(bytes memory proof) external nonReentrant returns (uint256) {
