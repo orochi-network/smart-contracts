@@ -3,10 +3,11 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '../libraries/Operatable.sol';
 import './XOROECDSA.sol';
 
-contract XORO is ERC20, Ownable, Operatable, XOROECDSA {
+contract XORO is ERC20, Ownable, Operatable, XOROECDSA, ReentrancyGuard {
   // Error: Access denied
   error AccessDenied();
 
@@ -65,7 +66,7 @@ contract XORO is ERC20, Ownable, Operatable, XOROECDSA {
   //====================[  Operator  ]====================
 
   // Every one can claim token with a valid ECDSA proof by Orochi Network
-  function redeem(bytes memory proof) external returns (uint256) {
+  function redeem(bytes memory proof) external nonReentrant returns (uint256) {
     XOROECDSAProof memory ecdsa = _decodeProof(proof);
 
     // Signer must be operator
