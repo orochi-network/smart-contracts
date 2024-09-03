@@ -23,7 +23,7 @@ let contract: XORO;
 
 const packData = (amount: bigint, address: string): bigint => (amount << 160n) | BigInt(address);
 
-describe.only('XORO token', function () {
+describe('XORO token', function () {
   it('XORO token must be deployed correctly', async () => {
     accounts = await hre.ethers.getSigners();
     [deployerSigner, player01, player02, player03, newOwner, operator1, operator2, fakeOperator, operator3] = accounts;
