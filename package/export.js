@@ -56,7 +56,7 @@ cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json'
 
 cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/AbiOrocleV2.ts');
 cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/AbiOrandProviderV3.ts');
-cpAbi('../artifacts/contracts/orochi/XOroV2.sol/XOroV2.json', './src/AbiXOroV2.ts');
+cpAbi('../artifacts/contracts/token/XORO.sol/XORO.json', './src/AbiXORO.ts');
 
 cpTypes('../typechain-types/contracts/orosign/OrosignMasterV1.ts', './src/OrosignMasterV1.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignV1.ts', './src/OrosignV1.ts');
@@ -67,7 +67,7 @@ cpTypes('../typechain-types/contracts/orocle-v1/OrocleV1.ts', './src/OrocleV1.ts
 cpTypes('../typechain-types/contracts/orand-v2/OrandProviderV2.ts', './src/OrandProviderV2.ts');
 cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts');
 cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
-cpTypes('../typechain-types/contracts/orochi/XOroV2.ts', './src/XOroV2.ts');
+cpTypes('../typechain-types/contracts/orochi/XORO.ts', './src/XORO.ts');
 
 writeFileSync(
   './src/index.ts',

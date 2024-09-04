@@ -395,18 +395,18 @@ describe('OrandProviderV3', function () {
   it('OrandProviderV3 should be upgradeable', async () => {
     const { ethers } = hre;
     const accounts = await ethers.getSigners();
-    const orocleV1Factory = await ethers.getContractFactory('OrocleV1');
+    const orocleV2Factory = await ethers.getContractFactory('OrocleV2');
     const orandECVRFV3Factory = await ethers.getContractFactory('OrandECVRFV3');
-    const orand1Factory = await ethers.getContractFactory('OrandProviderTest');
-    const orand2Factory = await ethers.getContractFactory('OrandProviderV3');
+    const orandV3Factory1 = await ethers.getContractFactory('OrandProviderTest');
+    const orandV3Factory2 = await ethers.getContractFactory('OrandProviderV3');
 
-    const orocleV1 = await orocleV1Factory.deploy([accounts[0]]);
-    console.log('Orocle V1', await orocleV1.getAddress());
+    const orocleV2 = await upgrades.deployProxy(orocleV2Factory, [[accounts[0].address]]);
+    console.log('Orocle V2', await orocleV2.getAddress());
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     const orandECVRFV3 = await orandECVRFV3Factory.deploy();
     console.log('Orand ECVRF V3', await orandECVRFV3.getAddress());
 
-    const instance = await upgrades.deployProxy(orand1Factory, [
+    const instance = await upgrades.deployProxy(orandV3Factory1, [
       // uint256[2] memory publicKey
       OrandEncoding.pubKeyToAffine(HexString.hexPrefixAdd(pk)),
       // address operator
@@ -414,16 +414,19 @@ describe('OrandProviderV3', function () {
       // address ecvrfAddress
       await orandECVRFV3.getAddress(),
       // address oracleAddress
-      await orocleV1.getAddress(),
+      await orocleV2.getAddress(),
       // uint256 maxBatchingLimit
       100,
     ]);
 
     console.log('Instance:', await instance.getOracle(), await instance.getAddress());
 
-    const upgraded = await upgrades.upgradeProxy(await instance.getAddress(), orand2Factory);
+    let upgraded = await upgrades.upgradeProxy(await instance.getAddress(), orandV3Factory1);
 
     console.log('Upgrade', await upgraded.getOracle(), await upgraded.getAddress());
+
+    upgraded = await upgrades.upgradeProxy(await instance.getAddress(), orandV3Factory2);
+
     orandProviderV3 = upgraded as any;
   });
 
