@@ -34,10 +34,12 @@ export interface XOROInterface extends Interface {
       | "batchMint"
       | "decimals"
       | "decreaseAllowance"
+      | "getNonce"
       | "increaseAllowance"
       | "isOperator"
       | "name"
       | "owner"
+      | "redeem"
       | "removeOperator"
       | "renounceOwnership"
       | "symbol"
@@ -86,6 +88,10 @@ export interface XOROInterface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getNonce",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "increaseAllowance",
     values: [AddressLike, BigNumberish]
   ): string;
@@ -95,6 +101,7 @@ export interface XOROInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "redeem", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "removeOperator",
     values: [AddressLike]
@@ -135,6 +142,7 @@ export interface XOROInterface extends Interface {
     functionFragment: "decreaseAllowance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getNonce", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "increaseAllowance",
     data: BytesLike
@@ -142,6 +150,7 @@ export interface XOROInterface extends Interface {
   decodeFunctionResult(functionFragment: "isOperator", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "removeOperator",
     data: BytesLike
@@ -304,13 +313,13 @@ export interface XORO extends BaseContract {
 
   batchBurn: TypedContractMethod<
     [packedData: BigNumberish[]],
-    [void],
+    [bigint],
     "nonpayable"
   >;
 
   batchMint: TypedContractMethod<
     [packedData: BigNumberish[]],
-    [void],
+    [bigint],
     "nonpayable"
   >;
 
@@ -320,6 +329,12 @@ export interface XORO extends BaseContract {
     [from: AddressLike, amount: BigNumberish],
     [boolean],
     "nonpayable"
+  >;
+
+  getNonce: TypedContractMethod<
+    [receiverAddress: AddressLike],
+    [bigint],
+    "view"
   >;
 
   increaseAllowance: TypedContractMethod<
@@ -337,6 +352,8 @@ export interface XORO extends BaseContract {
   name: TypedContractMethod<[], [string], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
+
+  redeem: TypedContractMethod<[proof: BytesLike], [bigint], "nonpayable">;
 
   removeOperator: TypedContractMethod<
     [oldOperator: AddressLike],
@@ -394,10 +411,10 @@ export interface XORO extends BaseContract {
   ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "batchBurn"
-  ): TypedContractMethod<[packedData: BigNumberish[]], [void], "nonpayable">;
+  ): TypedContractMethod<[packedData: BigNumberish[]], [bigint], "nonpayable">;
   getFunction(
     nameOrSignature: "batchMint"
-  ): TypedContractMethod<[packedData: BigNumberish[]], [void], "nonpayable">;
+  ): TypedContractMethod<[packedData: BigNumberish[]], [bigint], "nonpayable">;
   getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -408,6 +425,9 @@ export interface XORO extends BaseContract {
     [boolean],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "getNonce"
+  ): TypedContractMethod<[receiverAddress: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "increaseAllowance"
   ): TypedContractMethod<
@@ -424,6 +444,9 @@ export interface XORO extends BaseContract {
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "redeem"
+  ): TypedContractMethod<[proof: BytesLike], [bigint], "nonpayable">;
   getFunction(
     nameOrSignature: "removeOperator"
   ): TypedContractMethod<[oldOperator: AddressLike], [boolean], "nonpayable">;

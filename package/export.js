@@ -67,7 +67,7 @@ cpTypes('../typechain-types/contracts/orocle-v1/OrocleV1.ts', './src/OrocleV1.ts
 cpTypes('../typechain-types/contracts/orand-v2/OrandProviderV2.ts', './src/OrandProviderV2.ts');
 cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts');
 cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
-cpTypes('../typechain-types/contracts/orochi/XORO.ts', './src/XORO.ts');
+cpTypes('../typechain-types/contracts/token/XORO.ts', './src/XORO.ts');
 
 writeFileSync(
   './src/index.ts',
