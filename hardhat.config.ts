@@ -95,12 +95,12 @@ const config: HardhatUserConfig = {
       url: 'https://sepolia.optimism.io',
       chainId: 11155420,
     },
-    fantom: {
+    fantomMain: {
       url: 'https://fantom-mainnet.public.blastapi.io',
       chainId: 250,
     },
-    ftmTest: {
-      url: 'https://fantom-testnet.publicnode.com',
+    fantomTest: {
+      url: 'https://rpc.testnet.fantom.network',
       chainId: 4002,
     },
     okexchain: {
@@ -185,6 +185,10 @@ const config: HardhatUserConfig = {
       url: `https://sepolia-rpc.scroll.io/`,
       chainId: 534351,
     },
+    scrollMain: {
+      url: `https://rpc.scroll.io/`,
+      chainId: 534352,
+    },
     wanchainTest: {
       url: 'https://gwan-ssl.wandevs.org:46891',
       chainId: 999,
@@ -225,6 +229,10 @@ const config: HardhatUserConfig = {
       url: 'https://testnet-rpc.lumia.org',
       chainId: 1952959480,
     },
+    lumiaMain: {
+      url: 'https://rpc.lumia.org',
+      chainId: 994873017,
+    },
     reactiveTest: {
       url: 'https://kopli-rpc.rkt.ink',
       chainId: 5318008,
@@ -239,7 +247,7 @@ const config: HardhatUserConfig = {
     },
     shardeumTest: {
       chainId: 8082,
-      url: 'https://atomium.shardeum.org/',
+      url: 'https://atomium.shardeum.org',
     },
     b2Test: {
       chainId: 1123,
@@ -257,9 +265,29 @@ const config: HardhatUserConfig = {
       chainId: 10200,
       url: 'https://rpc.chiadochain.net',
     },
-    polygonMain: {
-      chainId: ,
-      url: 'https://rpc.chiadochain.net',
+    stravoTest: {
+      chainId: 93747,
+      url: 'https://rpc.stratovm.io',
+    },
+    lineaTest: {
+      chainId: 59141,
+      url: 'https://rpc.sepolia.linea.build',
+    },
+    lineaMain: {
+      chainId: 59144,
+      url: 'https://rpc.linea.build',
+    },
+    polygonTest: {
+      url: 'https://rpc-amoy.polygon.technology',
+      chainId: 80002,
+    },
+    lightLinkTest: {
+      url: 'https://replicator.pegasus.lightlink.io/rpc/v1',
+      chainId: 1891,
+    },
+    lightlinkMain: {
+      url: 'https://replicator.phoenix.lightlink.io/rpc/v1',
+      chainId: 1890,
     },
 
     // Hard hat network
@@ -333,6 +361,30 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/XLAYER',
           browserURL: 'https://www.oklink.com/xlayer',
+        },
+      },
+      {
+        network: 'scrollMain',
+        chainId: 534352,
+        urls: {
+          apiURL: 'https://api.scrollscan.com/api',
+          browserURL: 'https://scrollscan.com/',
+        },
+      },
+      {
+        network: 'lightlinkMain',
+        chainId: 1890,
+        urls: {
+          apiURL: 'https://phoenix.lightlink.io/api',
+          browserURL: 'https://phoenix.lightlink.io',
+        },
+      },
+      {
+        network: 'stravoTest',
+        chainId: 93747,
+        urls: {
+          apiURL: 'https://explorer.stratovm.io/api',
+          browserURL: 'https://explorer.stratovm.io/',
         },
       },
     ],
