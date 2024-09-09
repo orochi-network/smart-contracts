@@ -26,7 +26,7 @@ const sleep = async (seconds: number) => {
 
 const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
 
-task('transfer:orochi-owner', 'Transfer orocle & orand ownership with zkSolc').setAction(
+task('transfer:zk-orochi-owner', 'Transfer orocle & orand ownership with zkSolc').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     if (!hre.network.config.chainId) {
       throw new Error('Invalid chainId');
