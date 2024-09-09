@@ -209,6 +209,8 @@ const config: HardhatUserConfig = {
     },
     zkSyncMain: {
       url: 'https://mainnet.era.zksync.io',
+      ethNetwork: 'https://mainnet.era.zksync.io',
+      zksync: true,
       chainId: 324,
     },
     zkSyncTest: {
