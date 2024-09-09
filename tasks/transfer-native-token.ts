@@ -18,7 +18,6 @@ task('transfer:native-token', 'Transfer native token to operator').setAction(
       to: OPERATOR_ADDRESS,
       value: parseEther(AMOUNT_IN_ETH),
     });
-    await tx.wait();
     console.log(`Transaction successful with hash: ${tx.hash}`);
   },
 );
