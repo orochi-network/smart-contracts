@@ -23,7 +23,7 @@ const OROCHI_CONFIGURATION = {
 } as const;
 
 type TAlterConfig<T extends Record<string, string>> = {
-  [K in keyof T]: T[K] extends 'false' ? boolean : string;
+  [K in keyof T]: T[K] extends 'false' | 'true' ? boolean : string;
 };
 
 export type TEnvironment = TAlterConfig<typeof OROCHI_CONFIGURATION>;

@@ -215,7 +215,9 @@ const config: HardhatUserConfig = {
     },
     zkSyncTest: {
       url: 'https://sepolia.era.zksync.dev',
+      ethNetwork: 'https://sepolia.era.zksync.dev',
       chainId: 300,
+      zksync: true,
     },
     corechainTest: {
       url: 'https://rpc.test.btcs.network',
