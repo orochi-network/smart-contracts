@@ -7,8 +7,6 @@ import '@matterlabs/hardhat-zksync-deploy';
 import '@matterlabs/hardhat-zksync-solc';
 import '@openzeppelin/hardhat-upgrades';
 
-const isZkSolc = process.env.USE_ZKSOLC === 'true';
-
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
   for (let entry = dir.readSync(); entry !== null; entry = dir.readSync()) {
@@ -292,7 +290,7 @@ const config: HardhatUserConfig = {
 
     // Hard hat network
     hardhat: {
-      zksync: isZkSolc,
+      zksync: env.USE_ZKSOLC,
       chainId: 911,
       hardfork: 'london',
       blockGasLimit: 30000000,
@@ -329,6 +327,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://explorer.saakuru.network/api',
           browserURL: 'https://explorer.saakuru.network/',
+        },
+      },
+      {
+        network: 'polygonTest',
+        chainId: 80002,
+        urls: {
+          apiURL: 'https://api-amoy.polygonscan.com/api',
+          browserURL: 'https://amoy.polygonscan.com/',
         },
       },
       {
