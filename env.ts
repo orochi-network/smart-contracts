@@ -20,9 +20,13 @@ const OROCHI_CONFIGURATION = {
   X_LAYER_API_KEY: '',
   BSC_API_KEY: '',
   VERBOSE_SILENT: 'false',
+} as const;
+
+type TAlterConfig<T extends Record<string, string>> = {
+  [K in keyof T]: T[K] extends 'false' | 'true' ? boolean : string;
 };
 
-export type TEnvironment = typeof OROCHI_CONFIGURATION;
+export type TEnvironment = TAlterConfig<typeof OROCHI_CONFIGURATION>;
 
 if (!fs.existsSync(`${__dirname}/.env`)) {
   throw new Error('.env file not found');

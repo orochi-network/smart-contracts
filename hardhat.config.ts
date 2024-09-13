@@ -7,8 +7,6 @@ import '@matterlabs/hardhat-zksync-deploy';
 import '@matterlabs/hardhat-zksync-solc';
 import '@openzeppelin/hardhat-upgrades';
 
-const isZkSolc = process.env.USE_ZKSOLC === 'true';
-
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
   for (let entry = dir.readSync(); entry !== null; entry = dir.readSync()) {
@@ -59,7 +57,7 @@ const config: HardhatUserConfig = {
       url: 'https://evm-rpc.sei-apis.com',
       chainId: 1329,
     },
-    a8main: {
+    a8Main: {
       url: 'https://rpc.ancient8.gg',
       chainId: 888888888,
     },
@@ -95,12 +93,12 @@ const config: HardhatUserConfig = {
       url: 'https://sepolia.optimism.io',
       chainId: 11155420,
     },
-    fantom: {
+    fantomMain: {
       url: 'https://fantom-mainnet.public.blastapi.io',
       chainId: 250,
     },
-    ftmTest: {
-      url: 'https://fantom-testnet.publicnode.com',
+    fantomTest: {
+      url: 'https://rpc.testnet.fantom.network',
       chainId: 4002,
     },
     okexchain: {
@@ -138,6 +136,10 @@ const config: HardhatUserConfig = {
     zircuitTest: {
       url: `https://zircuit1.p2pify.com/`,
       chainId: 48899,
+    },
+    zircuitMain: {
+      url: `https://zircuit1-mainnet.p2pify.com/`,
+      chainId: 48900,
     },
     xLayerTest: {
       url: `https://testrpc.xlayer.tech/`,
@@ -181,14 +183,119 @@ const config: HardhatUserConfig = {
       url: `https://sepolia-rpc.scroll.io/`,
       chainId: 534351,
     },
+    scrollMain: {
+      url: `https://rpc.scroll.io/`,
+      chainId: 534352,
+    },
     wanchainTest: {
-      url: `https://gwan-ssl.wandevs.org:46891`,
+      url: 'https://gwan-ssl.wandevs.org:46891',
       chainId: 999,
+    },
+    bitlayerMain: {
+      url: `https://rpc.bitlayer.org`,
+      chainId: 200901,
+    },
+    bitlayerTest: {
+      url: `https://testnet-rpc.bitlayer.org`,
+      chainId: 200810,
+    },
+    etherLinkMain: {
+      url: `https://node.mainnet.etherlink.com`,
+      chainId: 42793,
+    },
+    etherLinkTest: {
+      url: 'https://node.ghostnet.etherlink.com',
+      chainId: 128123,
+    },
+    zkSyncMain: {
+      url: 'https://mainnet.era.zksync.io',
+      ethNetwork: 'https://mainnet.era.zksync.io',
+      verifyURL: 'https://zksync2-mainnet-explorer.zksync.io/contract_verification',
+      zksync: true,
+      chainId: 324,
+    },
+    zkSyncTest: {
+      url: 'https://sepolia.era.zksync.dev',
+      ethNetwork: 'https://sepolia.era.zksync.dev',
+      chainId: 300,
+      zksync: true,
+    },
+    corechainTest: {
+      url: 'https://rpc.test.btcs.network',
+      chainId: 1115,
+    },
+    corechainMain: {
+      url: 'https://rpc.ankr.com/core',
+      chainId: 1116,
+    },
+    lumiaTest: {
+      url: 'https://testnet-rpc.lumia.org',
+      chainId: 1952959480,
+    },
+    lumiaMain: {
+      url: 'https://rpc.lumia.org',
+      chainId: 994873017,
+    },
+    reactiveTest: {
+      url: 'https://kopli-rpc.rkt.ink',
+      chainId: 5318008,
+    },
+    ioTexMain: {
+      chainId: 4689,
+      url: 'https://babel-api.mainnet.iotex.io',
+    },
+    ioTexTest: {
+      chainId: 4690,
+      url: 'https://babel-api.testnet.iotex.io',
+    },
+    shardeumTest: {
+      chainId: 8082,
+      url: 'https://atomium.shardeum.org',
+    },
+    b2Test: {
+      chainId: 1123,
+      url: 'https://rpc.ankr.com/b2_testnet',
+    },
+    b2Main: {
+      chainId: 223,
+      url: 'https://mainnet.b2-rpc.com',
+    },
+    gnosisChainMain: {
+      chainId: 100,
+      url: 'https://rpc.gnosischain.com',
+    },
+    gnosisChainTest: {
+      chainId: 10200,
+      url: 'https://rpc.chiadochain.net',
+    },
+    stravoTest: {
+      chainId: 93747,
+      url: 'https://rpc.stratovm.io',
+    },
+    lineaTest: {
+      chainId: 59141,
+      url: 'https://rpc.sepolia.linea.build',
+    },
+    lineaMain: {
+      chainId: 59144,
+      url: 'https://rpc.linea.build',
+    },
+    polygonTest: {
+      url: 'https://rpc-amoy.polygon.technology',
+      chainId: 80002,
+    },
+    lightLinkTest: {
+      url: 'https://replicator.pegasus.lightlink.io/rpc/v1',
+      chainId: 1891,
+    },
+    lightlinkMain: {
+      url: 'https://replicator.phoenix.lightlink.io/rpc/v1',
+      chainId: 1890,
     },
 
     // Hard hat network
     hardhat: {
-      zksync: isZkSolc,
+      zksync: env.USE_ZKSOLC,
       chainId: 911,
       hardfork: 'london',
       blockGasLimit: 30000000,
@@ -214,8 +321,8 @@ const config: HardhatUserConfig = {
     apiKey: {
       saakuruMainL2: 'random_string',
       binance: env.BSC_API_KEY,
-      a8main: 'random_string',
-      u2umain: 'random_string',
+      a8Main: 'random_string',
+      u2uMain: 'random_string',
       xLayerMain: env.X_LAYER_API_KEY,
     },
     customChains: [
@@ -228,6 +335,14 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        network: 'polygonTest',
+        chainId: 80002,
+        urls: {
+          apiURL: 'https://api-amoy.polygonscan.com/api',
+          browserURL: 'https://amoy.polygonscan.com/',
+        },
+      },
+      {
         network: 'binance',
         chainId: 56,
         urls: {
@@ -236,7 +351,7 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: 'a8main',
+        network: 'a8Main',
         chainId: 888888888,
         urls: {
           apiURL: 'https://scan.ancient8.gg/api',
@@ -244,11 +359,27 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: 'u2umain',
+        network: 'u2uMain',
         chainId: 39,
         urls: {
           apiURL: 'https://u2uscan.xyz/api',
           browserURL: 'https://u2uscan.xyz',
+        },
+      },
+      {
+        network: 'u2uTest',
+        chainId: 2484,
+        urls: {
+          apiURL: 'https://testnet.u2uscan.xyz/api',
+          browserURL: 'https://testnet.u2uscan.xyz',
+        },
+      },
+      {
+        network: 'zircuit',
+        chainId: 48900,
+        urls: {
+          apiURL: 'https://explorer.zircuit.com/api/contractVerifyHardhat',
+          browserURL: 'https://explorer.zircuit.com',
         },
       },
       {
@@ -259,10 +390,31 @@ const config: HardhatUserConfig = {
           browserURL: 'https://www.oklink.com/xlayer',
         },
       },
+      {
+        network: 'scrollMain',
+        chainId: 534352,
+        urls: {
+          apiURL: 'https://api.scrollscan.com/api',
+          browserURL: 'https://scrollscan.com/',
+        },
+      },
+      {
+        network: 'lightlinkMain',
+        chainId: 1890,
+        urls: {
+          apiURL: 'https://phoenix.lightlink.io/api',
+          browserURL: 'https://phoenix.lightlink.io',
+        },
+      },
+      {
+        network: 'stravoTest',
+        chainId: 93747,
+        urls: {
+          apiURL: 'https://explorer.stratovm.io/api',
+          browserURL: 'https://explorer.stratovm.io/',
+        },
+      },
     ],
-  },
-  solidity: {
-    compilers,
   },
 };
 

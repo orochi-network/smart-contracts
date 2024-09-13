@@ -4,14 +4,31 @@ import { task } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Deployer } from '../helpers';
 import { Multicast } from '../typechain-types';
+import { getWallet, getZkSyncWallet } from '../helpers/wallet';
+import { env } from '../env';
+import { Provider } from 'zksync-ethers';
+import { Deployer as zkDeployer } from '@matterlabs/hardhat-zksync';
 
 task('deploy:multicast', 'Deploy Multicast contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
-    const accounts = await hre.ethers.getSigners();
-    //0x3ECb21f2c6A5a57C57634036777730bb6E87F281
-    const deployer: Deployer = Deployer.getInstance(hre).connect(accounts[0]);
-    await deployer.contractDeploy<Multicast>('orochi/Multicast', []);
-    await deployer.printReport();
+    const { chainId } = await hre.ethers.provider.getNetwork();
+    const account = await getWallet(hre, chainId);
+    console.log('Using zkSolc =', env.USE_ZKSOLC);
+
+    // If this blockchain need to use zkSolc
+    if (env.USE_ZKSOLC) {
+      const provider = new Provider(hre.network.config.url);
+      const wallet = getZkSyncWallet(account, provider);
+      const deployer = new zkDeployer(hre, wallet);
+      const multicastArtifact = await deployer.loadArtifact('Multicast');
+      const multicast = await deployer.deploy(multicastArtifact);
+      await multicast.waitForDeployment();
+      console.log('Multicast contract address:', await multicast.getAddress());
+    } else {
+      const deployer: Deployer = Deployer.getInstance(hre).connect(account);
+      await deployer.contractDeploy<Multicast>('orochi/Multicast', []);
+      await deployer.printReport();
+    }
   },
 );
 
