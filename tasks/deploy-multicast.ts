@@ -11,9 +11,9 @@ import { Deployer as zkDeployer } from '@matterlabs/hardhat-zksync';
 
 task('deploy:multicast', 'Deploy Multicast contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
+    console.log('Using zkSolc =', env.USE_ZKSOLC);
     const { chainId } = await hre.ethers.provider.getNetwork();
     const account = await getWallet(hre, chainId);
-    console.log('Using zkSolc =', env.USE_ZKSOLC);
 
     // If this blockchain need to use zkSolc
     if (env.USE_ZKSOLC) {

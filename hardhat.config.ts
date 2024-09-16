@@ -1,11 +1,15 @@
 import fs from 'fs';
 import { HardhatUserConfig } from 'hardhat/types';
-import { env } from './env';
 import '@nomicfoundation/hardhat-toolbox';
-import '@matterlabs/hardhat-zksync';
-import '@matterlabs/hardhat-zksync-deploy';
-import '@matterlabs/hardhat-zksync-solc';
 import '@openzeppelin/hardhat-upgrades';
+import { env } from './env';
+
+// Only load those libs when we need zkSolc compiler
+if (env.USE_ZKSOLC) {
+  require('@matterlabs/hardhat-zksync');
+  require('@matterlabs/hardhat-zksync-deploy');
+  require('@matterlabs/hardhat-zksync-solc');
+}
 
 if (fs.existsSync('./typechain-types')) {
   const dir = fs.opendirSync(`${__dirname}/tasks`);
@@ -29,268 +33,283 @@ const compilers = ['0.8.19'].map((item: string) => ({
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
-  gasReporter: {
-    enabled: true,
-  },
   zksolc: {
     version: '1.4.1',
     settings: {},
   },
   networks: {
-    sepolia: {
+    local: {
+      url: env.LOCAL_RPC,
+      chainId: 911,
+    },
+    testnetSepolia: {
       url: 'https://rpc.sepolia.org',
       chainId: 11155111,
-    },
-    u2: {
-      url: 'https://rpc-nebulas-testnet.uniultra.xyz/',
-      chainId: 2484,
-    },
-    a8: {
-      url: 'https://rpcv2-testnet.ancient8.gg/',
-      chainId: 28122024,
-    },
-    seitest: {
-      url: 'https://evm-rpc-arctic-1.sei-apis.com',
-      chainId: 713715,
-    },
-    seimain: {
-      url: 'https://evm-rpc.sei-apis.com',
-      chainId: 1329,
-    },
-    a8Main: {
-      url: 'https://rpc.ancient8.gg',
-      chainId: 888888888,
-    },
-    u2umain: {
-      url: 'https://rpc-mainnet.uniultra.xyz',
-      chainId: 39,
     },
     ethereum: {
       url: 'https://eth-mainnet.public.blastapi.io',
       chainId: 1,
     },
-    binance: {
-      url: 'https://bnb.api.onfinality.io/public',
-      chainId: 56,
+    testnetU2U: {
+      url: 'https://rpc-nebulas-testnet.uniultra.xyz/',
+      chainId: 2484,
+      verifyURL: 'https://testnet.u2uscan.xyz/api',
     },
-    arbitrum: {
-      url: 'https://arbitrum.blockpi.network/v1/rpc/public',
-      chainId: 42161,
+    mainnetU2U: {
+      url: 'https://rpc-mainnet.uniultra.xyz',
+      chainId: 39,
+      verifyURL: 'https://u2uscan.xyz/api',
     },
-    arbitrumTest: {
-      url: 'https://sepolia-rollup.arbitrum.io/rpc',
-      chainId: 421614,
+    testnetAncient8: {
+      url: 'https://rpcv2-testnet.ancient8.gg/',
+      chainId: 28122024,
     },
-    polygon: {
-      url: 'https://rpc-mainnet.matic.quiknode.pro',
-      chainId: 137,
+    mainnetAncient8: {
+      url: 'https://rpc.ancient8.gg',
+      chainId: 888888888,
+      verifyURL: 'https://scan.ancient8.gg/api',
     },
-    optimism: {
-      url: 'https://optimism-mainnet.public.blastapi.io',
-      chainId: 10,
+    testnetSei: {
+      url: 'https://evm-rpc-arctic-1.sei-apis.com',
+      chainId: 713715,
     },
-    optimismTest: {
-      url: 'https://sepolia.optimism.io',
-      chainId: 11155420,
+    mainnetSei: {
+      url: 'https://evm-rpc.sei-apis.com',
+      chainId: 1329,
     },
-    fantomMain: {
-      url: 'https://fantom-mainnet.public.blastapi.io',
-      chainId: 250,
-    },
-    fantomTest: {
-      url: 'https://rpc.testnet.fantom.network',
-      chainId: 4002,
-    },
-    okexchain: {
-      url: 'https://exchainrpc.okex.org',
-      chainId: 66,
-    },
-    bnbChainTest: {
+    testnetBnbChain: {
       url: 'https://bsc-testnet-rpc.publicnode.com',
       chainId: 97,
     },
-    local: {
-      url: env.LOCAL_RPC,
-      chainId: 911,
+    mainnetBnbChain: {
+      url: 'https://bnb.api.onfinality.io/public',
+      chainId: 56,
     },
-    moonbeamTest: {
+    testnetArbitrum: {
+      url: 'https://sepolia-rollup.arbitrum.io/rpc',
+      chainId: 421614,
+    },
+    mainnetArbitrum: {
+      url: 'https://arbitrum.blockpi.network/v1/rpc/public',
+      chainId: 42161,
+    },
+    testnetPolygon: {
+      url: 'https://rpc-amoy.polygon.technology',
+      chainId: 80002,
+      verifyURL: 'https://api-amoy.polygonscan.com/api',
+    },
+    mainnetPolygon: {
+      url: 'https://rpc-mainnet.matic.quiknode.pro',
+      chainId: 137,
+    },
+    testnetOptimism: {
+      url: 'https://sepolia.optimism.io',
+      chainId: 11155420,
+    },
+    mainnetOptimism: {
+      url: 'https://optimism-mainnet.public.blastapi.io',
+      chainId: 10,
+    },
+    testnetFantom: {
+      url: 'https://rpc.testnet.fantom.network',
+      chainId: 4002,
+    },
+    mainnetFantom: {
+      url: 'https://fantom-mainnet.public.blastapi.io',
+      chainId: 250,
+    },
+    mainnetOKXChain: {
+      url: 'https://exchainrpc.okex.org',
+      chainId: 66,
+    },
+    testnetMoonbeam: {
       url: 'https://rpc.api.moonbase.moonbeam.network',
       chainId: 1287,
     },
-    saakuruTest: {
+    mainnetMoonbeam: {
+      url: 'https://moonbeam.api.onfinality.io/public',
+      chainId: 1284,
+    },
+    testnetSaakuru: {
       url: 'https://rpc.testnet.oasys.games/',
       chainId: 9372,
     },
-    saakuruTestL2: {
-      url: 'https://rpc-testnet.saakuru.network',
-      chainId: 247253,
-    },
-    saakuruMainL2: {
+    mainnetSaakuru: {
       url: 'https://rpc.saakuru.network',
       chainId: 7225878,
+      verifyURL: 'https://explorer.saakuru.network/api',
     },
-    zkFairTest: {
+    testnetZKFair: {
       url: 'https://testnet-rpc.zkfair.io',
       chainId: 43851,
     },
-    zircuitTest: {
+    mainnetZKFair: {
+      url: 'https://rpc.zkfair.io',
+      chainId: 42766,
+    },
+    testnetZircuit: {
       url: `https://zircuit1.p2pify.com/`,
       chainId: 48899,
     },
-    zircuitMain: {
+    mainnetZircuit: {
       url: `https://zircuit1-mainnet.p2pify.com/`,
       chainId: 48900,
     },
-    xLayerTest: {
+    testnetXLayer: {
       url: `https://testrpc.xlayer.tech/`,
       chainId: 195,
     },
-    xLayerMain: {
+    mainnetXLayer: {
       url: `https://rpc.xlayer.tech/`,
       chainId: 196,
     },
-    zkLinkTest: {
+    testnetZkLink: {
       url: `https://sepolia.rpc.zklink.io`,
       zksync: true,
       ethNetwork: 'https://sepolia.rpc.zklink.io',
       chainId: 810181,
     },
-    mantaTest: {
+    mainnetZkLink: {
+      url: `https://rpc.zklink.io`,
+      zksync: true,
+      ethNetwork: `https://rpc.zklink.io`,
+      chainId: 810180,
+    },
+    testnetManta: {
       url: `https://pacific-rpc.sepolia-testnet.manta.network/http`,
       chainId: 3441006,
     },
-    mantaMainnet: {
+    mainnetManta: {
       url: `https://pacific-rpc.manta.network/http`,
       chainId: 169,
     },
-    layerEdgeTest: {
-      url: `https://testnet-rpc.layeredge.io`,
-      chainId: 3456,
-    },
-    baseMain: {
-      url: `https://base-rpc.publicnode.com`,
-      chainId: 8453,
-    },
-    baseTest: {
+    testnetBase: {
       url: `https://base-sepolia-rpc.publicnode.com`,
       chainId: 84532,
     },
-    morphHoleskyTest: {
+    mainnetBase: {
+      url: `https://base-rpc.publicnode.com`,
+      chainId: 8453,
+    },
+    testnetMorph: {
       url: `https://rpc-quicknode-holesky.morphl2.io`,
       chainId: 2810,
     },
-    scrollTest: {
+    testnetScroll: {
       url: `https://sepolia-rpc.scroll.io/`,
       chainId: 534351,
     },
-    scrollMain: {
+    mainnetScroll: {
       url: `https://rpc.scroll.io/`,
       chainId: 534352,
+      verifyURL: 'https://api.scrollscan.com/api',
     },
-    wanchainTest: {
+    testnetWanchain: {
       url: 'https://gwan-ssl.wandevs.org:46891',
       chainId: 999,
     },
-    bitlayerMain: {
-      url: `https://rpc.bitlayer.org`,
-      chainId: 200901,
-    },
-    bitlayerTest: {
+    testnetBitLayer: {
       url: `https://testnet-rpc.bitlayer.org`,
       chainId: 200810,
     },
-    etherLinkMain: {
-      url: `https://node.mainnet.etherlink.com`,
-      chainId: 42793,
+    mainnetBitlayer: {
+      url: `https://rpc.bitlayer.org`,
+      chainId: 200901,
     },
-    etherLinkTest: {
+    testnetEtherLink: {
       url: 'https://node.ghostnet.etherlink.com',
       chainId: 128123,
     },
-    zkSyncMain: {
+    mainnetEtherLink: {
+      url: `https://node.mainnet.etherlink.com`,
+      chainId: 42793,
+    },
+    testnetZKSync: {
+      url: 'https://sepolia.era.zksync.dev',
+      ethNetwork: 'https://sepolia.era.zksync.dev',
+      chainId: 300,
+      zksync: true,
+    },
+    mainnetZKSync: {
       url: 'https://mainnet.era.zksync.io',
       ethNetwork: 'https://mainnet.era.zksync.io',
       verifyURL: 'https://zksync2-mainnet-explorer.zksync.io/contract_verification',
       zksync: true,
       chainId: 324,
     },
-    zkSyncTest: {
-      url: 'https://sepolia.era.zksync.dev',
-      ethNetwork: 'https://sepolia.era.zksync.dev',
-      chainId: 300,
-      zksync: true,
-    },
-    corechainTest: {
+    testnetCoreChain: {
       url: 'https://rpc.test.btcs.network',
       chainId: 1115,
     },
-    corechainMain: {
+    mainnetCoreChain: {
       url: 'https://rpc.ankr.com/core',
       chainId: 1116,
     },
-    lumiaTest: {
+    testnetLumia: {
       url: 'https://testnet-rpc.lumia.org',
       chainId: 1952959480,
     },
-    lumiaMain: {
+    mainnetLumia: {
       url: 'https://rpc.lumia.org',
       chainId: 994873017,
     },
-    reactiveTest: {
+    testnetReactive: {
       url: 'https://kopli-rpc.rkt.ink',
       chainId: 5318008,
     },
-    ioTexMain: {
-      chainId: 4689,
-      url: 'https://babel-api.mainnet.iotex.io',
-    },
-    ioTexTest: {
+    testnetIoTex: {
       chainId: 4690,
       url: 'https://babel-api.testnet.iotex.io',
     },
-    shardeumTest: {
+    mainnetIoTex: {
+      chainId: 4689,
+      url: 'https://babel-api.mainnet.iotex.io',
+    },
+    testnetShardeum: {
       chainId: 8082,
       url: 'https://atomium.shardeum.org',
     },
-    b2Test: {
+    testnetB2: {
       chainId: 1123,
       url: 'https://rpc.ankr.com/b2_testnet',
     },
-    b2Main: {
+    mainnetB2: {
       chainId: 223,
       url: 'https://mainnet.b2-rpc.com',
     },
-    gnosisChainMain: {
-      chainId: 100,
-      url: 'https://rpc.gnosischain.com',
-    },
-    gnosisChainTest: {
+    testnetGnosisChain: {
       chainId: 10200,
       url: 'https://rpc.chiadochain.net',
     },
-    stravoTest: {
+    mainnetGnosisChain: {
+      chainId: 100,
+      url: 'https://rpc.gnosischain.com',
+    },
+    testnetStravo: {
       chainId: 93747,
       url: 'https://rpc.stratovm.io',
+      verifyURL: 'https://explorer.stratovm.io/api',
     },
-    lineaTest: {
+    testnetLinea: {
       chainId: 59141,
       url: 'https://rpc.sepolia.linea.build',
     },
-    lineaMain: {
+    mainnetLinea: {
       chainId: 59144,
       url: 'https://rpc.linea.build',
     },
-    polygonTest: {
-      url: 'https://rpc-amoy.polygon.technology',
-      chainId: 80002,
-    },
-    lightLinkTest: {
+    testnetLightLink: {
       url: 'https://replicator.pegasus.lightlink.io/rpc/v1',
       chainId: 1891,
     },
-    lightlinkMain: {
+    mainnetLightLink: {
       url: 'https://replicator.phoenix.lightlink.io/rpc/v1',
       chainId: 1890,
+      verifyURL: 'https://phoenix.lightlink.io/api',
+    },
+    testnetMinato: {
+      url: 'https://rpc.minato.soneium.org',
+      chainId: 1946,
     },
 
     // Hard hat network
@@ -319,31 +338,14 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      saakuruMainL2: 'random_string',
-      binance: env.BSC_API_KEY,
-      a8Main: 'random_string',
-      u2uMain: 'random_string',
-      xLayerMain: env.X_LAYER_API_KEY,
+      mainnetBnbChain: env.BSC_API_KEY,
+      mainnetXLayer: env.X_LAYER_API_KEY,
+      // mainnetZircuit: env.ZIRCUIT_API_KEY,
+      mainnetZircuit: '0x4039486acc158aA6a0ddeC143252c3C8489f1948',
     },
     customChains: [
       {
-        network: 'saakuruMainL2',
-        chainId: 7225878,
-        urls: {
-          apiURL: 'https://explorer.saakuru.network/api',
-          browserURL: 'https://explorer.saakuru.network/',
-        },
-      },
-      {
-        network: 'polygonTest',
-        chainId: 80002,
-        urls: {
-          apiURL: 'https://api-amoy.polygonscan.com/api',
-          browserURL: 'https://amoy.polygonscan.com/',
-        },
-      },
-      {
-        network: 'binance',
+        network: 'mainnetBnbChain',
         chainId: 56,
         urls: {
           apiURL: 'https://api.bscscan.com/api',
@@ -351,39 +353,7 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: 'a8Main',
-        chainId: 888888888,
-        urls: {
-          apiURL: 'https://scan.ancient8.gg/api',
-          browserURL: 'https://scan.ancient8.gg',
-        },
-      },
-      {
-        network: 'u2uMain',
-        chainId: 39,
-        urls: {
-          apiURL: 'https://u2uscan.xyz/api',
-          browserURL: 'https://u2uscan.xyz',
-        },
-      },
-      {
-        network: 'u2uTest',
-        chainId: 2484,
-        urls: {
-          apiURL: 'https://testnet.u2uscan.xyz/api',
-          browserURL: 'https://testnet.u2uscan.xyz',
-        },
-      },
-      {
-        network: 'zircuit',
-        chainId: 48900,
-        urls: {
-          apiURL: 'https://explorer.zircuit.com/api/contractVerifyHardhat',
-          browserURL: 'https://explorer.zircuit.com',
-        },
-      },
-      {
-        network: 'xLayerMain',
+        network: 'mainnetXLayer',
         chainId: 196,
         urls: {
           apiURL: 'https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/XLAYER',
@@ -391,30 +361,25 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: 'scrollMain',
-        chainId: 534352,
+        network: 'mainnetZircuit',
+        chainId: 48900,
         urls: {
-          apiURL: 'https://api.scrollscan.com/api',
-          browserURL: 'https://scrollscan.com/',
+          apiURL: 'https://explorer.zircuit.com/api/contractVerifyHardhat',
+          browserURL: 'https://explorer.zircuit.com',
         },
       },
       {
-        network: 'lightlinkMain',
-        chainId: 1890,
+        network: 'mainnetEtherLink',
+        chainId: 42793,
         urls: {
-          apiURL: 'https://phoenix.lightlink.io/api',
-          browserURL: 'https://phoenix.lightlink.io',
-        },
-      },
-      {
-        network: 'stravoTest',
-        chainId: 93747,
-        urls: {
-          apiURL: 'https://explorer.stratovm.io/api',
-          browserURL: 'https://explorer.stratovm.io/',
+          apiURL: 'https://explorer.etherlink.com/api',
+          browserURL: 'https://explorer.etherlink.com',
         },
       },
     ],
+  },
+  solidity: {
+    compilers,
   },
 };
 
