@@ -279,7 +279,7 @@ const config: HardhatUserConfig = {
     },
     testnetGnosisChain: {
       chainId: 10200,
-      url: 'https://rpc.chiadochain.net',
+      url: 'https://rpc.chiado.gnosis.gateway.fm',
     },
     mainnetGnosisChain: {
       chainId: 100,
@@ -311,6 +311,22 @@ const config: HardhatUserConfig = {
       url: 'https://rpc.minato.soneium.org',
       chainId: 1946,
     },
+    testnetAILayer: {
+      url: 'https://testnet-rpc.ailayer.xyz',
+      chainId: 2648,
+    },
+    mainnetAILayer: {
+      url: 'https://mainnet-rpc.ailayer.xyz',
+      chainId: 2649,
+    },
+    testnetIoTeX: {
+      url: 'https://archive-testnet.iotex.io',
+      chainId: 4690,
+    },
+    mainnetIoTeX: {
+      url: 'https://archive-mainnet.iotex.io',
+      chainId: 4689,
+    },
 
     // Hard hat network
     hardhat: {
@@ -340,8 +356,6 @@ const config: HardhatUserConfig = {
     apiKey: {
       mainnetBnbChain: env.BSC_API_KEY,
       mainnetXLayer: env.X_LAYER_API_KEY,
-      // mainnetZircuit: env.ZIRCUIT_API_KEY,
-      mainnetZircuit: '0x4039486acc158aA6a0ddeC143252c3C8489f1948',
     },
     customChains: [
       {
