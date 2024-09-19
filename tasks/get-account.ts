@@ -10,5 +10,3 @@ task('get:account', 'Get accounts').setAction(async (_taskArgs: any, hre: Hardha
   const wallet = await getWallet(hre, chainId);
   return wallet;
 });
-
-export default {};

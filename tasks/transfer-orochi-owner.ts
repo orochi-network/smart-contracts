@@ -117,5 +117,3 @@ task('transfer:orochi-owner', 'Transfer orocle & orand ownership').setAction(
     console.log('Is OrandProviderV3 owner correct?', OWNER === (await orandProviderV3Proxy.owner()));
   },
 );
-
-export default {};

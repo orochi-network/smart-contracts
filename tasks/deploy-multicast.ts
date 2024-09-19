@@ -31,5 +31,3 @@ task('deploy:multicast', 'Deploy Multicast contracts').setAction(
     }
   },
 );
-
-export default {};

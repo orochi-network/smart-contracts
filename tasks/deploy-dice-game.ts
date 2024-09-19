@@ -9,10 +9,10 @@ import { env } from '../env';
 import { Provider } from 'zksync-ethers';
 import { Deployer as zkDeployer } from '@matterlabs/hardhat-zksync';
 
-const OROCLE_ADDRESS = '0x544FE7b51EF279c15f82B2037e524eeCa1E610C3';
-const ORAND_PROVIDER_ADDRESS = '0x219Eed0551cB8BCf55b61e1CFB353f4Ad1F5bcF7';
+const OROCLE_ADDRESS = '0xF49c2DFb6789C8643B772F8dd039E6cF5fdaF6CE';
+const ORAND_PROVIDER_ADDRESS = '0xB7a2e1ffa0Aaef491d381ABA2e07668f98B02C49';
 
-task('deploy:dice-game-v3', 'Deploy dice game contracts').setAction(
+task('deploy:dice-game', 'Deploy dice game contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     console.log('Using zkSolc =', env.USE_ZKSOLC);
     const { chainId } = await hre.ethers.provider.getNetwork();
@@ -33,5 +33,3 @@ task('deploy:dice-game-v3', 'Deploy dice game contracts').setAction(
     }
   },
 );
-
-export default {};

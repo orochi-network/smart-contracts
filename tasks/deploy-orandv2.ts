@@ -52,5 +52,3 @@ task('deploy:orandv2', 'Deploy Orand V2 contracts').setAction(
     await deployer.printReport();
   },
 );
-
-export default {};

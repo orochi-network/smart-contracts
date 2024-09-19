@@ -38,6 +38,7 @@ task('deploy:test-token', 'Deploy test token').setAction(async (_, hre: HardhatR
   } else {
     const testERC20Factory = await hre.ethers.getContractFactory('TestERC20', account);
     const token = await testERC20Factory.deploy(TOKEN_NAME, TOKEN_SYMBOL);
+    await token.waitForDeployment();
     await token.batchMint(packedArray);
     tokenAddress = await token.getAddress();
   }

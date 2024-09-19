@@ -55,5 +55,3 @@ task('get:info', 'Deploy Orochi Network contracts').setAction(
     }
   },
 );
-
-export default {};

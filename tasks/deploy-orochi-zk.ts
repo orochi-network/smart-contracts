@@ -119,5 +119,3 @@ task('deploy:zk', 'Deploy Orochi Network contracts with zkSolc').setAction(
     console.log('Is OrandProviderV2 owner correct?', OWNER === (await orandProviderV3Proxy.owner()));
   },
 );
-
-export default {};

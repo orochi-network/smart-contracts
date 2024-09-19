@@ -4,9 +4,9 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DiceGameV3 } from '../typechain-types';
 import { getWallet } from '../helpers/wallet';
 
-const DICE_GAME_CONTRACT_ADDRESS = '0x57abA949de504cE2c1D55cBB919A5e8233b40c60';
+const DICE_GAME_CONTRACT_ADDRESS = '0x9c6435a92E16a4Af495F736e98a59E6865c3373c';
 
-task('test:dice-game-v3', 'Test dice game with OrandProviderV3').setAction(
+task('test:dice-game', 'Test dice game with OrandProviderV3').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     const { chainId } = await hre.ethers.provider.getNetwork();
     const account = await getWallet(hre, chainId);
@@ -15,5 +15,3 @@ task('test:dice-game-v3', 'Test dice game with OrandProviderV3').setAction(
     console.log('Successful transaction', tx);
   },
 );
-
-export default {};

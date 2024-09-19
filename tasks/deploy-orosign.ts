@@ -74,5 +74,3 @@ task('deploy:orosign', 'Deploy multi signature v1 contracts').setAction(
     }
   },
 );
-
-export default {};
