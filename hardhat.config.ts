@@ -90,8 +90,8 @@ const config: HardhatUserConfig = {
       chainId: 421614,
     },
     mainnetArbitrum: {
-      url: 'https://arbitrum.blockpi.network/v1/rpc/public',
-      chainId: 42161,
+      url: 'https://nova.arbitrum.io/rpc',
+      chainId: 42170,
     },
     testnetPolygon: {
       url: 'https://rpc-amoy.polygon.technology',
@@ -192,7 +192,7 @@ const config: HardhatUserConfig = {
       chainId: 8453,
     },
     testnetMorph: {
-      url: `https://rpc-quicknode-holesky.morphl2.io`,
+      url: `https://rpc-holesky.morphl2.io`,
       chainId: 2810,
     },
     testnetScroll: {
