@@ -8,6 +8,7 @@ import { getWallet, getZkSyncWallet } from '../helpers/wallet';
 import { env } from '../env';
 import { Provider } from 'zksync-ethers';
 import { Deployer as zkDeployer } from '@matterlabs/hardhat-zksync';
+import EthJsonRpc from '../helpers/provider';
 
 task('deploy:multicast', 'Deploy Multicast contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
@@ -25,6 +26,9 @@ task('deploy:multicast', 'Deploy Multicast contracts').setAction(
       await multicast.waitForDeployment();
       console.log('Multicast contract address:', await multicast.getAddress());
     } else {
+      const provider = new EthJsonRpc(hre.network.config.url);
+      const { chainId } = await provider.getNetwork();
+      const account = (await getWallet(hre, chainId)).connect(provider);
       const deployer: Deployer = Deployer.getInstance(hre).connect(account);
       await deployer.contractDeploy<Multicast>('orochi/Multicast', []);
       await deployer.printReport();
