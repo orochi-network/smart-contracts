@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
 import fs from 'fs';
@@ -8,6 +7,7 @@ import { getAddress, isAddress, keccak256 } from 'ethers';
 import { HexString, OrandEncoding } from '@orochi-network/utilities';
 import { getWallet } from '../helpers/wallet';
 import EthJsonRpc from '../helpers/provider';
+import { DEPLOYED_CONTRACT_RESULT_PATH } from '../helpers';
 
 export const GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN = 1000000n;
 const filePath = './output/result.json';
@@ -19,7 +19,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     let correspondingAddress = getAddress(`0x${keccak256(`0x${pk.substring(2, 130)}`).substring(26, 66)}`);
     // Get deployer account
 
-    const { chainId } = await hre.ethers.provider.getNetwork();
+    const { chainId, name } = await hre.ethers.provider.getNetwork();
     const OPERATORS = env.OROCHI_OPERATOR.split(',').map((op) => op.trim());
     const account = await getWallet(hre, chainId);
     if (!account.provider) {
@@ -133,8 +133,16 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         );
         console.log('Everything done now');
       }
+    } else {
+      // Insert new Orand & Orocle contract for later use
+      const deploymentJson = fs.existsSync(DEPLOYED_CONTRACT_RESULT_PATH)
+        ? JSON.parse(fs.readFileSync(DEPLOYED_CONTRACT_RESULT_PATH).toString())
+        : {};
+      deploymentJson[name] = {
+        OrocleV2: await orocleV2Proxy.getAddress(),
+        OrandProviderV3: await orandProviderV3Proxy.getAddress(),
+      };
+      fs.writeFileSync(DEPLOYED_CONTRACT_RESULT_PATH, JSON.stringify(deploymentJson));
     }
   },
 );
-
-export default {};

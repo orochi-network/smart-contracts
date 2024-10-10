@@ -327,6 +327,14 @@ const config: HardhatUserConfig = {
       url: 'https://archive-mainnet.iotex.io',
       chainId: 4689,
     },
+    testnetIOTA: {
+      url: 'https://json-rpc.evm.testnet.iotaledger.net',
+      chainId: 1075,
+    },
+    testnetShimmer: {
+      url: 'https://json-rpc.evm.testnet.shimmer.network',
+      chainId: 1073,
+    },
 
     // Hard hat network
     hardhat: {

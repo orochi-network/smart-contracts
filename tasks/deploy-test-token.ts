@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import { Deployer as zkDeployer } from '@matterlabs/hardhat-zksync';
 import '@nomicfoundation/hardhat-ethers';
 import { task } from 'hardhat/config';
@@ -15,12 +14,11 @@ const TEST_RECEIVER_ADDRESS = [
   '0x10A0031781971bd37504354BBa49299885aD5cd4',
 ];
 const AMOUNT = 10n ** 9n * 10n ** 18n;
-
 const TOKEN_NAME = 'Orochi Test Token';
 const TOKEN_SYMBOL = 'OT';
 
 task('deploy:test-token', 'Deploy test token').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
-  console.log('Using zkSolc =', env.USE_ZKSOLC);
+  console.log('Using zkSolc:', env.USE_ZKSOLC);
   const { chainId } = await hre.ethers.provider.getNetwork();
   const account = await getWallet(hre, chainId);
   const packedArray = TEST_RECEIVER_ADDRESS.map((item) => packDataTokenBatchMint(AMOUNT, item));
@@ -31,14 +29,12 @@ task('deploy:test-token', 'Deploy test token').setAction(async (_, hre: HardhatR
     const wallet = getZkSyncWallet(account, provider);
     const deployer = new zkDeployer(hre, wallet);
     const testERC20Artifact = await deployer.loadArtifact('TestERC20');
-    const token = await deployer.deploy(testERC20Artifact, [TOKEN_NAME, TOKEN_SYMBOL]);
-    await token.waitForDeployment();
+    const token = await (await deployer.deploy(testERC20Artifact, [TOKEN_NAME, TOKEN_SYMBOL])).waitForDeployment();
     await token.batchMint(packedArray);
     tokenAddress = await token.getAddress();
   } else {
     const testERC20Factory = await hre.ethers.getContractFactory('TestERC20', account);
-    const token = await testERC20Factory.deploy(TOKEN_NAME, TOKEN_SYMBOL);
-    await token.waitForDeployment();
+    const token = await (await testERC20Factory.deploy(TOKEN_NAME, TOKEN_SYMBOL)).waitForDeployment();
     await token.batchMint(packedArray);
     tokenAddress = await token.getAddress();
   }
