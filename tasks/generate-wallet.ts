@@ -29,5 +29,3 @@ task('create:wallet', 'Create new wallet').setAction(async (_taskArgs: any) => {
     recoveredWallet.path,
   );
 });
-
-export default {};

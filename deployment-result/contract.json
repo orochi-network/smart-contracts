@@ -1,0 +1,249 @@
+{
+  "testnetSepolia": {
+    "OrandProviderV3": "0xabD720eaf47339150E0d0dF379307a17A68092Ac",
+    "OrocleV2": "0x8519243FaeDcC4292c0b0ebB63b84020158bBE68",
+    "DiceGame": "0xc59962217c85a545dBC94998ff2f572734e12c9D",
+    "Multicast": "0xD5C8D7c18D8883b5F742f976A3b8F2bd576A9a89"
+  },
+  "testnetU2U": {
+    "OrandProviderV3": "0x3eAF9da360dA944105599cdB7833712346af6DF1",
+    "OrocleV2": "0x70523434ee6a9870410960E2615406f8F9850676",
+    "DiceGame": "0x09D01c34cb98B812981709076579B330d888D23d",
+    "Multicast": "0x8c5fdbd0053b58abc78b2ea2f782eaa8e78d3ebf"
+  },
+  "testnetAncient8": {
+    "OrandProviderV3": "0xD7a2643c1d9C3E6069f90DbAabd9D58825C7A2b9",
+    "OrocleV2": "0xd26Ea014930305B498C5826cF0712F877CCAF93f",
+    "DiceGame": "0xb3BcC12a620f0e4d98971805b790a25d03688C26",
+    "Multicast": "0xf5270d3e147d5e9805e78139c8c3b1e74712c532"
+  },
+  "testnetSei": {
+    "OrandProviderV3": "0x2182fD816A3fCeCDeD390452524cfA8f21142A88",
+    "OrocleV2": "0x2cC3DF2fC577237A3Fa00634c3d90910211bdAc7",
+    "DiceGame": "0xe39f1bb41166cd6F2E802C759543e1E311DCa02F",
+    "Multicast": "0x396A7d9faF82905a9ab13a4190D041D186CDe92d"
+  },
+  "testnetBnbChain": {
+    "OrandProviderV3": "0xA9aA047CaA5C24A4fC390F3887C98b20bc4e6556",
+    "OrocleV2": "0xbC792147B026F2B998A97d6BC9718569Df79ec65",
+    "DiceGame": "0x707dc1041dc702a83F7a0af57dDe1a3cdAC9643e",
+    "Multicast": "0x699e86B9e94962b074370061f10B109B9484B655"
+  },
+  "testnetArbitrum": {
+    "OrandProviderV3": "0x398027eA740de745FE4Be768e6e5744A6C58514C",
+    "OrocleV2": "0x4ec4C6E856d0ce4D4bc57b50B9234DcD7c6c31BE",
+    "DiceGame": "0xb61fFc03Ff3087e38aC3361479d9BC9bF9B54a11",
+    "Multicast": "0x2C872Fb451121DD6959FBD7542bCa770038e8e5E"
+  },
+  "testnetOptimism": {
+    "OrandProviderV3": "0x518fF0Ad9549BbB38000459C6F70bc78718cC0B1",
+    "OrocleV2": "0xCc00d46197FBee69d7C79661e2F89c17b12FFFf3",
+    "DiceGame": "0xac51fd8BE179a7d6B4C9F879852E42Da546A3399",
+    "Multicast": "0xa00ECEd5321F30766860B0997E63b084D3B4228f"
+  },
+  "testnetFantom": {
+    "OrandProviderV3": "0xc3A7a16304D08002c27441e9e2Cb6366E97862B2",
+    "OrocleV2": "0xf20f36FBec4C592367D807112ddBd44275a1B2df",
+    "DiceGame": "0xbc25d63a4aD0EfB7C337786d5434701F6Db4F68F",
+    "Multicast": "0x27997E9Db6f9E0Bb65034F1388B3525F8749f4ab"
+  },
+  "testnetMoonbeam": {
+    "OrandProviderV3": "0xb368A56355707bC23321C85a9f2f1773B09a5a22",
+    "OrocleV2": "0xCe4defA26b1820026136D71F2e00e291C479D656",
+    "DiceGame": "0x2e2a7db5bc23192ce3fb8979bd2aef593c44094a",
+    "Multicast": "0xc74f2a05bd2b0029b521c3ed77185f8afb5fe3d0"
+  },
+  "testnetSaakuru": {
+    "OrandProviderV3": "0xA117B152a7bB8fAa9920e2C51B1Fb95452D2936f",
+    "OrocleV2": "0xA346Ed72C477F5007866D6B9edCb1563af8cC23d",
+    "DiceGame": "0x04c8b978C739dfEc62a2F913c870cf47C30228EC",
+    "Multicast": "0xe1fBC7D697584A83D7d382DF38888E1c64597D6E"
+  },
+  "testnetZKFair": {
+    "OrandProviderV3": "0xE733CaC2c60effe593587E595Ef6F98dA44a7cf4",
+    "OrocleV2": "0x4A9f4f5acF2E11eb4795f228805c6577876559e1",
+    "DiceGame": "0x4ED0b454985F847AE04B31443057011a65F2569e",
+    "Multicast": "0xed865fBFE46705e6fe97FD39ea0fC5f6cbe3d31D"
+  },
+  "testnetZircuit": {
+    "OrandProviderV3": "0x1Ae52e0Ef3f78F015AEF13AbCB4776333fb073C2",
+    "OrocleV2": "0x9eF4E958A94375436bA4071599BDF47f81E1d96f",
+    "DiceGame": "0xec5C10341dDE3d095dC0065Fc2Be3E1E6ed028a4",
+    "Multicast": "0x18EB255EBAB0f1FF3009a516849a2A96c8554E30"
+  },
+  "testnetXLayer": {
+    "OrandProviderV3": "0x50C72F5bea0757c8052daa6402568d4bbf2336Fb",
+    "OrocleV2": "0x471434636bE5da937d401971267Dd56C1696C073",
+    "DiceGame": "0x4D214560D73215ec2a967B995aa4Afd69A4Bd470",
+    "Multicast": "0x11ab59A7b6449274c6CF1c3C3a0582FfD9024AaB"
+  },
+  "testnetZkLink": {
+    "OrandProviderV3": "0xf9338096bb1bCdBDB83E5a237F198A60A48395a2",
+    "OrocleV2": "0xb0b5fFeF72c6ea620689CF947C0458fAD5cF58da",
+    "DiceGame": "0x4def0197DE14040b4ac245F33852341d28E64df0",
+    "Multicast": "0x37B9F6BD4d7073f4C23aAb2656181CF4C28143fC"
+  },
+  "testnetManta": {
+    "OrandProviderV3": "0x060b6352406f6a22a5BAfCB372EDa87a3B077D23",
+    "OrocleV2": "0xc069da03509222325f9d51239E9F8E6F8cB953Eb",
+    "DiceGame": "0x9411400271b658F5D7991C29DA4D20980D30b67f",
+    "Multicast": "0x3d5409368e91311d5c400e92c19082c2c1236577"
+  },
+  "testnetBase": {
+    "OrandProviderV3": "0x6240Cb830Ab06cd872827b92D6E9Fe9cA8Eac432",
+    "OrocleV2": "0xC6b292b2c1bBDbFfbb0c415D3880DEd376dAd672",
+    "DiceGame": "0x677fB3EAFAE0A019319101b768471C06650B30eA",
+    "Multicast": "0x676d1E0884e9101cE1514a3573D21fCb819e17ec"
+  },
+  "testnetMorph": {
+    "OrandProviderV3": "0x6d660F6e9bC72709c96448dEe00D0c08cfD77577",
+    "OrocleV2": "0xa43Df8eE133946f4f9e455722D7Ec9cb29A08740",
+    "DiceGame": "0x6D4c78b62b6Be511b5cD6Db31dBB1d639BC2a126",
+    "Multicast": "0x5879d87b13529BadA86EE779824cDf850f5Fb79c"
+  },
+  "testnetScroll": {
+    "OrandProviderV3": "0x25fa439D1030540FCd9B2E67F0e8A704ad078226",
+    "OrocleV2": "0xC385AbA69909502B439670Bc2d81FF6B4b30AD6e",
+    "DiceGame": "0x8a743cF0A27c607A0e8787d02F2Df0803724e8D4",
+    "Multicast": "0x00334fd84c9DB1f4f6a769E24ec53a085c5B3DB9"
+  },
+  "testnetWanchain": {
+    "OrandProviderV3": "0xD682B35eB08cC3cb74F690f6B8fFAE087625a158",
+    "OrocleV2": "0x5ad07a162a56E8e4621544fA5D9243CA83264053",
+    "DiceGame": "0xf4c4D788d1b1d2de37B4131F3343A45bf602023c",
+    "Multicast": "0x761648b419B3692D305bBec11bd6C1ea42d22379"
+  },
+  "testnetBitLayer": {
+    "OrandProviderV3": "0x15E150edF1a532642a32b4f76240D1bE62e685cD",
+    "OrocleV2": "0x4E1893a8583B27Ee2372E21B093607EB1e6627FA",
+    "DiceGame": "0xB9a114EeC4083Bc81BE626F1f0C3BDEBA6EA83BB",
+    "Multicast": "0x149339e0A4dFEE0B0aBb0A6772e1ad24b36eeC4D"
+  },
+  "testnetEtherLink": {
+    "OrandProviderV3": "0x3e84eB29Df33832DE7c0E65BE3cC23F07Cb2fBdf",
+    "OrocleV2": "0x6Fc8fcE9061977131A87D95458De69b9b4e36B1e",
+    "DiceGame": "0x2D0BF2977830d01994b80Bed14F08AfB60aB30F5",
+    "Multicast": "0x0b634856CC48BD28A86B54d741CBB305373F2B36"
+  },
+  "testnetZKSync": {
+    "OrandProviderV3": "0xd1B52ff1d2D218E090238AED41C550925eD3a492",
+    "OrocleV2": "0x292b839f40178A951F99EF314b6Ba033C155C0fC",
+    "DiceGame": "0xf23a085A7e0825BBb370E31bf05c012879FC6F2c",
+    "Multicast": "0x46f5d4c72867E06650e40EbF96880Db868739f1f"
+  },
+  "testnetCoreChain": {
+    "OrandProviderV3": "0x396BBaA9eFfDFFa790e53b1a6b93AA161d65Cb75",
+    "OrocleV2": "0x08f5A19CAE906E6851E38e6A1f1848464548D9ff",
+    "DiceGame": "0x7B5bD21CBbFAF71789Fa1b71556eFdb672Acf058",
+    "Multicast": "0x09e8dE953baC547d580b868FaF291F6727847bB4"
+  },
+  "testnetLumia": {
+    "OrandProviderV3": "0x5379742183018F098c160EeEf7DBe3187a23AA3A",
+    "OrocleV2": "0x4231579Bb5DB91d9ACB5A54482A1FA7Bbc08132a",
+    "DiceGame": "0x7F55410F9E1df62b2c8389E9dFc75513e34a6ab2",
+    "Multicast": "0x13cfc8C299A3a10aa8ddF6b3510DdA431A408a6a"
+  },
+  "testnetReactive": {
+    "OrandProviderV3": "0xB915109C4b9BD827314a0D5E944658dDdf373cd2",
+    "OrocleV2": "0xC0B13744c68161123f077272E13F0B949CaF26F5",
+    "DiceGame": "0x1fa308d3A8FE14820eBB15e27F64F76670072380",
+    "Multicast": "0x3aa75Fb3ABd6288b134A716eA23BDe0875E2CEAf"
+  },
+  "testnetB2": {
+    "OrandProviderV3": "0xE21Bc6E404A4133119A164352477C1439205Af27",
+    "OrocleV2": "0xD1159958Fb9d174230dD4B9Ae506AC2F518FD4Cf",
+    "DiceGame": "0x614377Cd443d30372fa65CbE1EeC2078090dDDFa",
+    "Multicast": "0xe052e938D54e080F2Fa3583cF13B66Dbd7f7A439"
+  },
+  "testnetGnosisChain": {
+    "OrandProviderV3": "0xE161A02Da435F36EC5EbfEAE84a0B81616Fa5F22",
+    "OrocleV2": "0xf40931591640833969ee404F1FFfc2C722eE402F",
+    "DiceGame": "0x9c6435a92E16a4Af495F736e98a59E6865c3373c",
+    "Multicast": "0x2cd94d49197349f676222529dFeAdDb2d9A148bb"
+  },
+  "testnetStravo": {
+    "OrandProviderV3": "0xE161A02Da435F36EC5EbfEAE84a0B81616Fa5F22",
+    "OrocleV2": "0xf40931591640833969ee404F1FFfc2C722eE402F",
+    "DiceGame": "0x9c6435a92E16a4Af495F736e98a59E6865c3373c",
+    "Multicast": "0x2cd94d49197349f676222529dFeAdDb2d9A148bb"
+  },
+  "testnetLinea": {
+    "OrandProviderV3": "0x9FC1eE65D0485F2CFeeC5237D765DE5Af3f3f31c",
+    "OrocleV2": "0x4D214560D73215ec2a967B995aa4Afd69A4Bd470",
+    "DiceGame": "0xAAFBb2F5067e348C2e8F0291d91dB9225628c93D",
+    "Multicast": "0x558a630BD3FC98e8F8F64D32A1733e738A0Ca67C"
+  },
+  "testnetLightLink": {
+    "OrandProviderV3": "0x591749260B0dEc690976ce1dDFbd71694578b99e",
+    "OrocleV2": "0x9CB1bDc8D01841F1887f62a8F61813472B0cf1e4",
+    "DiceGame": "0xc67b241e8bF85531e66334e888F2a1e9aAdab668",
+    "Multicast": "0x7D65F1816452cE41AA190912C904FC9F359dE290"
+  },
+  "testnetMinato": {
+    "OrandProviderV3": "0x219Eed0551cB8BCf55b61e1CFB353f4Ad1F5bcF7",
+    "OrocleV2": "0x544FE7b51EF279c15f82B2037e524eeCa1E610C3",
+    "DiceGame": "0x44b3D640f2269f2Db843e7e1f4375e45A99559B4",
+    "Multicast": "0x1a98d77F60a8D3cdAcC7B1339Bf99ee309bCb14F"
+  },
+  "mainnetU2U": {
+    "OrandProviderV3": "0x635eB277805AFADDd720B873dfE87F8fc01b24e4",
+    "OrocleV2": "0x6eFAA86dD3177d75d161A99e2c103409927f3C49",
+    "Multicast": "0x8c5fdbd0053b58abc78b2ea2f782eaa8e78d3ebf"
+  },
+  "mainnetAncient8": {
+    "OrandProviderV3": "0x970FD01B4427Ec1b48a8105aee7A3fc4E70E5FE5",
+    "OrocleV2": "0x80011aA6171B433d33c46B59A619FD338c155161",
+    "Multicast": "0x6fC90b1613946A80Ffac62C0FF2bFDcea6Ee246b"
+  },
+  "mainnetSei": {
+    "OrandProviderV3": "0x6f24d4da6b9bBdbE4d5F2e3C663c8F1C617bdf13",
+    "OrocleV2": "0x5C27491559b3E438b18024A2d5C6f307fBD9Ba15",
+    "Multicast": ""
+  },
+  "mainnetBnbChain": {
+    "OrandProviderV3": "0x4DB03CC56421A81EC1398279913d8D55E62f5328",
+    "OrocleV2": "0xcE978D96f761a0AE9Dd252E666504482B74A4713",
+    "Multicast": "0x11Af4c61D8D51016b8800EA71e42Cf7c3682Ab84"
+  },
+  "mainnetArbitrum": {},
+  "mainnetXLayer": {
+    "OrandProviderV3": "0x6254c96c3d96653FCD4A7133Ff138F97656522B7",
+    "OrocleV2": "0x5CB715DDB32D0FAcD9C5B9e3a10f2FfCEBa93285",
+    "Multicast": "0x5f365F92A42c3edb4875BDe03BCCB927F51c27dc"
+  },
+  "mainnetSaakuru": {
+    "OrandProviderV3": "0x3CEA68A48c01Ff0759C3df54324b4E3B6F284303",
+    "OrocleV2": "0x5C27491559b3E438b18024A2d5C6f307fBD9Ba15",
+    "Multicast": "0x5C5A1F773C45496C35A2844097007C6A772Da223"
+  },
+  "mainnetManta": {
+    "OrandProviderV3": "0x2578F22C7488E08B6D8ED3Bb042b70a3444BF111",
+    "OrocleV2": "0x155bF6a23e5551b431cfb716D2c62409e49B03dd",
+    "Multicast": ""
+  },
+  "mainnetZKSync": {
+    "OrandProviderV3": "0x29ca057761732432bcA26109A291291a365755b4",
+    "OrocleV2": "0x4e12287584A3a506755f8212311f6165336f98a9",
+    "Multicast": "0x2b2CE786695820900f5fE3958A032e377f74731b"
+  },
+  "mainnetScroll": {
+    "OrandProviderV3": "0x4e7dc620996e58A2BCba128c6b0C7e9e2De103dC",
+    "OrocleV2": "0x59bcAa1fB8D336CE6103Ed95BD0929e78a1fcEf6",
+    "Multicast": "0xF8417887EB5135b006C4Ac0e28C58c53C1c3B00f"
+  },
+  "mainnetZircuit": {
+    "OrandProviderV3": "0x99C2b1CcA077ceA2c84Fdc160aAc1A7f64ecf6be",
+    "OrocleV2": "0xCB50b75b5CaF2F8A58e4842238475384fb6d5Ee6",
+    "Multicast": "0x92631f74397Ab51D5816Df6F260d87653Ef03ddd"
+  },
+  "mainnetLightLink": {
+    "OrandProviderV3": "0x0b226bf21B67A691775F9eDbc529D244FC79ab49",
+    "OrocleV2": "0x9A19D4065b91FE61664fE5C50f20048969729D74",
+    "Multicast": "0x096e707591d6E475F4e314C27E69C459529A7C84"
+  },
+  "mainnetEtherLink": {
+    "OrandProviderV3": "0xbaD95Bd46411785c1189a8dd06C1C354DE805170",
+    "OrocleV2": "0xF971965E35b8923DF33332561f69ce74547c3fE3",
+    "Multicast": "0x7ce4b06372d660E10AB8d74966AF317Bd6363e36"
+  }
+}

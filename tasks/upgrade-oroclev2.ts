@@ -41,5 +41,3 @@ task('upgrade:oroclev2', 'Upgrade OrocleV2 contract').setAction(
     console.log('Is OrocleV1 owner correct?', OWNER === (await orocleV2Proxy.owner()));
   },
 );
-
-export default {};

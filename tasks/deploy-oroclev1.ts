@@ -23,5 +23,3 @@ task('deploy:oroclev1', 'Deploy Orocle V1 contracts').setAction(
     await deployer.printReport();
   },
 );
-
-export default {};

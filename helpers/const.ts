@@ -11,3 +11,5 @@ export const NATIVE_UNIT = 1000000000000000000n;
 export const EMPTY_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 export const MAX_UINT256 = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+export const DEPLOYED_CONTRACT_RESULT_PATH = `${__dirname}/../deployment-result/contract.json`;

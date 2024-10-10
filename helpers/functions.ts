@@ -115,3 +115,7 @@ export async function printAllEvents(tx: ContractTransactionResponse) {
 export async function getCurrentBlockTimestamp(hre: HardhatRuntimeEnvironment): Promise<number> {
   return ((await hre.ethers.provider.getBlock('latest')) || { timestamp: 0 }).timestamp;
 }
+
+export function packDataTokenBatchMint(amount: bigint, address: string): bigint {
+  return (amount << 160n) | BigInt(address);
+}

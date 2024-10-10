@@ -12,5 +12,3 @@ task('test:vault', 'Test vault').setAction(async (_taskArgs: any, hre: HardhatRu
 
   console.log(await hre.ethers.provider.getBalance(''));
 });
-
-export default {};

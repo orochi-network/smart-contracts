@@ -47,5 +47,3 @@ task('upgrade:orandv3', 'Upgrade OrandV3 contract').setAction(
     console.log('Is OrandProviderV2 owner correct?', OWNER === (await orandProviderV3Proxy.owner()));
   },
 );
-
-export default {};

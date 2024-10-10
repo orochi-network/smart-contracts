@@ -59,5 +59,3 @@ task('test:call', 'Test vault').setAction(async (_taskArgs: any, hre: HardhatRun
     zInv,
   });
 });
-
-export default {};
