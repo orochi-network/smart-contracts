@@ -26,13 +26,6 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
       throw new Error('Invalid provider');
     }
 
-    const gasOverrides =
-      account.provider instanceof EthJsonRpc && account.provider.isGasLessBlockchain
-        ? {
-            gasLimit: GAS_LIMIT_IN_GAS_LESS_BLOCKCHAIN,
-          }
-        : {};
-
     const { ethers, upgrades } = hre;
     const OWNER = chainId === 911n ? account.address : env.OROCHI_OWNER.trim();
 
@@ -62,7 +55,7 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
     console.log('orandECVRF', await orandECVRF.getAddress());
 
     // Deploy Orocle
-    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS], { txOverrides: gasOverrides });
+    const orocleV2Proxy = await upgrades.deployProxy(orocleV2Factory, [OPERATORS]);
     await orocleV2Proxy.waitForDeployment();
     console.log('>> [Orocle V2] proxy contract address:', await orocleV2Proxy.getAddress());
 
@@ -86,7 +79,6 @@ task('deploy:orochi', 'Deploy Orochi Network contracts').setAction(
         await orocleV2Proxy.getAddress(),
         200,
       ],
-      { txOverrides: gasOverrides },
     );
     console.log('>> [OrandProvider V3] proxy contract address:', await orandProviderV3Proxy.getAddress());
     await orandProviderV3Proxy.waitForDeployment();

@@ -60,6 +60,10 @@ const config: HardhatUserConfig = {
       chainId: 39,
       verifyURL: 'https://u2uscan.xyz/api',
     },
+    mainnet5ire: {
+      url: 'https://rpc.5ire.network',
+      chainId: 995,
+    },
     testnetAncient8: {
       url: 'https://rpcv2-testnet.ancient8.gg/',
       chainId: 28122024,
@@ -335,6 +339,14 @@ const config: HardhatUserConfig = {
       url: 'https://json-rpc.evm.testnet.shimmer.network',
       chainId: 1073,
     },
+    testnetBobaEth: {
+      url: 'https://sepolia.boba.network',
+      chainId: 28882,
+    },
+    testnetNero: {
+      url: 'https://rpc-testnet.nerochain.io',
+      chainId: 689,
+    },
 
     // Hard hat network
     hardhat: {
@@ -357,15 +369,32 @@ const config: HardhatUserConfig = {
         : undefined,
     },
   },
-  sourcify: {
-    enabled: false,
-  },
+  // sourcify: {
+  //   enabled: true,
+  // },
   etherscan: {
     apiKey: {
       mainnetBnbChain: env.BSC_API_KEY,
       mainnetXLayer: env.X_LAYER_API_KEY,
+      mainnetZircuit: '16072498B5C485DC3851D9E07FEF783520',
     },
     customChains: [
+      {
+        network: 'mainnetZircuit',
+        chainId: 48900,
+        urls: {
+          apiURL: 'https://explorer.zircuit.com/api/contractVerifyHardhat',
+          browserURL: 'https://explorer.zircuit.com',
+        },
+      },
+      {
+        network: 'testnetNero',
+        chainId: 689,
+        urls: {
+          apiURL: 'https://api-testnet.neroscan.io/api',
+          browserURL: 'https://testnet.neroscan.io/',
+        },
+      },
       {
         network: 'mainnetBnbChain',
         chainId: 56,

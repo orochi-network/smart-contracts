@@ -7,7 +7,7 @@ import { env } from '../env';
 import EncryptionKey from './encryption';
 import EthJsonRpc from './provider';
 
-export const CHAIN_NEED_CUSTOM_PROVIDER = [196n, 7225878n];
+export const CHAIN_NEED_CUSTOM_PROVIDER = [196n, 7225878n, 995n];
 export const GAS_LESS_BLOCK_CHAIN = [7225878n];
 
 export function getZkSyncWallet(wallet: HDNodeWallet, provider: Provider) {
