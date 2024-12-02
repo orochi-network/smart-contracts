@@ -228,6 +228,14 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        network: 'seitest',
+        chainId: 713715,
+        urls: {
+          apiURL: 'https://seitrace.com/arctic-1/api',
+          browserURL: 'https://devnet.seitrace.com',
+        },
+      },
+      {
         network: 'binance',
         chainId: 56,
         urls: {
