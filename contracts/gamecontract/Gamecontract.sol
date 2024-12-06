@@ -25,7 +25,6 @@ contract GameContract is Ownable {
         _;
     }
 
-    constructor() {}
     
     function isSigner(address _address) external view returns (bool) {
         return signers[_address];
