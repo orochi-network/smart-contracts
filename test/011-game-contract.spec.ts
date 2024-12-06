@@ -19,8 +19,7 @@ let contract: GameContract;
 describe('Game Contract', function () {
   beforeEach(async () => {
     accounts = await hre.ethers.getSigners();
-    [deployerSigner, user01, user02, user03, user04, user05, user06, user07] =
-      accounts;
+    [deployerSigner, user01, user02, user03, user04, user05, user06, user07] = accounts;
 
     const deployer: Deployer = Deployer.getInstance(hre);
     deployer.connect(deployerSigner);
@@ -40,15 +39,15 @@ describe('Game Contract', function () {
 
     await expect(contract.connect(user04).dailyQuestSubmit('login')).to.be.revertedWithCustomError(
       contract,
-      'GameContract__NotAuthorized',
+      'InvalidGameContractUser()',
     );
     await expect(contract.connect(user07).gameQuestSubmit('played 10 game')).to.be.revertedWithCustomError(
       contract,
-      'GameContract__NotAuthorized',
+      'InvalidGameContractUser()',
     );
     await expect(contract.connect(user05).socialQuestSubmit('Tweet')).to.be.revertedWithCustomError(
       contract,
-      'GameContract__NotAuthorized',
+      'InvalidGameContractUser()',
     );
   });
 
@@ -66,25 +65,30 @@ describe('Game Contract', function () {
       .withArgs(user03.address, 'played 10 games');
   });
 
-  it('Only owner can add new signers', async () => {
-    await contract.connect(deployerSigner).addSigners([user04.address]);
+  it('Only owner can add new signers and emit event addsigner', async () => {
+    await expect(contract.connect(deployerSigner).addSigners([user04.address]))
+      .to.emit(contract, 'AddSigners')
+      .withArgs([user04.address]);
 
-    expect(await contract.signers(user04.address)).to.be.true;
-    expect(await contract.signers(user05.address)).to.be.false;
+    expect(await contract.isSigner(user04.address)).to.be.true;
+    expect(await contract.isSigner(user05.address)).to.be.false;
 
     await expect(contract.connect(user01).addSigners([user05.address])).to.be.revertedWith(
       'Ownable: caller is not the owner',
     );
   });
 
-  it('Only owner can remove signers', async () => {
-    await contract.connect(deployerSigner).addSigners([user04.address]);
+  it('Only owner can remove signers and emit event removesigners', async () => {
+    await expect(contract.connect(deployerSigner).addSigners([user04.address]))
+      .to.emit(contract, 'AddSigners')
+      .withArgs([user04.address]);
+    expect(await contract.isSigner(user04.address)).to.be.true;
 
-    expect(await contract.signers(user04.address)).to.be.true;
+    await expect(contract.connect(deployerSigner).removeSigners([user04.address]))
+      .to.emit(contract, 'RemoveSigners')
+      .withArgs([user04.address]);
 
-    await expect(contract.connect(deployerSigner).removeSigners([user04.address])).to.not.be.reverted;
-
-    expect(await contract.signers(user04.address)).to.be.false;
+    expect(await contract.isSigner(user04.address)).to.be.false;
 
     await expect(contract.connect(user01).removeSigners([user04.address])).to.be.revertedWith(
       'Ownable: caller is not the owner',
@@ -92,13 +96,11 @@ describe('Game Contract', function () {
   });
 
   it('Should remove multiple signers', async () => {
-    await expect(contract.connect(deployerSigner).addSigners([user05.address, user06.address])).to.not.be
-      .reverted;
+    await expect(contract.connect(deployerSigner).addSigners([user05.address, user06.address])).to.not.be.reverted;
 
-    await expect(contract.connect(deployerSigner).removeSigners([user05.address, user06.address])).to.not.be
-      .reverted;
+    await expect(contract.connect(deployerSigner).removeSigners([user05.address, user06.address])).to.not.be.reverted;
 
-    expect(await contract.signers(user05.address)).to.be.false;
-    expect(await contract.signers(user06.address)).to.be.false;
+    expect(await contract.isSigner(user05.address)).to.be.false;
+    expect(await contract.isSigner(user06.address)).to.be.false;
   });
 });
