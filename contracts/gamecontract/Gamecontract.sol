@@ -3,62 +3,71 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 
-
 contract GameContract is Ownable {
-
     error InvalidGameContractUser();
 
-    mapping(address => bool) signers;
+    mapping(address => bool) private signerMap;
 
-    event DailyQuestSubmit(address indexed user, string questName);
-    event SocialQuestSubmit(address indexed user, string questName);
-    event GameQuestSubmit(address indexed user, string questName);
-    event AddSigners(address[] users);
-    event RemoveSigners(address[] users);
+    uint256 private totalSigner;
 
-
+    event DailyQuestSubmit(address user, bytes32 indexed questName);
+    event SocialQuestSubmit(address user, bytes32 indexed questName);
+    event GameQuestSubmit(address user, bytes32 indexed questName);
 
     modifier User() {
-        if (!signers[tx.origin]) {
+        if (!signerMap[tx.origin]) {
             revert InvalidGameContractUser();
         }
         _;
     }
 
-    
-    function isSigner(address _address) external view returns (bool) {
-        return signers[_address];
+    function addListSigner(address[] memory listSigner) external onlyOwner {
+        bool[] memory listStatus = checkListSigner(listSigner); 
+
+        for (uint256 i = 0; i < listSigner.length; i += 1) {
+            if (!listStatus[i]) { 
+                signerMap[listSigner[i]] = true; 
+                totalSigner += 1;
+            }
+        }
     }
 
-    function dailyQuestSubmit (
-        string memory _questName
-    ) external User {
+    function removeListSigner(address[] memory listRemoveSigner) external onlyOwner {
+        bool[] memory listStatus = checkListSigner(listRemoveSigner); 
+
+        for (uint256 i = 0; i < listRemoveSigner.length; i += 1) {
+            if (listStatus[i]) { 
+                signerMap[listRemoveSigner[i]] = false; 
+                totalSigner -= 1;
+            }
+        }
+    }
+
+    function dailyQuestSubmit(bytes32 _questName) external User {
         emit DailyQuestSubmit(tx.origin, _questName);
     }
 
-    function socialQuestSubmit (
-        string memory _questName
-    ) external User {
+    function socialQuestSubmit(bytes32 _questName) external User {
         emit SocialQuestSubmit(tx.origin, _questName);
     }
 
-    function gameQuestSubmit (
-        string memory _questName
-    ) external User {
+    function gameQuestSubmit(bytes32 _questName) external User {
         emit GameQuestSubmit(tx.origin, _questName);
     }
 
-    function addSigners(address[] memory _signers) external onlyOwner {
-        for (uint256 i = 0; i < _signers.length; i+=1) {
-            signers[_signers[i]] = true;
+    function checkListSigner(address[] memory _addresses) private view returns (bool[] memory) {
+        bool[] memory listStatus = new bool[](_addresses.length);
+        for (uint256 i = 0; i < _addresses.length; i += 1) {
+            listStatus[i] = signerMap[_addresses[i]];
         }
-        emit AddSigners(_signers);
+        return listStatus; 
     }
 
-    function removeSigners(address[] memory _signers) external onlyOwner {
-        for (uint256 i = 0; i < _signers.length; i+=1) {
-            signers[_signers[i]] = false;
-        }
-        emit RemoveSigners(_signers);
+    function isSigner(address _address) external view returns (bool) {
+        return signerMap[_address];
+    }
+
+    function getTotalSigner() external view onlyOwner returns (uint256) {
+        return totalSigner;
     }
 }

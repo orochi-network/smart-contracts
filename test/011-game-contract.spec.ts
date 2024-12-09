@@ -3,6 +3,8 @@ import hre from 'hardhat';
 import Deployer from '../helpers/deployer';
 import { GameContract } from '../typechain-types';
 import { expect } from 'chai';
+import { keccak256, toUtf8Bytes } from 'ethers';
+
 
 let accounts: SignerWithAddress[];
 let deployerSigner: SignerWithAddress;
@@ -26,81 +28,89 @@ describe('Game Contract', function () {
     contract = await deployer.contractDeploy<GameContract>('GameContract/GameContract', []);
   });
 
-  it('Game Contract must be deployed correctly', async () => {
-    expect(await contract.owner()).eq(deployerSigner.address);
+  it('Should deploy contract correctly and initialize state', async () => {
+    expect(await contract.owner()).to.equal(deployerSigner.address);
+    expect(await contract.getTotalSigner()).to.equal(0);
   });
 
-  it('Only signer can send transaction', async () => {
-    await contract.connect(deployerSigner).addSigners([user01.address, user02.address, user03.address]);
+  it('Only owner can add and remove signers', async () => {
+    await contract.connect(deployerSigner).addListSigner([user01.address, user02.address]);
+    expect(await contract.isSigner(user01.address)).to.be.true;
+    expect(await contract.isSigner(user02.address)).to.be.true;
 
-    await expect(contract.connect(user01).dailyQuestSubmit('login')).to.not.be.reverted;
-    await expect(contract.connect(user02).gameQuestSubmit('played 10 game')).to.not.be.reverted;
-    await expect(contract.connect(user03).socialQuestSubmit('Tweet')).to.not.be.reverted;
+    await contract.connect(deployerSigner).removeListSigner([user01.address]);
+    expect(await contract.isSigner(user01.address)).to.be.false;
 
-    await expect(contract.connect(user04).dailyQuestSubmit('login')).to.be.revertedWithCustomError(
-      contract,
-      'InvalidGameContractUser()',
+    await expect(contract.connect(user01).addListSigner([user03.address])).to.be.revertedWith(
+      'Ownable: caller is not the owner',
     );
-    await expect(contract.connect(user07).gameQuestSubmit('played 10 game')).to.be.revertedWithCustomError(
-      contract,
-      'InvalidGameContractUser()',
-    );
-    await expect(contract.connect(user05).socialQuestSubmit('Tweet')).to.be.revertedWithCustomError(
-      contract,
-      'InvalidGameContractUser()',
-    );
-  });
 
-  it('Should emit events correctly when submitting quests', async () => {
-    await expect(contract.connect(user01).dailyQuestSubmit('login'))
-      .to.emit(contract, 'DailyQuestSubmit')
-      .withArgs(user01.address, 'login');
-
-    await expect(contract.connect(user02).socialQuestSubmit('Tweet'))
-      .to.emit(contract, 'SocialQuestSubmit')
-      .withArgs(user02.address, 'Tweet');
-
-    await expect(contract.connect(user03).gameQuestSubmit('played 10 games'))
-      .to.emit(contract, 'GameQuestSubmit')
-      .withArgs(user03.address, 'played 10 games');
-  });
-
-  it('Only owner can add new signers and emit event addsigner', async () => {
-    await expect(contract.connect(deployerSigner).addSigners([user04.address]))
-      .to.emit(contract, 'AddSigners')
-      .withArgs([user04.address]);
-
-    expect(await contract.isSigner(user04.address)).to.be.true;
-    expect(await contract.isSigner(user05.address)).to.be.false;
-
-    await expect(contract.connect(user01).addSigners([user05.address])).to.be.revertedWith(
+    await expect(contract.connect(user01).removeListSigner([user02.address])).to.be.revertedWith(
       'Ownable: caller is not the owner',
     );
   });
 
-  it('Only owner can remove signers and emit event removesigners', async () => {
-    await expect(contract.connect(deployerSigner).addSigners([user04.address]))
-      .to.emit(contract, 'AddSigners')
-      .withArgs([user04.address]);
-    expect(await contract.isSigner(user04.address)).to.be.true;
+  it('Should handle adding multiple signers and totalSigner count', async () => {
+    await contract.connect(deployerSigner).addListSigner([user01.address, user02.address, user03.address]);
+    expect(await contract.getTotalSigner()).to.equal(3);
 
-    await expect(contract.connect(deployerSigner).removeSigners([user04.address]))
-      .to.emit(contract, 'RemoveSigners')
-      .withArgs([user04.address]);
+    await contract.connect(deployerSigner).removeListSigner([user02.address]);
+    expect(await contract.getTotalSigner()).to.equal(2);
 
+    await contract.connect(deployerSigner).removeListSigner([user01.address, user03.address]);
+    expect(await contract.getTotalSigner()).to.equal(0);
+  });
+
+  it('Should reject duplicate signers and not affect totalSigner', async () => {
+    await contract.connect(deployerSigner).addListSigner([user01.address, user02.address]);
+    expect(await contract.getTotalSigner()).to.equal(2);
+
+    await contract.connect(deployerSigner).addListSigner([user01.address, user02.address, user03.address]);
+    expect(await contract.getTotalSigner()).to.equal(3);
+  });
+
+  it('Should handle removing non-existent signers without errors', async () => {
+    await contract.connect(deployerSigner).addListSigner([user01.address, user02.address, user03.address]);
+    expect(await contract.getTotalSigner()).to.equal(3);
+
+    expect(await contract.isSigner(user03.address)).to.be.true;
     expect(await contract.isSigner(user04.address)).to.be.false;
 
-    await expect(contract.connect(user01).removeSigners([user04.address])).to.be.revertedWith(
-      'Ownable: caller is not the owner',
+    await contract.connect(deployerSigner).removeListSigner([user04.address]);
+    expect(await contract.getTotalSigner()).to.equal(3);
+
+    await contract.connect(deployerSigner).removeListSigner([user03.address]);
+    expect(await contract.getTotalSigner()).to.equal(2);
+  });
+
+  it('Only valid signers can perform user actions', async () => {
+    const loginQuest = keccak256(toUtf8Bytes('login'));
+    const tweetQuest = keccak256(toUtf8Bytes('Tweet'));
+
+    await contract.connect(deployerSigner).addListSigner([user01.address, user02.address]);
+
+    await expect(contract.connect(user01).dailyQuestSubmit(loginQuest))
+      .to.emit(contract, 'DailyQuestSubmit')
+      .withArgs(user01.address, loginQuest);
+
+    await expect(contract.connect(user02).socialQuestSubmit(tweetQuest))
+      .to.emit(contract, 'SocialQuestSubmit')
+      .withArgs(user02.address, tweetQuest);
+
+    expect(await contract.isSigner(user03.address)).to.be.false;
+
+    await expect(contract.connect(user03).dailyQuestSubmit(loginQuest)).to.be.revertedWithCustomError(
+      contract,
+      'InvalidGameContractUser',
     );
   });
 
-  it('Should remove multiple signers', async () => {
-    await expect(contract.connect(deployerSigner).addSigners([user05.address, user06.address])).to.not.be.reverted;
+  it('Should handle bytes32 questName for events', async () => {
+    const questName = keccak256(toUtf8Bytes('playGame'));
+    await contract.connect(deployerSigner).addListSigner([user01.address]);
 
-    await expect(contract.connect(deployerSigner).removeSigners([user05.address, user06.address])).to.not.be.reverted;
-
-    expect(await contract.isSigner(user05.address)).to.be.false;
-    expect(await contract.isSigner(user06.address)).to.be.false;
+    await expect(contract.connect(user01).gameQuestSubmit(questName))
+      .to.emit(contract, 'GameQuestSubmit')
+      .withArgs(user01.address, questName);
   });
 });
