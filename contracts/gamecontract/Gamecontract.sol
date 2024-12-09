@@ -16,7 +16,7 @@ contract GameContract is Ownable {
     event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
     event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
-    modifier User() {
+    modifier onlyUser() {
         if (!_signerMap[msg.sender]) {
             revert InvalidUser();
         }
@@ -43,15 +43,15 @@ contract GameContract is Ownable {
          emit SignerListRemove(_signerTotal, block.timestamp);
     }
 
-    function questSubmitDaily(bytes32 questName) external User {
+    function questSubmitDaily(bytes32 questName) external onlyUser {
         emit QuestCompleteDaily(msg.sender, questName);
     }
 
-    function questSubmitSocial(bytes32 questName) external User {
+    function questSubmitSocial(bytes32 questName) external onlyUser {
         emit QuestCompleteSocial(msg.sender, questName);
     }
 
-    function questSubmitGame(bytes32 questName) external User {
+    function questSubmitGame(bytes32 questName) external onlyUser {
         emit QuestCompleteGame(msg.sender, questName);
     }
 
@@ -67,7 +67,7 @@ contract GameContract is Ownable {
         return _signerMap[signerToCheck];
     }
 
-    function signerTotal() external view onlyOwner returns (uint256) {
+    function signerTotal() external view returns (uint256) {
         return _signerTotal;
     }
 }
