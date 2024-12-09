@@ -149,7 +149,24 @@ describe('Game Contract', function () {
 
     expect(await contract.getTotalSigner()).to.equal(signersToAdd.length - signersToRemove.length);
   });
+
+  it('Should correctly return signer statuses using checkListSigner', async () => {
+    const signersToAdd = [user01.address, user02.address, user03.address];
+    const nonSigners = [user04.address, user05.address];
   
+    await contract.connect(deployerSigner).addListSigner(signersToAdd);
+  
+    const statuses = await contract.checkListSigner([...signersToAdd, ...nonSigners]);
+  
+    expect(statuses).to.deep.equal([true, true, true, false, false]);
+  
+    await contract.connect(deployerSigner).removeListSigner([user01.address]);
+    const updatedStatuses = await contract.checkListSigner([...signersToAdd, ...nonSigners]);
+  
+    expect(updatedStatuses).to.deep.equal([false, true, true, false, false]);
+  });
+  
+
   it('Should transfer ownership correctly', async () => {
     expect(await contract.owner()).to.equal(deployerSigner.address);
 

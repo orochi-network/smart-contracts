@@ -10,24 +10,22 @@ contract GameContract is Ownable {
 
     uint256 private totalSigner;
 
-    event DailyQuestSubmit(address user, bytes32 indexed questName);
-    event SocialQuestSubmit(address user, bytes32 indexed questName);
-    event GameQuestSubmit(address user, bytes32 indexed questName);
+    event DailyQuestSubmit(address indexed user, bytes32 indexed questName);
+    event SocialQuestSubmit(address indexed user, bytes32 indexed questName);
+    event GameQuestSubmit(address indexed user, bytes32 indexed questName);
     event AddListSigner(uint256 indexed totalAddedUser, uint256 indexed timestamp);
     event RemoveListSigner(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     modifier User() {
-        if (!signerMap[tx.origin]) {
+        if (!signerMap[msg.sender]) {
             revert InvalidGameContractUser();
         }
         _;
     }
 
     function addListSigner(address[] memory listSigner) external onlyOwner {
-        bool[] memory listStatus = checkListSigner(listSigner); 
-
         for (uint256 i = 0; i < listSigner.length; i += 1) {
-            if (!listStatus[i]) { 
+            if (!signerMap[listSigner[i]]) { 
                 signerMap[listSigner[i]] = true; 
                 totalSigner += 1;
             }
@@ -36,10 +34,8 @@ contract GameContract is Ownable {
     }
 
     function removeListSigner(address[] memory listRemoveSigner) external onlyOwner {
-        bool[] memory listStatus = checkListSigner(listRemoveSigner); 
-
         for (uint256 i = 0; i < listRemoveSigner.length; i += 1) {
-            if (listStatus[i]) { 
+            if (signerMap[listRemoveSigner[i]]) { 
                 signerMap[listRemoveSigner[i]] = false; 
                 totalSigner -= 1;
             }
@@ -48,18 +44,18 @@ contract GameContract is Ownable {
     }
 
     function dailyQuestSubmit(bytes32 _questName) external User {
-        emit DailyQuestSubmit(tx.origin, _questName);
+        emit DailyQuestSubmit(msg.sender, _questName);
     }
 
     function socialQuestSubmit(bytes32 _questName) external User {
-        emit SocialQuestSubmit(tx.origin, _questName);
+        emit SocialQuestSubmit(msg.sender, _questName);
     }
 
     function gameQuestSubmit(bytes32 _questName) external User {
-        emit GameQuestSubmit(tx.origin, _questName);
+        emit GameQuestSubmit(msg.sender, _questName);
     }
 
-    function checkListSigner(address[] memory _addresses) private view returns (bool[] memory) {
+    function checkListSigner(address[] memory _addresses) external view returns (bool[] memory) {
         bool[] memory listStatus = new bool[](_addresses.length);
         for (uint256 i = 0; i < _addresses.length; i += 1) {
             listStatus[i] = signerMap[_addresses[i]];
