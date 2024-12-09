@@ -113,6 +113,43 @@ describe('Game Contract', function () {
       .to.emit(contract, 'GameQuestSubmit')
       .withArgs(user01.address, questName);
   });
+  
+  it('Should emit AddListSigner event with correct totalAddedUser and timestamp', async () => {
+    const signersToAdd = [user01.address, user02.address, user03.address];
+    const tx = await contract.connect(deployerSigner).addListSigner(signersToAdd);
+  
+    const block = await hre.ethers.provider.getBlock('latest');
+    if (!block) {
+      throw new Error("Unable to fetch the latest block.");
+    }
+  
+    await expect(tx)
+      .to.emit(contract, 'AddListSigner')
+      .withArgs(signersToAdd.length, block.timestamp);
+  
+    expect(await contract.getTotalSigner()).to.equal(signersToAdd.length);
+  });
+
+  it('Should emit RemoveListSigner event with correct totalAddedUser and timestamp', async () => {
+    const signersToAdd = [user01.address, user02.address, user03.address];
+    const signersToRemove = [user01.address, user03.address];
+
+    await contract.connect(deployerSigner).addListSigner(signersToAdd);
+
+    const tx = await contract.connect(deployerSigner).removeListSigner(signersToRemove);
+
+    const block = await hre.ethers.provider.getBlock('latest');
+    if (!block) {
+      throw new Error("Unable to fetch the latest block.");
+    }
+
+    await expect(tx)
+      .to.emit(contract, 'RemoveListSigner')
+      .withArgs(signersToAdd.length - signersToRemove.length, block.timestamp);
+
+    expect(await contract.getTotalSigner()).to.equal(signersToAdd.length - signersToRemove.length);
+  });
+  
   it('Should transfer ownership correctly', async () => {
     expect(await contract.owner()).to.equal(deployerSigner.address);
 

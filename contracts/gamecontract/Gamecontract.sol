@@ -13,6 +13,8 @@ contract GameContract is Ownable {
     event DailyQuestSubmit(address user, bytes32 indexed questName);
     event SocialQuestSubmit(address user, bytes32 indexed questName);
     event GameQuestSubmit(address user, bytes32 indexed questName);
+    event AddListSigner(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event RemoveListSigner(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     modifier User() {
         if (!signerMap[tx.origin]) {
@@ -30,6 +32,7 @@ contract GameContract is Ownable {
                 totalSigner += 1;
             }
         }
+        emit AddListSigner(totalSigner, block.timestamp);
     }
 
     function removeListSigner(address[] memory listRemoveSigner) external onlyOwner {
@@ -41,6 +44,7 @@ contract GameContract is Ownable {
                 totalSigner -= 1;
             }
         }
+         emit RemoveListSigner(totalSigner, block.timestamp);
     }
 
     function dailyQuestSubmit(bytes32 _questName) external User {
