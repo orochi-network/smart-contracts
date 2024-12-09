@@ -30,16 +30,16 @@ describe('Game Contract', function () {
 
   it('Should deploy contract correctly and initialize state', async () => {
     expect(await contract.owner()).to.equal(deployerSigner.address);
-    expect(await contract.getTotalSigner()).to.equal(0);
+    expect(await contract.signerTotal()).to.equal(0);
   });
 
   it('Only owner can add and remove signers', async () => {
     await contract.connect(deployerSigner).signerListAdd([user01.address, user02.address]);
-    expect(await contract.isSigner(user01.address)).to.be.true;
-    expect(await contract.isSigner(user02.address)).to.be.true;
+    expect(await contract.signerCheck(user01.address)).to.be.true;
+    expect(await contract.signerCheck(user02.address)).to.be.true;
 
     await contract.connect(deployerSigner).signerListRemove([user01.address]);
-    expect(await contract.isSigner(user01.address)).to.be.false;
+    expect(await contract.signerCheck(user01.address)).to.be.false;
 
     await expect(contract.connect(user01).signerListAdd([user03.address])).to.be.revertedWith(
       'Ownable: caller is not the owner',
@@ -52,35 +52,35 @@ describe('Game Contract', function () {
 
   it('Should handle adding multiple signers and totalSigner count', async () => {
     await contract.connect(deployerSigner).signerListAdd([user01.address, user02.address, user03.address]);
-    expect(await contract.getTotalSigner()).to.equal(3);
+    expect(await contract.signerTotal()).to.equal(3);
 
     await contract.connect(deployerSigner).signerListRemove([user02.address]);
-    expect(await contract.getTotalSigner()).to.equal(2);
+    expect(await contract.signerTotal()).to.equal(2);
 
     await contract.connect(deployerSigner).signerListRemove([user01.address, user03.address]);
-    expect(await contract.getTotalSigner()).to.equal(0);
+    expect(await contract.signerTotal()).to.equal(0);
   });
 
   it('Should reject duplicate signers and not affect totalSigner', async () => {
     await contract.connect(deployerSigner).signerListAdd([user01.address, user02.address]);
-    expect(await contract.getTotalSigner()).to.equal(2);
+    expect(await contract.signerTotal()).to.equal(2);
 
     await contract.connect(deployerSigner).signerListAdd([user01.address, user02.address, user03.address]);
-    expect(await contract.getTotalSigner()).to.equal(3);
+    expect(await contract.signerTotal()).to.equal(3);
   });
 
   it('Should handle removing non-existent signers without errors', async () => {
     await contract.connect(deployerSigner).signerListAdd([user01.address, user02.address, user03.address]);
-    expect(await contract.getTotalSigner()).to.equal(3);
+    expect(await contract.signerTotal()).to.equal(3);
 
-    expect(await contract.isSigner(user03.address)).to.be.true;
-    expect(await contract.isSigner(user04.address)).to.be.false;
+    expect(await contract.signerCheck(user03.address)).to.be.true;
+    expect(await contract.signerCheck(user04.address)).to.be.false;
 
     await contract.connect(deployerSigner).signerListRemove([user04.address]);
-    expect(await contract.getTotalSigner()).to.equal(3);
+    expect(await contract.signerTotal()).to.equal(3);
 
     await contract.connect(deployerSigner).signerListRemove([user03.address]);
-    expect(await contract.getTotalSigner()).to.equal(2);
+    expect(await contract.signerTotal()).to.equal(2);
   });
 
   it('Only valid signers can perform user actions', async () => {
@@ -97,7 +97,7 @@ describe('Game Contract', function () {
       .to.emit(contract, 'QuestCompleteSocial')
       .withArgs(user02.address, tweetQuest);
 
-    expect(await contract.isSigner(user03.address)).to.be.false;
+    expect(await contract.signerCheck(user03.address)).to.be.false;
 
     await expect(contract.connect(user03).questSubmitDaily(loginQuest)).to.be.revertedWithCustomError(
       contract,
@@ -127,7 +127,7 @@ describe('Game Contract', function () {
       .to.emit(contract, 'SignerListAdd')
       .withArgs(signersToAdd.length, block.timestamp);
   
-    expect(await contract.getTotalSigner()).to.equal(signersToAdd.length);
+    expect(await contract.signerTotal()).to.equal(signersToAdd.length);
   });
 
   it('Should emit RemoveListSigner event with correct totalAddedUser and timestamp', async () => {
@@ -147,7 +147,7 @@ describe('Game Contract', function () {
       .to.emit(contract, 'SignerListRemove')
       .withArgs(signersToAdd.length - signersToRemove.length, block.timestamp);
 
-    expect(await contract.getTotalSigner()).to.equal(signersToAdd.length - signersToRemove.length);
+    expect(await contract.signerTotal()).to.equal(signersToAdd.length - signersToRemove.length);
   });
 
   it('Should correctly return signer statuses using checkListSigner', async () => {
