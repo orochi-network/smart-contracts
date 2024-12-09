@@ -113,4 +113,17 @@ describe('Game Contract', function () {
       .to.emit(contract, 'GameQuestSubmit')
       .withArgs(user01.address, questName);
   });
+  it('Should transfer ownership correctly', async () => {
+    expect(await contract.owner()).to.equal(deployerSigner.address);
+
+    await contract.connect(deployerSigner).transferOwnership(user01.address);
+    expect(await contract.owner()).to.equal(user01.address);
+
+    await expect(contract.connect(deployerSigner).transferOwnership(user02.address)).to.be.revertedWith(
+      'Ownable: caller is not the owner',
+    );
+
+    await contract.connect(user01).transferOwnership(user02.address);
+    expect(await contract.owner()).to.equal(user02.address);
+  });
 });
