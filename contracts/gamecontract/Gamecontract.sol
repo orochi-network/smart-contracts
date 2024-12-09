@@ -4,63 +4,63 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract GameContract is Ownable {
-    error InvalidGameContractUser();
+    error InvalidUser();
 
     mapping(address => bool) private signerMap;
 
-    uint256 private totalUserGameContract;
+    uint256 private signerTotal;
 
-    event DailyQuestSubmit(address indexed user, bytes32 indexed questName);
-    event SocialQuestSubmit(address indexed user, bytes32 indexed questName);
-    event GameQuestSubmit(address indexed user, bytes32 indexed questName);
-    event AddListSigner(uint256 indexed totalAddedUser, uint256 indexed timestamp);
-    event RemoveListSigner(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event QuestCompleteDaily(address indexed user, bytes32 indexed questName);
+    event QuestCompleteSocial(address indexed user, bytes32 indexed questName);
+    event QuestCompleteGame(address indexed user, bytes32 indexed questName);
+    event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     modifier User() {
         if (!signerMap[msg.sender]) {
-            revert InvalidGameContractUser();
+            revert InvalidUser();
         }
         _;
     }
 
-    function addListSigner(address[] memory listSignerToAdd) external onlyOwner {
-        for (uint256 i = 0; i < listSignerToAdd.length; i += 1) {
-            if (!signerMap[listSignerToAdd[i]]) { 
-                signerMap[listSignerToAdd[i]] = true; 
-                totalUserGameContract += 1;
+    function signerListAdd(address[] memory signerListToAdd) external onlyOwner {
+        for (uint256 i = 0; i < signerListToAdd.length; i += 1) {
+            if (!signerMap[signerListToAdd[i]]) { 
+                signerMap[signerListToAdd[i]] = true; 
+                signerTotal += 1;
             }
         }
-        emit AddListSigner(totalUserGameContract, block.timestamp);
+        emit SignerListAdd(signerTotal, block.timestamp);
     }
 
-    function removeListSigner(address[] memory listSignerToRemove) external onlyOwner {
+    function signerListRemove(address[] memory listSignerToRemove) external onlyOwner {
         for (uint256 i = 0; i < listSignerToRemove.length; i += 1) {
             if (signerMap[listSignerToRemove[i]]) { 
                 signerMap[listSignerToRemove[i]] = false; 
-                totalUserGameContract -= 1;
+                signerTotal -= 1;
             }
         }
-         emit RemoveListSigner(totalUserGameContract, block.timestamp);
+         emit SignerListRemove(signerTotal, block.timestamp);
     }
 
-    function dailyQuestSubmit(bytes32 questName) external User {
-        emit DailyQuestSubmit(msg.sender, questName);
+    function questSubmitDaily(bytes32 questName) external User {
+        emit QuestCompleteDaily(msg.sender, questName);
     }
 
-    function socialQuestSubmit(bytes32 questName) external User {
-        emit SocialQuestSubmit(msg.sender, questName);
+    function questSubmitSocial(bytes32 questName) external User {
+        emit QuestCompleteSocial(msg.sender, questName);
     }
 
-    function gameQuestSubmit(bytes32 questName) external User {
-        emit GameQuestSubmit(msg.sender, questName);
+    function questSubmitGame(bytes32 questName) external User {
+        emit QuestCompleteGame(msg.sender, questName);
     }
 
-    function checkListSigner(address[] memory listSignerToCheck) external view returns (bool[] memory) {
-        bool[] memory listStatus = new bool[](listSignerToCheck.length);
-        for (uint256 i = 0; i < listSignerToCheck.length; i += 1) {
-            listStatus[i] = signerMap[listSignerToCheck[i]];
+    function signerListCheck(address[] memory signerListToCheck) external view returns (bool[] memory) {
+        bool[] memory statusList = new bool[](signerListToCheck.length);
+        for (uint256 i = 0; i < signerListToCheck.length; i += 1) {
+            statusList[i] = signerMap[signerListToCheck[i]];
         }
-        return listStatus; 
+        return statusList; 
     }
 
     function isSigner(address signerToCheck) external view returns (bool) {
@@ -68,6 +68,6 @@ contract GameContract is Ownable {
     }
 
     function getTotalSigner() external view onlyOwner returns (uint256) {
-        return totalUserGameContract;
+        return signerTotal;
     }
 }
