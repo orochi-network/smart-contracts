@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import hre from 'hardhat';
 import Deployer from '../helpers/deployer';
-import { GameContract } from '../typechain-types';
+import { LittleWicce } from '../typechain-types';
 import { expect } from 'chai';
 import { keccak256, toUtf8Bytes } from 'ethers';
 
@@ -15,9 +15,9 @@ let user05: SignerWithAddress;
 let user06: SignerWithAddress;
 let user07: SignerWithAddress;
 
-let contract: GameContract;
+let contract: LittleWicce;
 
-describe('Game Contract', function () {
+describe('LittleWicce', function () {
   // Before each test, deploy contract and set up accounts
   beforeEach(async () => {
     accounts = await hre.ethers.getSigners();
@@ -25,7 +25,7 @@ describe('Game Contract', function () {
 
     const deployer: Deployer = Deployer.getInstance(hre);
     deployer.connect(deployerSigner);
-    contract = await deployer.contractDeploy<GameContract>('GameContract/GameContract', []);
+    contract = await deployer.contractDeploy<LittleWicce>('sei-onplay/LittleWicce', []);
   });
 
   it('Should deploy contract correctly and initialize state', async () => {
