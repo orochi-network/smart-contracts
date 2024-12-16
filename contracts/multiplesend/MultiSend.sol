@@ -7,7 +7,7 @@ contract MultiSend {
 
     // Send native token to all address in list base on amount input 
     function multiSend(address[] memory recipientList, uint256 amount) external payable {
-        uint256 totalDeficit = 0;
+        uint256 deficitTotal = 0;
         uint256[] memory deficit = new uint256[](recipientList.length);
 
         // Calculate total deficit
@@ -15,15 +15,15 @@ contract MultiSend {
             uint256 balance = address(recipientList[i]).balance;  
             if (balance < amount) {
                 deficit[i] = amount - balance;
-                totalDeficit += deficit[i];
+                deficitTotal += deficit[i];
             } else {
                 deficit[i] = 0;
             }
         }
 
         // Check if enough value to send
-        if (msg.value < totalDeficit) {
-            revert InsufficientValue(msg.value, totalDeficit);
+        if (msg.value < deficitTotal) {
+            revert InsufficientValue(msg.value, deficitTotal);
         }
 
         // Send deficit
@@ -34,7 +34,7 @@ contract MultiSend {
         }
 
         // Refund remaining amount back to the sender
-        uint256 refund = msg.value - totalDeficit;
+        uint256 refund = msg.value - deficitTotal;
         if (refund > 0) {
             payable(msg.sender).transfer(refund);
         }
