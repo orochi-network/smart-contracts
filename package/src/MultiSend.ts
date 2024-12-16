@@ -21,22 +21,30 @@ import type {
   TypedContractMethod,
 } from "./common.js";
 
-export interface MultiSendFixedAmountInterface extends Interface {
-  getFunction(nameOrSignature: "multiSend"): FunctionFragment;
+export interface MultiSendInterface extends Interface {
+  getFunction(nameOrSignature: "checkDeficit" | "multiSend"): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "checkDeficit",
+    values: [AddressLike[], BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "multiSend",
     values: [AddressLike[], BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "checkDeficit",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "multiSend", data: BytesLike): Result;
 }
 
-export interface MultiSendFixedAmount extends BaseContract {
-  connect(runner?: ContractRunner | null): MultiSendFixedAmount;
+export interface MultiSend extends BaseContract {
+  connect(runner?: ContractRunner | null): MultiSend;
   waitForDeployment(): Promise<this>;
 
-  interface: MultiSendFixedAmountInterface;
+  interface: MultiSendInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -75,8 +83,14 @@ export interface MultiSendFixedAmount extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  checkDeficit: TypedContractMethod<
+    [recipientList: AddressLike[], amount: BigNumberish],
+    [bigint[]],
+    "view"
+  >;
+
   multiSend: TypedContractMethod<
-    [recipients: AddressLike[], amount: BigNumberish],
+    [recipientList: AddressLike[], amount: BigNumberish],
     [void],
     "payable"
   >;
@@ -86,9 +100,16 @@ export interface MultiSendFixedAmount extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "checkDeficit"
+  ): TypedContractMethod<
+    [recipientList: AddressLike[], amount: BigNumberish],
+    [bigint[]],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "multiSend"
   ): TypedContractMethod<
-    [recipients: AddressLike[], amount: BigNumberish],
+    [recipientList: AddressLike[], amount: BigNumberish],
     [void],
     "payable"
   >;

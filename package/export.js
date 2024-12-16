@@ -46,7 +46,7 @@ cp('../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol', './IOrocleAggreg
 cp('../contracts/orand-v3/interfaces/IOrandConsumerV3.sol', './IOrandConsumerV3.sol');
 cp('../contracts/orocle-v2/interfaces/IOrocleAggregatorV2.sol', './IOrocleAggregatorV2.sol');
 
-cp('../contracts/multiplesend/interfaces/IMultiSendFixedAmount.sol', './IMultiSendFixedAmount.sol');
+cp('../contracts/multiplesend/interfaces/IMultiSend.sol', './IMultiSend.sol');
 cp('../contracts/gamecontract/interfaces/IGameContract.sol', './IGameContract.sol');
 
 cpAbi('../artifacts/contracts/orosign/OrosignMasterV1.sol/OrosignMasterV1.json', './src/AbiOrosignMasterV1.ts');
@@ -59,8 +59,8 @@ cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json'
 
 cpAbi('../artifacts/contracts/gamecontract/Gamecontract.sol/GameContract.json', './src/AbiGameContract.ts');
 cpAbi(
-  '../artifacts/contracts/multiplesend/MultiSendFixedAmount.sol/MultiSendFixedAmount.json',
-  './src/AbiMultiSendFixedAmount.ts',
+  '../artifacts/contracts/multiplesend/MultiSend.sol/MultiSend.json',
+  './src/AbiMultiSend.ts',
 );
 
 cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/AbiOrocleV2.ts');
@@ -78,7 +78,7 @@ cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts
 cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
 cpTypes('../typechain-types/contracts/token/XORO.ts', './src/XORO.ts');
 cpTypes('../typechain-types/contracts/gamecontract/Gamecontract.sol/GameContract.ts', './src/GameContract.ts');
-cpTypes('../typechain-types/contracts/multiplesend/MultiSendFixedAmount.ts', './src/MultiSendFixedAmount.ts');
+cpTypes('../typechain-types/contracts/multiplesend/MultiSend.ts', './src/MultiSend.ts');
 writeFileSync(
   './src/index.ts',
   [
