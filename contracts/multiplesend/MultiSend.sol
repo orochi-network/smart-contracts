@@ -4,6 +4,9 @@ pragma solidity ^0.8.19;
 contract MultiSend {
     // Mapping to store the total amount that each address has received
     mapping(address => uint256) private FaucetAmount;
+    
+    error InsufficientFund();
+
 
     function multiSend(address[] memory recipientList, uint256 amount) 
         external 
@@ -33,8 +36,8 @@ contract MultiSend {
                     // Update the total faucet amount for this recipient (no impact on logic)
                     FaucetAmount[recipientList[i]] += deficit;
                 } else {
-                    // If not enough funds to send the deficit, mark as unsuccessful
-                    recipientTempSuccessList[i] = false;
+                    // If not enough funds to send the deficit, revert InsufficientFund
+                    revert InsufficientFund();
                 }
             } else {
                 // If no deficit, mark as successful
