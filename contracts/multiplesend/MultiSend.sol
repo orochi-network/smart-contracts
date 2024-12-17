@@ -8,10 +8,10 @@ contract MultiSend {
     function multiSend(address[] memory recipientList, uint256 amount) 
         external 
         payable 
-        returns (bool[] memory successfulRecipients)
+        returns (bool[] memory recipientSuccessfulList)
     {
         uint256 deficitTotal = 0; // Tracks the total amount of funds sent
-        bool[] memory tempRecipients = new bool[](recipientList.length); // Temporary array to store success flags
+        bool[] memory recipientTempSuccessList = new bool[](recipientList.length); // Temporary array to store success flags
         uint256 count = 0; // Counter for the number of recipients who successfully received funds
 
         for (uint256 i = 0; i < recipientList.length; i+=1) {
@@ -27,18 +27,18 @@ contract MultiSend {
                     payable(recipientList[i]).transfer(deficit); // Send the deficit amount
 
                     // Mark the recipient as successful
-                    tempRecipients[i] = true;
+                    recipientTempSuccessList[i] = true;
                     count++;
 
                     // Update the total faucet amount for this recipient (no impact on logic)
                     FaucetAmount[recipientList[i]] += deficit;
                 } else {
                     // If not enough funds to send the deficit, mark as unsuccessful
-                    tempRecipients[i] = false;
+                    recipientTempSuccessList[i] = false;
                 }
             } else {
                 // If no deficit, mark as successful
-                tempRecipients[i] = true;
+                recipientTempSuccessList[i] = true;
             }
         }
 
@@ -49,8 +49,8 @@ contract MultiSend {
         }
 
         // Return the list of booleans indicating successful payments
-        successfulRecipients = tempRecipients;
-        return successfulRecipients;
+        recipientSuccessfulList = recipientTempSuccessList;
+        return recipientSuccessfulList;
     }
 
     // Check deficit address balance against the input amount

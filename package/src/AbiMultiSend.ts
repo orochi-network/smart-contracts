@@ -59,7 +59,7 @@ export const AbiMultiSend = [
     "outputs": [
       {
         "internalType": "bool[]",
-        "name": "successfulRecipients",
+        "name": "recipientSuccessfulList",
         "type": "bool[]"
       }
     ],
