@@ -2,18 +2,21 @@ export const AbiMultiSend = [
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "provided",
-        "type": "uint256"
-      },
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      }
+    ],
+    "name": "AddressFaucetAmount",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "required",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "InsufficientValue",
-    "type": "error"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -53,7 +56,13 @@ export const AbiMultiSend = [
       }
     ],
     "name": "multiSend",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "successfulRecipients",
+        "type": "bool[]"
+      }
+    ],
     "stateMutability": "payable",
     "type": "function"
   }

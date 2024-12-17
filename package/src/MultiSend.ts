@@ -22,8 +22,14 @@ import type {
 } from "./common.js";
 
 export interface MultiSendInterface extends Interface {
-  getFunction(nameOrSignature: "checkDeficit" | "multiSend"): FunctionFragment;
+  getFunction(
+    nameOrSignature: "AddressFaucetAmount" | "checkDeficit" | "multiSend"
+  ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "AddressFaucetAmount",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "checkDeficit",
     values: [AddressLike[], BigNumberish]
@@ -33,6 +39,10 @@ export interface MultiSendInterface extends Interface {
     values: [AddressLike[], BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "AddressFaucetAmount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "checkDeficit",
     data: BytesLike
@@ -83,6 +93,12 @@ export interface MultiSend extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  AddressFaucetAmount: TypedContractMethod<
+    [recipient: AddressLike],
+    [bigint],
+    "view"
+  >;
+
   checkDeficit: TypedContractMethod<
     [recipientList: AddressLike[], amount: BigNumberish],
     [bigint[]],
@@ -91,7 +107,7 @@ export interface MultiSend extends BaseContract {
 
   multiSend: TypedContractMethod<
     [recipientList: AddressLike[], amount: BigNumberish],
-    [void],
+    [boolean[]],
     "payable"
   >;
 
@@ -99,6 +115,9 @@ export interface MultiSend extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "AddressFaucetAmount"
+  ): TypedContractMethod<[recipient: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "checkDeficit"
   ): TypedContractMethod<
@@ -110,7 +129,7 @@ export interface MultiSend extends BaseContract {
     nameOrSignature: "multiSend"
   ): TypedContractMethod<
     [recipientList: AddressLike[], amount: BigNumberish],
-    [void],
+    [boolean[]],
     "payable"
   >;
 

@@ -2,57 +2,78 @@
 pragma solidity ^0.8.19;
 
 contract MultiSend {
-    // Insufficient send value error
-    error InsufficientValue(uint256 provided, uint256 required);
+    // Mapping to store the total amount that each address has received
+    mapping(address => uint256) private FaucetAmount;
 
-    // Send native token to all address in list base on amount input 
-    function multiSend(address[] memory recipientList, uint256 amount) external payable {
-        uint256 deficitTotal = 0;
-        uint256[] memory deficit = new uint256[](recipientList.length);
+    function multiSend(address[] memory recipientList, uint256 amount) 
+        external 
+        payable 
+        returns (bool[] memory successfulRecipients)
+    {
+        uint256 deficitTotal = 0; // Tracks the total amount of funds sent
+        bool[] memory tempRecipients = new bool[](recipientList.length); // Temporary array to store success flags
+        uint256 count = 0; // Counter for the number of recipients who successfully received funds
 
-        // Calculate total deficit
-        for (uint256 i = 0; i < recipientList.length; i+=1) {
-            uint256 balance = address(recipientList[i]).balance;  
+        for (uint256 i = 0; i < recipientList.length; i++) {
+            uint256 balance = address(recipientList[i]).balance;
+
+            // Calculate deficit for the recipient
             if (balance < amount) {
-                deficit[i] = amount - balance;
-                deficitTotal += deficit[i];
+                uint256 deficit = amount - balance;
+
+                // Check if enough value is available to send
+                if (msg.value - deficitTotal >= deficit) {
+                    deficitTotal += deficit; // Add to the total funds sent
+                    payable(recipientList[i]).transfer(deficit); // Send the deficit amount
+
+                    // Mark the recipient as successful
+                    tempRecipients[i] = true;
+                    count++;
+
+                    // Update the total faucet amount for this recipient (no impact on logic)
+                    FaucetAmount[recipientList[i]] += deficit;
+                } else {
+                    // If not enough funds to send the deficit, mark as unsuccessful
+                    tempRecipients[i] = false;
+                }
             } else {
-                deficit[i] = 0;
+                // If no deficit, mark as successful
+                tempRecipients[i] = true;
             }
         }
 
-        // Check if enough value to send
-        if (msg.value < deficitTotal) {
-            revert InsufficientValue(msg.value, deficitTotal);
-        }
-
-        // Send deficit
-        for (uint256 i = 0; i < recipientList.length; i+=1) {
-            if (deficit[i] > 0) {
-                payable(recipientList[i]).transfer(deficit[i]);
-            }
-        }
-
-        // Refund remaining amount back to the sender
+        // Refund any remaining ETH back to the sender
         uint256 refund = msg.value - deficitTotal;
         if (refund > 0) {
             payable(msg.sender).transfer(refund);
         }
+
+        // Return the list of booleans indicating successful payments
+        successfulRecipients = tempRecipients;
+        return successfulRecipients;
     }
 
-    // Check deficit address balance against amount input
-    function checkDeficit(address[] memory recipientList, uint256 amount) external view returns (uint256[] memory) {
-        uint256[] memory deficit = new uint256[](recipientList.length);
+    // Check deficit address balance against the input amount
+    function checkDeficit(address[] memory recipientList, uint256 amount) 
+        external 
+        view 
+        returns (uint256[] memory) 
+    {
+        uint256[] memory deficits = new uint256[](recipientList.length);
 
-        for (uint256 i = 0; i < recipientList.length; i+=1) {
-            uint256 balance = address(recipientList[i]).balance;  
+        for (uint256 i = 0; i < recipientList.length; i++) {
+            uint256 balance = address(recipientList[i]).balance;
+
             if (balance < amount) {
-                deficit[i] = amount - balance;
+                deficits[i] = amount - balance;
             } else {
-                deficit[i] = 0;
+                deficits[i] = 0;
             }
         }
 
-        return deficit;
+        return deficits;
+    }
+    function AddressFaucetAmount(address recipient) external view returns (uint256) {
+        return FaucetAmount[recipient];
     }
 }
