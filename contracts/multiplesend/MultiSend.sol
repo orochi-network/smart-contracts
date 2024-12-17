@@ -14,7 +14,7 @@ contract MultiSend {
         bool[] memory tempRecipients = new bool[](recipientList.length); // Temporary array to store success flags
         uint256 count = 0; // Counter for the number of recipients who successfully received funds
 
-        for (uint256 i = 0; i < recipientList.length; i++) {
+        for (uint256 i = 0; i < recipientList.length; i+=1) {
             uint256 balance = address(recipientList[i]).balance;
 
             // Calculate deficit for the recipient
@@ -61,7 +61,7 @@ contract MultiSend {
     {
         uint256[] memory deficits = new uint256[](recipientList.length);
 
-        for (uint256 i = 0; i < recipientList.length; i++) {
+        for (uint256 i = 0; i < recipientList.length; i+=1) {
             uint256 balance = address(recipientList[i]).balance;
 
             if (balance < amount) {
