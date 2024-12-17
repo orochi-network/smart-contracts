@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  EventFragment,
   AddressLike,
   ContractRunner,
   ContractMethod,
@@ -17,37 +18,34 @@ import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
+  TypedLogDescription,
   TypedListener,
   TypedContractMethod,
 } from "./common.js";
 
 export interface MultiSendInterface extends Interface {
-  getFunction(
-    nameOrSignature: "AddressFaucetAmount" | "checkDeficit" | "multiSend"
-  ): FunctionFragment;
+  getFunction(nameOrSignature: "multiSend"): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "AddressFaucetAmount",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "checkDeficit",
-    values: [AddressLike[], BigNumberish]
-  ): string;
+  getEvent(nameOrSignatureOrTopic: "BalanceUpdate"): EventFragment;
+
   encodeFunctionData(
     functionFragment: "multiSend",
     values: [AddressLike[], BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "AddressFaucetAmount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "checkDeficit",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "multiSend", data: BytesLike): Result;
+}
+
+export namespace BalanceUpdateEvent {
+  export type InputTuple = [balance: BigNumberish];
+  export type OutputTuple = [balance: bigint];
+  export interface OutputObject {
+    balance: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export interface MultiSend extends BaseContract {
@@ -93,21 +91,9 @@ export interface MultiSend extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  AddressFaucetAmount: TypedContractMethod<
-    [recipient: AddressLike],
-    [bigint],
-    "view"
-  >;
-
-  checkDeficit: TypedContractMethod<
-    [recipientList: AddressLike[], amount: BigNumberish],
-    [bigint[]],
-    "view"
-  >;
-
   multiSend: TypedContractMethod<
     [recipientList: AddressLike[], amount: BigNumberish],
-    [boolean[]],
+    [void],
     "payable"
   >;
 
@@ -116,22 +102,31 @@ export interface MultiSend extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "AddressFaucetAmount"
-  ): TypedContractMethod<[recipient: AddressLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "checkDeficit"
-  ): TypedContractMethod<
-    [recipientList: AddressLike[], amount: BigNumberish],
-    [bigint[]],
-    "view"
-  >;
-  getFunction(
     nameOrSignature: "multiSend"
   ): TypedContractMethod<
     [recipientList: AddressLike[], amount: BigNumberish],
-    [boolean[]],
+    [void],
     "payable"
   >;
 
-  filters: {};
+  getEvent(
+    key: "BalanceUpdate"
+  ): TypedContractEvent<
+    BalanceUpdateEvent.InputTuple,
+    BalanceUpdateEvent.OutputTuple,
+    BalanceUpdateEvent.OutputObject
+  >;
+
+  filters: {
+    "BalanceUpdate(uint256)": TypedContractEvent<
+      BalanceUpdateEvent.InputTuple,
+      BalanceUpdateEvent.OutputTuple,
+      BalanceUpdateEvent.OutputObject
+    >;
+    BalanceUpdate: TypedContractEvent<
+      BalanceUpdateEvent.InputTuple,
+      BalanceUpdateEvent.OutputTuple,
+      BalanceUpdateEvent.OutputObject
+    >;
+  };
 }

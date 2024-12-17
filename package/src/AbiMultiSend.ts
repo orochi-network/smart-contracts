@@ -1,46 +1,21 @@
 export const AbiMultiSend = [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      }
-    ],
-    "name": "AddressFaucetAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    "inputs": [],
+    "name": "InsufficientFund",
+    "type": "error"
   },
   {
+    "anonymous": false,
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "recipientList",
-        "type": "address[]"
-      },
-      {
+        "indexed": true,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "balance",
         "type": "uint256"
       }
     ],
-    "name": "checkDeficit",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    "name": "BalanceUpdate",
+    "type": "event"
   },
   {
     "inputs": [
@@ -56,13 +31,7 @@ export const AbiMultiSend = [
       }
     ],
     "name": "multiSend",
-    "outputs": [
-      {
-        "internalType": "bool[]",
-        "name": "recipientSuccessfulList",
-        "type": "bool[]"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "payable",
     "type": "function"
   }
