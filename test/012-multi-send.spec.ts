@@ -12,6 +12,7 @@ let recipient2: SignerWithAddress;
 let recipient3: SignerWithAddress;
 let recipient4: SignerWithAddress;
 let recipient5: SignerWithAddress;
+let recipient6: SignerWithAddress;
 
 let contract: MultiSend;
 
@@ -19,7 +20,7 @@ describe('MultiSend', function () {
   // Deploy the contract and set up accounts before each test
   beforeEach(async () => {
     account = await hre.ethers.getSigners();
-    [deployerSigner, recipient1, recipient2, recipient3, recipient4, recipient5] = account;
+    [deployerSigner, recipient1, recipient2, recipient3, recipient4, recipient5, recipient6] = account;
 
     const deployer: Deployer = Deployer.getInstance(hre);
     deployer.connect(deployerSigner);
@@ -120,6 +121,7 @@ describe('MultiSend', function () {
       recipient5.address,
       recipient3.address,
       recipient4.address,
+      recipient6.address,
     ];
     const amountPerRecipient = hre.ethers.parseEther('1'); // 1 ETH per recipient
 
@@ -153,8 +155,12 @@ describe('MultiSend', function () {
       `0x${hre.ethers.parseUnits('0.9', 'ether').toString(16)}`, // Recipient 5 starts with 0.9 ETH
     ]);
 
+    await hre.ethers.provider.send('hardhat_setBalance', [
+      recipient6.address,
+      `0x${hre.ethers.parseUnits('1.01', 'ether').toString(16)}`, // Recipient 6 starts with 1.01 ETH
+    ]);
     // Calculate the total amount to be sent
-    const totalSent = hre.ethers.parseEther('5'); // Sending 5 ETH total, 1 ETH per recipient
+    const totalSent = hre.ethers.parseEther('6'); // Sending 6 ETH total, 1 ETH per recipient
 
     // Record sender's initial balance before transaction
     const senderInitialBalance = await hre.ethers.provider.getBalance(deployerSigner.address);
@@ -187,7 +193,7 @@ describe('MultiSend', function () {
     console.log('Gas Used: ', gasUsed.toString());
     console.log('Gas Cost: ', gasCost.toString());
 
-    // Refund 2.6 ethers
+    // Refund 3.6 ethers
     const expectedSenderFinalBalance = senderInitialBalance - hre.ethers.parseEther('2.4') - gasCost;
     console.log('Expected Sender Final Balance after refund and gas: ', expectedSenderFinalBalance.toString());
 
@@ -200,6 +206,7 @@ describe('MultiSend', function () {
     const recipient3FinalBalance = await hre.ethers.provider.getBalance(recipient3.address);
     const recipient4FinalBalance = await hre.ethers.provider.getBalance(recipient4.address);
     const recipient5FinalBalance = await hre.ethers.provider.getBalance(recipient5.address);
+    const recipient6FinalBalance = await hre.ethers.provider.getBalance(recipient6.address);
 
     // Log recipient balances
     console.log('Recipient 1 Final Balance: ', recipient1FinalBalance.toString());
@@ -207,6 +214,8 @@ describe('MultiSend', function () {
     console.log('Recipient 3 Final Balance: ', recipient3FinalBalance.toString());
     console.log('Recipient 4 Final Balance: ', recipient4FinalBalance.toString());
     console.log('Recipient 5 Final Balance: ', recipient5FinalBalance.toString());
+    console.log('Recipient 6 Final Balance: ', recipient6FinalBalance.toString());
+
 
     // Verify that each recipient's balance has been updated correctly
     expect(recipient1FinalBalance).to.equal(amountPerRecipient);
@@ -214,6 +223,7 @@ describe('MultiSend', function () {
     expect(recipient3FinalBalance).to.equal(amountPerRecipient);
     expect(recipient4FinalBalance).to.equal(amountPerRecipient);
     expect(recipient5FinalBalance).to.equal(amountPerRecipient);
+    expect(recipient6FinalBalance).to.equal(hre.ethers.parseEther('1.01'))
   });
 
   // Enough send amount

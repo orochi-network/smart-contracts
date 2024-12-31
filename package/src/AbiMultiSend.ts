@@ -5,19 +5,6 @@ export const AbiMultiSend = [
     "type": "error"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      }
-    ],
-    "name": "BalanceUpdate",
-    "type": "event"
-  },
-  {
     "inputs": [
       {
         "internalType": "address[]",
