@@ -9,6 +9,12 @@ export const AbiMultiSend = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "beneficially",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "balance",
         "type": "uint256"

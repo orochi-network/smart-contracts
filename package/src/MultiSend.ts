@@ -37,9 +37,10 @@ export interface MultiSendInterface extends Interface {
 }
 
 export namespace BalanceUpdateEvent {
-  export type InputTuple = [balance: BigNumberish];
-  export type OutputTuple = [balance: bigint];
+  export type InputTuple = [beneficially: AddressLike, balance: BigNumberish];
+  export type OutputTuple = [beneficially: string, balance: bigint];
   export interface OutputObject {
+    beneficially: string;
     balance: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -118,7 +119,7 @@ export interface MultiSend extends BaseContract {
   >;
 
   filters: {
-    "BalanceUpdate(uint256)": TypedContractEvent<
+    "BalanceUpdate(address,uint256)": TypedContractEvent<
       BalanceUpdateEvent.InputTuple,
       BalanceUpdateEvent.OutputTuple,
       BalanceUpdateEvent.OutputObject
