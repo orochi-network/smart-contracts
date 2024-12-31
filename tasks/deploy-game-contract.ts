@@ -6,7 +6,7 @@ import { Deployer } from '../helpers';
 import { GameContract } from '../typechain-types';
 import { getWallet } from '../helpers/wallet';
 
-task('deploy:gameContract', 'Deploy game contracts').setAction(
+task('deploy:gamecontract', 'Deploy game contracts').setAction(
   async (_taskArgs: any, hre: HardhatRuntimeEnvironment) => {
     const { chainId } = await hre.ethers.provider.getNetwork();
     const account = await getWallet(hre, chainId);
