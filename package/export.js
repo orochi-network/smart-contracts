@@ -57,7 +57,7 @@ cpAbi('../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json'
 cpAbi('../artifacts/contracts/orocle-v1/OrocleV1.sol/OrocleV1.json', './src/AbiOrocleV1.ts');
 cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json', './src/AbiOrandProviderV2.ts');
 
-cpAbi('../artifacts/contracts/game-contract/Gamecontract.sol/GameContract.json', './src/AbiGameContract.ts');
+cpAbi('../artifacts/contracts/game-contract/GameContract.sol/GameContract.json', './src/AbiGameContract.ts');
 cpAbi(
   '../artifacts/contracts/multi-send/MultiSend.sol/MultiSend.json',
   './src/AbiMultiSend.ts',
