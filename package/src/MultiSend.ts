@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  EventFragment,
   AddressLike,
   ContractRunner,
   ContractMethod,
@@ -17,6 +18,7 @@ import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
+  TypedLogDescription,
   TypedListener,
   TypedContractMethod,
 } from "./common.js";
@@ -24,12 +26,27 @@ import type {
 export interface MultiSendInterface extends Interface {
   getFunction(nameOrSignature: "multiSend"): FunctionFragment;
 
+  getEvent(nameOrSignatureOrTopic: "BalanceUpdate"): EventFragment;
+
   encodeFunctionData(
     functionFragment: "multiSend",
     values: [AddressLike[], BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "multiSend", data: BytesLike): Result;
+}
+
+export namespace BalanceUpdateEvent {
+  export type InputTuple = [beneficially: AddressLike, balance: BigNumberish];
+  export type OutputTuple = [beneficially: string, balance: bigint];
+  export interface OutputObject {
+    beneficially: string;
+    balance: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export interface MultiSend extends BaseContract {
@@ -93,5 +110,24 @@ export interface MultiSend extends BaseContract {
     "payable"
   >;
 
-  filters: {};
+  getEvent(
+    key: "BalanceUpdate"
+  ): TypedContractEvent<
+    BalanceUpdateEvent.InputTuple,
+    BalanceUpdateEvent.OutputTuple,
+    BalanceUpdateEvent.OutputObject
+  >;
+
+  filters: {
+    "BalanceUpdate(address,uint256)": TypedContractEvent<
+      BalanceUpdateEvent.InputTuple,
+      BalanceUpdateEvent.OutputTuple,
+      BalanceUpdateEvent.OutputObject
+    >;
+    BalanceUpdate: TypedContractEvent<
+      BalanceUpdateEvent.InputTuple,
+      BalanceUpdateEvent.OutputTuple,
+      BalanceUpdateEvent.OutputObject
+    >;
+  };
 }
