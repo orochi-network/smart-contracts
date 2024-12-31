@@ -46,8 +46,8 @@ cp('../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol', './IOrocleAggreg
 cp('../contracts/orand-v3/interfaces/IOrandConsumerV3.sol', './IOrandConsumerV3.sol');
 cp('../contracts/orocle-v2/interfaces/IOrocleAggregatorV2.sol', './IOrocleAggregatorV2.sol');
 
-cp('../contracts/multiplesend/interfaces/IMultiSend.sol', './IMultiSend.sol');
-cp('../contracts/gamecontract/interfaces/IGameContract.sol', './IGameContract.sol');
+cp('../contracts/multi-send/interfaces/IMultiSend.sol', './IMultiSend.sol');
+cp('../contracts/game-contract/interfaces/IGameContract.sol', './IGameContract.sol');
 
 cpAbi('../artifacts/contracts/orosign/OrosignMasterV1.sol/OrosignMasterV1.json', './src/AbiOrosignMasterV1.ts');
 cpAbi('../artifacts/contracts/orosign/OrosignV1.sol/OrosignV1.json', './src/AbiOrosignV1.ts');
@@ -57,9 +57,9 @@ cpAbi('../artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json'
 cpAbi('../artifacts/contracts/orocle-v1/OrocleV1.sol/OrocleV1.json', './src/AbiOrocleV1.ts');
 cpAbi('../artifacts/contracts/orand-v2/OrandProviderV2.sol/OrandProviderV2.json', './src/AbiOrandProviderV2.ts');
 
-cpAbi('../artifacts/contracts/gamecontract/Gamecontract.sol/GameContract.json', './src/AbiGameContract.ts');
+cpAbi('../artifacts/contracts/game-contract/Gamecontract.sol/GameContract.json', './src/AbiGameContract.ts');
 cpAbi(
-  '../artifacts/contracts/multiplesend/MultiSend.sol/MultiSend.json',
+  '../artifacts/contracts/multi-send/MultiSend.sol/MultiSend.json',
   './src/AbiMultiSend.ts',
 );
 
@@ -77,8 +77,8 @@ cpTypes('../typechain-types/contracts/orand-v2/OrandProviderV2.ts', './src/Orand
 cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts');
 cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
 cpTypes('../typechain-types/contracts/token/XORO.ts', './src/XORO.ts');
-cpTypes('../typechain-types/contracts/gamecontract/Gamecontract.sol/GameContract.ts', './src/GameContract.ts');
-cpTypes('../typechain-types/contracts/multiplesend/MultiSend.ts', './src/MultiSend.ts');
+cpTypes('../typechain-types/contracts/game-contract/GameContract.ts', './src/GameContract.ts');
+cpTypes('../typechain-types/contracts/multi-send/MultiSend.ts', './src/MultiSend.ts');
 writeFileSync(
   './src/index.ts',
   [
