@@ -102,6 +102,10 @@ const config: HardhatUserConfig = {
       url: 'https://rpc-mainnet.matic.quiknode.pro',
       chainId: 137,
     },
+    mainnetMatchain: {
+      url: 'https://rpc.matchain.io',
+      chainId: 698,
+    },
     testnetOptimism: {
       url: 'https://sepolia.optimism.io',
       chainId: 11155420,
