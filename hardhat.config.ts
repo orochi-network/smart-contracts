@@ -106,6 +106,14 @@ const config: HardhatUserConfig = {
       url: 'https://rpc.matchain.io',
       chainId: 698,
     },
+    testnetMatchain: {
+      url: 'https://testnet-rpc.matchain.io',
+      chainId: 699,
+    },
+    testnetPentagon: {
+      url: 'https://rpc-testnet.pentagon.games',
+      chainId: 555555,
+    },
     testnetOptimism: {
       url: 'https://sepolia.optimism.io',
       chainId: 11155420,
@@ -339,6 +347,14 @@ const config: HardhatUserConfig = {
       url: 'https://json-rpc.evm.testnet.shimmer.network',
       chainId: 1073,
     },
+    testnetTangle: {
+      url: 'https://testnet-rpc.tangle.tools',
+      chainId: 3799,
+    },
+    mainnetTangle: {
+      url: 'https://rpc.tangle.tools',
+      chainId: 5845,
+    },
 
     // Hard hat network
     hardhat: {
@@ -368,6 +384,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       mainnetBnbChain: env.BSC_API_KEY,
       mainnetXLayer: env.X_LAYER_API_KEY,
+      testnetPentagon: 'testnetPentagon',
     },
     customChains: [
       {
@@ -400,6 +417,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://explorer.etherlink.com/api',
           browserURL: 'https://explorer.etherlink.com',
+        },
+      },
+      {
+        network: 'testnetPentagon',
+        chainId: 555555,
+        urls: {
+          apiURL: 'https://explorer-testnet.pentagon.games/api',
+          browserURL: 'https://explorer-testnet.pentagon.games/',
         },
       },
     ],
