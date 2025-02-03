@@ -14,9 +14,6 @@ contract DiceGameV3 is IOrandConsumerV3, Ownable {
   // Set new oracle
   event SetOracle(address indexed oldProvider, address indexed newProvider);
 
-  // Fulfill awaiting result
-  event Fulfilled(uint256 indexed gameId, uint256 guessed, uint256 indexed result);
-
   // New guess from player
   event NewGuess(address indexed player, uint256 indexed gameId, uint128 indexed guessed);
 
@@ -105,11 +102,11 @@ contract DiceGameV3 is IOrandConsumerV3, Ownable {
       Game memory currentGame = gameResult[fulfilled];
       currentGame.result = uint128((randomness % 6) + 1);
       gameResult[fulfilled] = currentGame;
-      emit Fulfilled(fulfilled, currentGame.guessed, currentGame.result);
       fulfilled += 1;
       return true;
     }
     // We will let the provider know that all are fulfilled
+    IOrocleAggregatorV2(oracle).fulfill(0, '0x');
     return false;
   }
 
