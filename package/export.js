@@ -48,6 +48,8 @@ cp('../contracts/orocle-v2/interfaces/IOrocleAggregatorV2.sol', './IOrocleAggreg
 
 cp('../contracts/multi-send/interfaces/IMultiSend.sol', './IMultiSend.sol');
 cp('../contracts/game-contract/interfaces/IGameContract.sol', './IGameContract.sol');
+cp('../contracts/game-contract/interfaces/IGameContractFactory.sol', './IGameContractFactory.sol');
+
 
 cpAbi('../artifacts/contracts/orosign/OrosignMasterV1.sol/OrosignMasterV1.json', './src/AbiOrosignMasterV1.ts');
 cpAbi('../artifacts/contracts/orosign/OrosignV1.sol/OrosignV1.json', './src/AbiOrosignV1.ts');
@@ -62,6 +64,8 @@ cpAbi(
   '../artifacts/contracts/multi-send/MultiSend.sol/MultiSend.json',
   './src/AbiMultiSend.ts',
 );
+cpAbi('../artifacts/contracts/game-contract/GameContractFactory.sol/GameContractFactory.json', './src/AbiGameContractFactory.ts');
+
 
 cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/AbiOrocleV2.ts');
 cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/AbiOrandProviderV3.ts');
@@ -78,6 +82,7 @@ cpTypes('../typechain-types/contracts/orocle-v2/OrocleV2.ts', './src/OrocleV2.ts
 cpTypes('../typechain-types/contracts/orand-v3/OrandProviderV3.ts', './src/OrandProviderV3.ts');
 cpTypes('../typechain-types/contracts/token/XORO.ts', './src/XORO.ts');
 cpTypes('../typechain-types/contracts/game-contract/GameContract.ts', './src/GameContract.ts');
+cpTypes('../typechain-types/contracts/game-contract/GameContractFactory.ts', './src/GameContractFactory.ts');
 cpTypes('../typechain-types/contracts/multi-send/MultiSend.ts', './src/MultiSend.ts');
 writeFileSync(
   './src/index.ts',
