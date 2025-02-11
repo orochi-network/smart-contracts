@@ -269,6 +269,10 @@ const config: HardhatUserConfig = {
       url: 'https://kopli-rpc.rkt.ink',
       chainId: 5318008,
     },
+    mainnetPlume: {
+      url: 'https://phoenix-rpc.plumenetwork.xyz/',
+      chainId: 98865,
+    },
     testnetIoTex: {
       chainId: 4690,
       url: 'https://babel-api.testnet.iotex.io',
@@ -385,8 +389,26 @@ const config: HardhatUserConfig = {
       mainnetBnbChain: env.BSC_API_KEY,
       mainnetXLayer: env.X_LAYER_API_KEY,
       testnetPentagon: 'testnetPentagon',
+      mainnetTangle: 'mainnetTangle',
+      testnetMatchain: 'some',
     },
     customChains: [
+      {
+        network: 'mainnetTangle',
+        chainId: 5845,
+        urls: {
+          apiURL: 'https://explorer.tangle.tools/api',
+          browserURL: 'https://explorer.tangle.tools/',
+        },
+      },
+      {
+        network: 'testnetMatchain',
+        chainId: 699,
+        urls: {
+          apiURL: 'https://api.testnet.matchscan.io/api',
+          browserURL: 'https://testnet.matchscan.io/',
+        },
+      },
       {
         network: 'mainnetBnbChain',
         chainId: 56,
