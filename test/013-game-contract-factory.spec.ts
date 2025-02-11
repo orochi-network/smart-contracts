@@ -3,7 +3,7 @@ import hre from 'hardhat';
 import Deployer from '../helpers/deployer';
 import { GameContractFactory, GameContract } from '../typechain-types';
 import { expect } from 'chai';
-import { keccak256, toUtf8Bytes } from 'ethers';
+import { keccak256, toUtf8Bytes, getCreate2Address } from 'ethers';
 
 let accounts: SignerWithAddress[];
 let deployerSigner: SignerWithAddress;
@@ -91,7 +91,7 @@ describe('GameContractFactory', function () {
     if (!eventLog) {
       throw new Error('GameContractDeploy event not found');
     }
-
+    // parse event to get new game contract address
     const parsedEvent = factory.interface.parseLog(eventLog);
     if (!parsedEvent) {
       throw new Error(`can not find any parse event`);
@@ -114,24 +114,29 @@ describe('GameContractFactory', function () {
   it('Should return correct deployed contract list', async () => {
     await factory.connect(deployerSigner).signerListAdd([user04.address]);
     const salt = keccak256(toUtf8Bytes('randomSalt2'));
+    // Deploy new contract
     await factory.connect(user04).deployGameContract(user04.address, salt);
-
+    // Get contract list
     const deployedContracts = await factory.getContractListDeploy();
     console.log(deployedContracts.length);
+    // Compare result
     expect(deployedContracts.length).to.equal(2);
   });
 
   it('Should emit correct events when adding and removing signers', async () => {
     const signersToAdd = [user01.address, user02.address];
+    // add singer
     const txAdd = await factory.connect(deployerSigner).signerListAdd(signersToAdd);
+    // store deploy block transaction add
     const blockAdd = await hre.ethers.provider.getBlock('latest');
     if (!blockAdd) {
       throw new Error(`Can not find block`);
     }
     const totalSigner = await factory.signerTotal();
     console.log(totalSigner.toString());
+    // compare with event
     await expect(txAdd).to.emit(factory, 'SignerListAdd').withArgs(totalSigner, blockAdd.timestamp);
-
+    // do same thing with remove
     const txRemove = await factory.connect(deployerSigner).signerListRemove([user01.address]);
     const blockRemove = await hre.ethers.provider.getBlock('latest');
     if (!blockRemove) {
@@ -139,9 +144,7 @@ describe('GameContractFactory', function () {
     }
     const totalSignerAfterRemove = await factory.signerTotal();
 
-    await expect(txRemove)
-      .to.emit(factory, 'SignerListRemove')
-      .withArgs(totalSignerAfterRemove, blockRemove.timestamp);
+    await expect(txRemove).to.emit(factory, 'SignerListRemove').withArgs(totalSignerAfterRemove, blockRemove.timestamp);
   });
 
   it('Should correctly check signer statuses', async () => {
@@ -149,7 +152,48 @@ describe('GameContractFactory', function () {
     const statuses = await factory.signerListCheck([user01.address, user02.address, user05.address]);
     expect(statuses).to.deep.equal([true, true, false]);
   });
+  it('Should predict the deployed GameContract address using CREATE2 and verify it matches', async () => {
+    // Ensure user01 is a valid signer before deployment
+    await factory.connect(deployerSigner).signerListAdd([user01.address]);
 
+    // Generate a unique salt for CREATE2 deployment
+    const salt = keccak256(toUtf8Bytes('predictTestSalt'));
+
+    // Retrieve the contract bytecode from Hardhat's compiled artifacts
+    const contractArtifact = await hre.artifacts.readArtifact('GameContract');
+    const bytecode = contractArtifact.bytecode;
+
+    // Compute the expected address using CREATE2
+    const predictedAddress = getCreate2Address(await factory.getAddress(), salt, keccak256(bytecode));
+
+    console.log(`Predicted GameContract Address: ${predictedAddress}`);
+
+    // Deploy the contract using the factory
+    const tx = await factory.connect(user01).deployGameContract(user01.address, salt);
+    const receipt = await tx.wait();
+    if (!receipt) throw new Error('Transaction receipt not found');
+
+    // Extract the deployed contract address from the event logs
+    const eventLog = receipt.logs.find((log) => {
+      try {
+        const parsedLog = factory.interface.parseLog(log);
+        return parsedLog && parsedLog.name === 'GameContractDeploy';
+      } catch (error) {
+        return false;
+      }
+    });
+
+    if (!eventLog) throw new Error('GameContractDeploy event not found');
+
+    const parsedEvent = factory.interface.parseLog(eventLog);
+    if (!parsedEvent) throw new Error('Parsed event not found');
+
+    deployedGameContractAddress = parsedEvent.args.contractAddress;
+    console.log(`Actual Deployed GameContract Address: ${deployedGameContractAddress}`);
+
+    // Ensure the predicted address matches the actual deployed address
+    expect(deployedGameContractAddress).to.equal(predictedAddress);
+  });
   it('Should transfer ownership correctly', async () => {
     expect(await factory.owner()).to.equal(deployerSigner.address);
 
@@ -164,6 +208,7 @@ describe('GameContractFactory', function () {
     expect(await factory.owner()).to.equal(user02.address);
   });
 
+  // Test game contract after deploy by factory
   it('GameContract should allow only the owner to add signers', async () => {
     await gameContract.connect(user01).signerListAdd([user02.address]);
     expect(await gameContract.signerCheck(user02.address)).to.be.true;
