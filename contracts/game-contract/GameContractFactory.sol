@@ -62,15 +62,15 @@ contract GameContractFactory is Ownable {
     }
 
     // Deploy game contract
-    function deployGameContract(address _GameContractOwner, bytes32 salt) external onlyUser {
+    function deployGameContract(address gameContractOwner, bytes32 salt) external onlyUser {
 
         GameContract newGameContract = new GameContract{salt: salt}();
 
-        newGameContract.transferOwnership(_GameContractOwner); 
+        newGameContract.transferOwnership(gameContractOwner); 
 
         contractListDeploy.push(address(newGameContract));
 
-        emit GameContractDeploy(_GameContractOwner, address(newGameContract));
+        emit GameContractDeploy(gameContractOwner, address(newGameContract));
     
     }
 

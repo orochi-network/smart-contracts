@@ -84,7 +84,7 @@ export const AbiGameContractFactory = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_GameContractOwner",
+        "name": "gameContractOwner",
         "type": "address"
       },
       {

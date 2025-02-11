@@ -225,7 +225,7 @@ export interface GameContractFactory extends BaseContract {
   ): Promise<this>;
 
   deployGameContract: TypedContractMethod<
-    [_GameContractOwner: AddressLike, salt: BytesLike],
+    [gameContractOwner: AddressLike, salt: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -275,7 +275,7 @@ export interface GameContractFactory extends BaseContract {
   getFunction(
     nameOrSignature: "deployGameContract"
   ): TypedContractMethod<
-    [_GameContractOwner: AddressLike, salt: BytesLike],
+    [gameContractOwner: AddressLike, salt: BytesLike],
     [void],
     "nonpayable"
   >;
