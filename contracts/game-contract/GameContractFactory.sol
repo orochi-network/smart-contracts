@@ -57,7 +57,8 @@ contract GameContractFactory is Ownable {
         _;
     }
 
-    constructor(address _implementation) onlyValidAddress((_implementation)){
+
+    constructor(address _implementation) onlyValidAddress(_implementation){
         implementation = _implementation;
     }
 
@@ -108,8 +109,9 @@ contract GameContractFactory is Ownable {
         emit UpgradeImplementation(implementation, newImplementation);
         return true;
     }
+
     /*******************************************************
-    * External view section
+    * Internal pure section
     ********************************************************/
 
     // packing salt and address to generate unique salt for this address
@@ -118,6 +120,10 @@ contract GameContractFactory is Ownable {
         packed := or(shl(160, a), b)
         }
     }
+
+    /*******************************************************
+    * External view section
+    ********************************************************/
 
     // Predict deploy address with this salt
     function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address predictedAddress) {
@@ -130,7 +136,7 @@ contract GameContractFactory is Ownable {
     }
 
     // Check if contract existed
-    function _isGameContractExist(address gameContractAddress) external view returns (bool isExist) {
+    function isGameContractExist(address gameContractAddress) external view returns (bool isExist) {
         return gameContractAddress.code.length > 0;
     }
 

@@ -35,7 +35,7 @@ contract GameContract is Ownable {
     event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     // Init event
-    event Initialize(address indexed owner, uint256 indexed timestamp);
+    event Initialize(address indexed contractAddress, address indexed ownerAddress, uint256 indexed timestamp);
 
     // We only allow User have been add by owner
     modifier onlyUser() {
@@ -45,19 +45,23 @@ contract GameContract is Ownable {
         _;
     }
 
+    // Modifier to check if already initialized
+    modifier onlyOnceInitialize() {
+        if (_initialized) {
+            revert OnlyAbleToInitOnce();
+        }
+        _;
+    }
 
     /*******************************************************
     * External section
     ********************************************************/
 
     // init once time
-    function initialize(address newGameContractOwner) external {
-        if(_initialized){
-            revert OnlyAbleToInitOnce();
-        }
+    function initialize(address newGameContractOwner) external onlyOnceInitialize {
         _transferOwnership(newGameContractOwner);
         _initialized = true;
-        emit Initialize(newGameContractOwner, block.timestamp);
+        emit Initialize(address(this), newGameContractOwner, block.timestamp);
     }
 
     // Add new Users in list
