@@ -158,7 +158,7 @@ contract GameContractFactory is Ownable {
         return _userTotal;
     }
 
-    // Pacing salt and creator address
+    // Packing salt and creator address
     function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256 packedSalt) {
         return uint256(_packing(salt, creatorAddress));
     }
