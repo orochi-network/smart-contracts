@@ -8,23 +8,23 @@ interface IGameContractFactory {
 
     // Events
     event GameContractDeploy(address indexed owner, address indexed contractAddress);
-    event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
-    event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
     event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
 
     /**
     * Add new User to list, only owner contract can transact this function
-    * @param signerListToAdd address[] - List of User addresses to add
-    * Emits event SignerListAdd with total User and block timestamp
+    * @param userListToAdd address[] - List of User addresses to add
+    * Emits event UserListAdd with total User and block timestamp
     */
-    function signerListAdd(address[] memory signerListToAdd) external;
+    function userListAdd(address[] memory userListToAdd) external;
 
     /**
     * Remove old User from list, only owner contract can transact this function
-    * @param listSignerToRemove address[] - List of User addresses to remove
-    * Emits event SignerListRemove with total User and block timestamp
+    * @param userListToRemove address[] - List of User addresses to remove
+    * Emits event UserListRemove with total User and block timestamp
     */
-    function signerListRemove(address[] memory listSignerToRemove) external;
+    function userListRemove(address[] memory userListToRemove) external;
 
     /**
     * Use to deploy game contract
@@ -42,21 +42,21 @@ interface IGameContractFactory {
 
         /**
     * Check status of each address in the list
-    * @param signerListToCheck address[] - List of addresses to check
+    * @param userListToCheck address[] - List of addresses to check
     * @return bool[] - Returns an array of booleans corresponding to each address status
     */
-    function signerListCheck(address[] memory signerListToCheck) external view returns (bool[] memory);
+    function userListCheck(address[] memory userListToCheck) external view returns (bool[] memory);
 
     /**
     * Check status of a specific address
-    * @param signerToCheck address - The address to check
+    * @param userToCheck address - The address to check
     * @return bool - Returns the status of the given address
     */
-    function signerCheck(address signerToCheck) external view returns (bool);
+    function userCheck(address userToCheck) external view returns (bool);
 
     /**
     * Show the total number of users added
     * @return uint256 - The total number of users added to the list
     */
-    function signerTotal() external view returns (uint256);
+    function userTotal() external view returns (uint256);
 }

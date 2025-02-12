@@ -31,7 +31,7 @@ export const AbiGameContractFactory = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "ownerAddress",
         "type": "address"
       },
       {
@@ -39,6 +39,12 @@ export const AbiGameContractFactory = [
         "internalType": "address",
         "name": "contractAddress",
         "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
       }
     ],
     "name": "GameContractDeploy",
@@ -68,44 +74,6 @@ export const AbiGameContractFactory = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "totalAddedUser",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "SignerListAdd",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "totalAddedUser",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "SignerListRemove",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "address",
         "name": "oldImplementation",
         "type": "address"
@@ -121,42 +89,42 @@ export const AbiGameContractFactory = [
     "type": "event"
   },
   {
+    "anonymous": false,
     "inputs": [
       {
-        "internalType": "address",
-        "name": "gameContractAddress",
-        "type": "address"
-      }
-    ],
-    "name": "_isGameContractExist",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "isExist",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
+        "indexed": true,
         "internalType": "uint256",
-        "name": "",
+        "name": "totalAddedUser",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "timestamp",
         "type": "uint256"
       }
     ],
-    "name": "contractListDeploy",
-    "outputs": [
+    "name": "UserListAdd",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "totalAddedUser",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "name": "UserListRemove",
+    "type": "event"
   },
   {
     "inputs": [
@@ -183,13 +151,38 @@ export const AbiGameContractFactory = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getContractListDeploy",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "gameContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getGameContractOwner",
     "outputs": [
       {
-        "internalType": "address[]",
+        "internalType": "address",
         "name": "",
-        "type": "address[]"
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "gameContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "isGameContractExist",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isExist",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -267,83 +260,6 @@ export const AbiGameContractFactory = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "signerToCheck",
-        "type": "address"
-      }
-    ],
-    "name": "signerCheck",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "signerListToAdd",
-        "type": "address[]"
-      }
-    ],
-    "name": "signerListAdd",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "signerListToCheck",
-        "type": "address[]"
-      }
-    ],
-    "name": "signerListCheck",
-    "outputs": [
-      {
-        "internalType": "bool[]",
-        "name": "",
-        "type": "bool[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "listSignerToRemove",
-        "type": "address[]"
-      }
-    ],
-    "name": "signerListRemove",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "signerTotal",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "newOwner",
         "type": "address"
       }
@@ -370,6 +286,83 @@ export const AbiGameContractFactory = [
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "userToCheck",
+        "type": "address"
+      }
+    ],
+    "name": "userCheck",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "userListToAdd",
+        "type": "address[]"
+      }
+    ],
+    "name": "userListAdd",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "userListToCheck",
+        "type": "address[]"
+      }
+    ],
+    "name": "userListCheck",
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "",
+        "type": "bool[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "userListToRemove",
+        "type": "address[]"
+      }
+    ],
+    "name": "userListRemove",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "userTotal",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ];

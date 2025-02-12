@@ -11,10 +11,10 @@ contract GameContract is Ownable {
     error OnlyAbleToInitOnce();
 
     // Signer List
-    mapping(address => bool) private _signerMap;
+    mapping(address => bool) private _userMap;
 
     // Signer Total
-    uint256 private _signerTotal;
+    uint256 private _userTotal;
 
     // init state
     bool private _initialized = false;
@@ -29,17 +29,17 @@ contract GameContract is Ownable {
     event QuestCompleteGame(address indexed user, bytes32 indexed questName);
 
     //  Add list Users
-    event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     // Remove list Users
-    event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     // Init event
-    event Initialize(address indexed contractAddress, address indexed ownerAddress, uint256 indexed timestamp);
+    event Initialize(address indexed contractAddress, address indexed ownerAddress, bytes32 indexed salt);
 
     // We only allow User have been add by owner
     modifier onlyUser() {
-        if (!_signerMap[msg.sender]) {
+        if (!_userMap[msg.sender]) {
             revert InvalidUser();
         }
         _;
@@ -58,32 +58,32 @@ contract GameContract is Ownable {
     ********************************************************/
 
     // init once time
-    function initialize(address newGameContractOwner) external onlyOnceInitialize {
+    function initialize(address newGameContractOwner, bytes32 salt) external onlyOnceInitialize {
         _transferOwnership(newGameContractOwner);
         _initialized = true;
-        emit Initialize(address(this), newGameContractOwner, block.timestamp);
+        emit Initialize(address(this), newGameContractOwner, salt);
     }
 
     // Add new Users in list
-    function signerListAdd(address[] memory signerListToAdd) external onlyOwner {
-        for (uint256 i = 0; i < signerListToAdd.length; i += 1) {
-            if (!_signerMap[signerListToAdd[i]]) { 
-                _signerMap[signerListToAdd[i]] = true; 
-                _signerTotal += 1;
+    function userListAdd(address[] memory userListToAdd) external onlyOwner {
+        for (uint256 i = 0; i < userListToAdd.length; i += 1) {
+            if (!_userMap[userListToAdd[i]]) { 
+                _userMap[userListToAdd[i]] = true; 
+                _userTotal += 1;
             }
         }
-        emit SignerListAdd(_signerTotal, block.timestamp);
+        emit UserListAdd(_userTotal, block.timestamp);
     }
 
     // Remove old Users in list
-    function signerListRemove(address[] memory listSignerToRemove) external onlyOwner {
-        for (uint256 i = 0; i < listSignerToRemove.length; i += 1) {
-            if (_signerMap[listSignerToRemove[i]]) { 
-                _signerMap[listSignerToRemove[i]] = false; 
-                _signerTotal -= 1;
+    function userListRemove(address[] memory userListToRemove) external onlyOwner {
+        for (uint256 i = 0; i < userListToRemove.length; i += 1) {
+            if (_userMap[userListToRemove[i]]) { 
+                _userMap[userListToRemove[i]] = false; 
+                _userTotal -= 1;
             }
         }
-         emit SignerListRemove(_signerTotal, block.timestamp);
+         emit UserListRemove(_userTotal, block.timestamp);
     }
 
     // submit transaction daily quest
@@ -105,22 +105,22 @@ contract GameContract is Ownable {
     * External view section
     ********************************************************/
 
-    // Check list signer status which have add and which hasn't add
-    function signerListCheck(address[] memory signerListToCheck) external view returns (bool[] memory) {
-        bool[] memory statusList = new bool[](signerListToCheck.length);
-        for (uint256 i = 0; i < signerListToCheck.length; i += 1) {
-            statusList[i] = _signerMap[signerListToCheck[i]];
+    // Check list user status which have add and which hasn't add
+    function userListCheck(address[] memory userListToCheck) external view returns (bool[] memory) {
+        bool[] memory statusList = new bool[](userListToCheck.length);
+        for (uint256 i = 0; i < userListToCheck.length; i += 1) {
+            statusList[i] = _userMap[userListToCheck[i]];
         }
         return statusList; 
     }
 
-    // Check signer status 
-    function signerCheck(address signerToCheck) external view returns (bool) {
-        return _signerMap[signerToCheck];
+    // Check user status 
+    function userCheck(address userToCheck) external view returns (bool) {
+        return _userMap[userToCheck];
     }
 
-    // Total signer has been added
-    function signerTotal() external view returns (uint256) {
-        return _signerTotal;
+    // Total user has been added
+    function userTotal() external view returns (uint256) {
+        return _userTotal;
     }
 }

@@ -32,12 +32,12 @@ export interface GameContractInterface extends Interface {
       | "questSubmitGame"
       | "questSubmitSocial"
       | "renounceOwnership"
-      | "signerCheck"
-      | "signerListAdd"
-      | "signerListCheck"
-      | "signerListRemove"
-      | "signerTotal"
       | "transferOwnership"
+      | "userCheck"
+      | "userListAdd"
+      | "userListCheck"
+      | "userListRemove"
+      | "userTotal"
   ): FunctionFragment;
 
   getEvent(
@@ -47,13 +47,13 @@ export interface GameContractInterface extends Interface {
       | "QuestCompleteDaily"
       | "QuestCompleteGame"
       | "QuestCompleteSocial"
-      | "SignerListAdd"
-      | "SignerListRemove"
+      | "UserListAdd"
+      | "UserListRemove"
   ): EventFragment;
 
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike]
+    values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -73,29 +73,26 @@ export interface GameContractInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "signerCheck",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "signerListAdd",
-    values: [AddressLike[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "signerListCheck",
-    values: [AddressLike[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "signerListRemove",
-    values: [AddressLike[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "signerTotal",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "userCheck",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "userListAdd",
+    values: [AddressLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "userListCheck",
+    values: [AddressLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "userListRemove",
+    values: [AddressLike[]]
+  ): string;
+  encodeFunctionData(functionFragment: "userTotal", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -116,37 +113,40 @@ export interface GameContractInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "signerCheck",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "signerListAdd",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "signerListCheck",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "signerListRemove",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "signerTotal",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "userCheck", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "userListAdd",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "userListCheck",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "userListRemove",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "userTotal", data: BytesLike): Result;
 }
 
 export namespace InitializeEvent {
-  export type InputTuple = [owner: AddressLike, timestamp: BigNumberish];
-  export type OutputTuple = [owner: string, timestamp: bigint];
+  export type InputTuple = [
+    contractAddress: AddressLike,
+    ownerAddress: AddressLike,
+    salt: BytesLike
+  ];
+  export type OutputTuple = [
+    contractAddress: string,
+    ownerAddress: string,
+    salt: string
+  ];
   export interface OutputObject {
-    owner: string;
-    timestamp: bigint;
+    contractAddress: string;
+    ownerAddress: string;
+    salt: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -206,7 +206,7 @@ export namespace QuestCompleteSocialEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace SignerListAddEvent {
+export namespace UserListAddEvent {
   export type InputTuple = [
     totalAddedUser: BigNumberish,
     timestamp: BigNumberish
@@ -222,7 +222,7 @@ export namespace SignerListAddEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace SignerListRemoveEvent {
+export namespace UserListRemoveEvent {
   export type InputTuple = [
     totalAddedUser: BigNumberish,
     timestamp: BigNumberish
@@ -282,7 +282,7 @@ export interface GameContract extends BaseContract {
   ): Promise<this>;
 
   initialize: TypedContractMethod<
-    [newGameContractOwner: AddressLike],
+    [newGameContractOwner: AddressLike, salt: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -309,37 +309,33 @@ export interface GameContract extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  signerCheck: TypedContractMethod<
-    [signerToCheck: AddressLike],
-    [boolean],
-    "view"
-  >;
-
-  signerListAdd: TypedContractMethod<
-    [signerListToAdd: AddressLike[]],
-    [void],
-    "nonpayable"
-  >;
-
-  signerListCheck: TypedContractMethod<
-    [signerListToCheck: AddressLike[]],
-    [boolean[]],
-    "view"
-  >;
-
-  signerListRemove: TypedContractMethod<
-    [listSignerToRemove: AddressLike[]],
-    [void],
-    "nonpayable"
-  >;
-
-  signerTotal: TypedContractMethod<[], [bigint], "view">;
-
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
     [void],
     "nonpayable"
   >;
+
+  userCheck: TypedContractMethod<[userToCheck: AddressLike], [boolean], "view">;
+
+  userListAdd: TypedContractMethod<
+    [userListToAdd: AddressLike[]],
+    [void],
+    "nonpayable"
+  >;
+
+  userListCheck: TypedContractMethod<
+    [userListToCheck: AddressLike[]],
+    [boolean[]],
+    "view"
+  >;
+
+  userListRemove: TypedContractMethod<
+    [userListToRemove: AddressLike[]],
+    [void],
+    "nonpayable"
+  >;
+
+  userTotal: TypedContractMethod<[], [bigint], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -348,7 +344,7 @@ export interface GameContract extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [newGameContractOwner: AddressLike],
+    [newGameContractOwner: AddressLike, salt: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -368,35 +364,27 @@ export interface GameContract extends BaseContract {
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "signerCheck"
-  ): TypedContractMethod<[signerToCheck: AddressLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "signerListAdd"
-  ): TypedContractMethod<
-    [signerListToAdd: AddressLike[]],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "signerListCheck"
-  ): TypedContractMethod<
-    [signerListToCheck: AddressLike[]],
-    [boolean[]],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "signerListRemove"
-  ): TypedContractMethod<
-    [listSignerToRemove: AddressLike[]],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "signerTotal"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "userCheck"
+  ): TypedContractMethod<[userToCheck: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "userListAdd"
+  ): TypedContractMethod<[userListToAdd: AddressLike[]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "userListCheck"
+  ): TypedContractMethod<[userListToCheck: AddressLike[]], [boolean[]], "view">;
+  getFunction(
+    nameOrSignature: "userListRemove"
+  ): TypedContractMethod<
+    [userListToRemove: AddressLike[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "userTotal"
+  ): TypedContractMethod<[], [bigint], "view">;
 
   getEvent(
     key: "Initialize"
@@ -434,22 +422,22 @@ export interface GameContract extends BaseContract {
     QuestCompleteSocialEvent.OutputObject
   >;
   getEvent(
-    key: "SignerListAdd"
+    key: "UserListAdd"
   ): TypedContractEvent<
-    SignerListAddEvent.InputTuple,
-    SignerListAddEvent.OutputTuple,
-    SignerListAddEvent.OutputObject
+    UserListAddEvent.InputTuple,
+    UserListAddEvent.OutputTuple,
+    UserListAddEvent.OutputObject
   >;
   getEvent(
-    key: "SignerListRemove"
+    key: "UserListRemove"
   ): TypedContractEvent<
-    SignerListRemoveEvent.InputTuple,
-    SignerListRemoveEvent.OutputTuple,
-    SignerListRemoveEvent.OutputObject
+    UserListRemoveEvent.InputTuple,
+    UserListRemoveEvent.OutputTuple,
+    UserListRemoveEvent.OutputObject
   >;
 
   filters: {
-    "Initialize(address,uint256)": TypedContractEvent<
+    "Initialize(address,address,bytes32)": TypedContractEvent<
       InitializeEvent.InputTuple,
       InitializeEvent.OutputTuple,
       InitializeEvent.OutputObject
@@ -504,26 +492,26 @@ export interface GameContract extends BaseContract {
       QuestCompleteSocialEvent.OutputObject
     >;
 
-    "SignerListAdd(uint256,uint256)": TypedContractEvent<
-      SignerListAddEvent.InputTuple,
-      SignerListAddEvent.OutputTuple,
-      SignerListAddEvent.OutputObject
+    "UserListAdd(uint256,uint256)": TypedContractEvent<
+      UserListAddEvent.InputTuple,
+      UserListAddEvent.OutputTuple,
+      UserListAddEvent.OutputObject
     >;
-    SignerListAdd: TypedContractEvent<
-      SignerListAddEvent.InputTuple,
-      SignerListAddEvent.OutputTuple,
-      SignerListAddEvent.OutputObject
+    UserListAdd: TypedContractEvent<
+      UserListAddEvent.InputTuple,
+      UserListAddEvent.OutputTuple,
+      UserListAddEvent.OutputObject
     >;
 
-    "SignerListRemove(uint256,uint256)": TypedContractEvent<
-      SignerListRemoveEvent.InputTuple,
-      SignerListRemoveEvent.OutputTuple,
-      SignerListRemoveEvent.OutputObject
+    "UserListRemove(uint256,uint256)": TypedContractEvent<
+      UserListRemoveEvent.InputTuple,
+      UserListRemoveEvent.OutputTuple,
+      UserListRemoveEvent.OutputObject
     >;
-    SignerListRemove: TypedContractEvent<
-      SignerListRemoveEvent.InputTuple,
-      SignerListRemoveEvent.OutputTuple,
-      SignerListRemoveEvent.OutputObject
+    UserListRemove: TypedContractEvent<
+      UserListRemoveEvent.InputTuple,
+      UserListRemoveEvent.OutputTuple,
+      UserListRemoveEvent.OutputObject
     >;
   };
 }

@@ -15,14 +15,20 @@ export const AbiGameContract = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "contractAddress",
         "type": "address"
       },
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
       }
     ],
     "name": "Initialize",
@@ -120,7 +126,7 @@ export const AbiGameContract = [
         "type": "uint256"
       }
     ],
-    "name": "SignerListAdd",
+    "name": "UserListAdd",
     "type": "event"
   },
   {
@@ -139,7 +145,7 @@ export const AbiGameContract = [
         "type": "uint256"
       }
     ],
-    "name": "SignerListRemove",
+    "name": "UserListRemove",
     "type": "event"
   },
   {
@@ -148,6 +154,11 @@ export const AbiGameContract = [
         "internalType": "address",
         "name": "newGameContractOwner",
         "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
       }
     ],
     "name": "initialize",
@@ -218,11 +229,24 @@ export const AbiGameContract = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "signerToCheck",
+        "name": "newOwner",
         "type": "address"
       }
     ],
-    "name": "signerCheck",
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "userToCheck",
+        "type": "address"
+      }
+    ],
+    "name": "userCheck",
     "outputs": [
       {
         "internalType": "bool",
@@ -237,11 +261,11 @@ export const AbiGameContract = [
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "signerListToAdd",
+        "name": "userListToAdd",
         "type": "address[]"
       }
     ],
-    "name": "signerListAdd",
+    "name": "userListAdd",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -250,11 +274,11 @@ export const AbiGameContract = [
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "signerListToCheck",
+        "name": "userListToCheck",
         "type": "address[]"
       }
     ],
-    "name": "signerListCheck",
+    "name": "userListCheck",
     "outputs": [
       {
         "internalType": "bool[]",
@@ -269,18 +293,18 @@ export const AbiGameContract = [
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "listSignerToRemove",
+        "name": "userListToRemove",
         "type": "address[]"
       }
     ],
-    "name": "signerListRemove",
+    "name": "userListRemove",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "signerTotal",
+    "name": "userTotal",
     "outputs": [
       {
         "internalType": "uint256",
@@ -289,19 +313,6 @@ export const AbiGameContract = [
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   }
 ];

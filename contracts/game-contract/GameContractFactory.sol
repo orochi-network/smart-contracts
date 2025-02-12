@@ -12,22 +12,22 @@ contract GameContractFactory is Ownable {
     address private implementation;
 
     // Contract deployed array 
-    address[] public contractListDeploy;
+    mapping(address => address) private _gameContractMapDeploy;
 
     // Signer list
-    mapping(address => bool) private _signerMap;
+    mapping(address => bool) private _userMap;
 
     // Signer total
-    uint256 private _signerTotal;
+    uint256 private _userTotal;
 
     // Game Contract deployed event
-    event GameContractDeploy(address indexed owner, address indexed contractAddress);
+    event GameContractDeploy(address indexed ownerAddress, address indexed contractAddress, bytes32 indexed salt);
 
     //  Add list Users
-    event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     // Remove list Users
-    event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
     // Upgrade implementation
     event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
@@ -43,7 +43,7 @@ contract GameContractFactory is Ownable {
 
     // We only allow User have been add by owner
     modifier onlyUser() {
-        if (!_signerMap[msg.sender]) {
+        if (!_userMap[msg.sender]) {
             revert InvalidUser();
         }
         _;
@@ -52,7 +52,7 @@ contract GameContractFactory is Ownable {
     // Check address is valid
     modifier onlyValidAddress(address validatingAddress) {
         if (validatingAddress == address(0)) {
-        revert InvalidAddress();
+            revert InvalidAddress();
         }
         _;
     }
@@ -68,35 +68,34 @@ contract GameContractFactory is Ownable {
     ********************************************************/
 
     // Add new Users in list
-    function signerListAdd(address[] memory signerListToAdd) external onlyOwner {
-        for (uint256 i = 0; i < signerListToAdd.length; i += 1) {
-            if (!_signerMap[signerListToAdd[i]]) { 
-                _signerMap[signerListToAdd[i]] = true; 
-                _signerTotal += 1;
+    function userListAdd(address[] memory userListToAdd) external onlyOwner {
+        for (uint256 i = 0; i < userListToAdd.length; i += 1) {
+            if (!_userMap[userListToAdd[i]]) { 
+                _userMap[userListToAdd[i]] = true; 
+                _userTotal += 1;
             }
         }
-        emit SignerListAdd(_signerTotal, block.timestamp);
+        emit UserListAdd(_userTotal, block.timestamp);
     }
 
     // Remove old Users in list
-    function signerListRemove(address[] memory listSignerToRemove) external onlyOwner {
-        for (uint256 i = 0; i < listSignerToRemove.length; i += 1) {
-            if (_signerMap[listSignerToRemove[i]]) { 
-                _signerMap[listSignerToRemove[i]] = false; 
-                _signerTotal -= 1;
+    function userListRemove(address[] memory userListToRemove) external onlyOwner {
+        for (uint256 i = 0; i < userListToRemove.length; i += 1) {
+            if (_userMap[userListToRemove[i]]) { 
+                _userMap[userListToRemove[i]] = false; 
+                _userTotal -= 1;
             }
         }
-        emit SignerListRemove(_signerTotal, block.timestamp);
+        emit UserListRemove(_userTotal, block.timestamp);
     }
 
     // Deploy game contract
     function deployGameContract(address gameContractOwner, uint96 salt) external onlyUser returns (address) {
         address clone = implementation.cloneDeterministic(_packing(salt, msg.sender));
 
-        GameContract(clone).initialize(gameContractOwner);
-
-        contractListDeploy.push(clone);
-        emit GameContractDeploy(gameContractOwner, clone);
+        GameContract(clone).initialize(gameContractOwner, _packing(salt, msg.sender));
+        _gameContractMapDeploy[clone] = msg.sender;
+        emit GameContractDeploy(gameContractOwner, clone, _packing(salt, msg.sender));
         return clone;
     }
     
@@ -130,9 +129,9 @@ contract GameContractFactory is Ownable {
         return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
     }
     
-    // Get all address contract
-    function getContractListDeploy() external view returns (address[] memory) {
-        return contractListDeploy;
+    // Get contract owner
+    function getGameContractOwner(address gameContractAddress) external view returns (address) {
+        return _gameContractMapDeploy[gameContractAddress];
     }
 
     // Check if contract existed
@@ -140,23 +139,23 @@ contract GameContractFactory is Ownable {
         return gameContractAddress.code.length > 0;
     }
 
-    // Check list signer status which have add and which hasn't add
-    function signerListCheck(address[] memory signerListToCheck) external view returns (bool[] memory) {
-        bool[] memory statusList = new bool[](signerListToCheck.length);
-        for (uint256 i = 0; i < signerListToCheck.length; i += 1) {
-            statusList[i] = _signerMap[signerListToCheck[i]];
+    // Check list user status which have add and which hasn't add
+    function userListCheck(address[] memory userListToCheck) external view returns (bool[] memory) {
+        bool[] memory statusList = new bool[](userListToCheck.length);
+        for (uint256 i = 0; i < userListToCheck.length; i += 1) {
+            statusList[i] = _userMap[userListToCheck[i]];
         }
         return statusList; 
     }
 
-    // Check signer status 
-    function signerCheck(address signerToCheck) external view returns (bool) {
-        return _signerMap[signerToCheck];
+    // Check user status 
+    function userCheck(address userToCheck) external view returns (bool) {
+        return _userMap[userToCheck];
     }
 
-    // Total signer has been added
-    function signerTotal() external view returns (uint256) {
-        return _signerTotal;
+    // Total user has been added
+    function userTotal() external view returns (uint256) {
+        return _userTotal;
     }
 
     // Pacing salt and creator address
