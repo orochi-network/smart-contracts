@@ -5,7 +5,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { getWallet } from '../helpers/wallet';
 import { GameContractFactory } from '../typechain-types';
 
-const CONTRACT_ADDRESS = '0x9E38C01b42125fE8e183be151Dee115A88fF0617';
+const CONTRACT_ADDRESS = '0x7c8DC9eB45FF302BAc473205F91D6ca915813ACe';
 
 task('transferOwnership:gameContractFactory', 'Transfer ownership to owner contract Factory').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
   const OwnerAddress = '0x73100880b1B6F0De121CAc27C418BF77183e3768';

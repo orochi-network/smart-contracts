@@ -10,6 +10,7 @@ interface IGameContractFactory {
     event GameContractDeploy(address indexed owner, address indexed contractAddress);
     event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
     event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
 
     /**
     * Add new User to list, only owner contract can transact this function
@@ -29,7 +30,7 @@ interface IGameContractFactory {
     * Use to deploy game contract
     * @param _GameContractOwner address - Owner address of game contract deployed
     * @param salt address - Salt to set up deploy smart contract address
-    * Emits event QuestCompleteSocial with User address and hash value
+    * Emits event GameContractDeploy with owner address and game contract address
     */
     function deployGameContract(address _GameContractOwner, bytes32 salt) external;
 

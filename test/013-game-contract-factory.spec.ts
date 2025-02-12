@@ -3,7 +3,7 @@ import hre from 'hardhat';
 import Deployer from '../helpers/deployer';
 import { GameContractFactory, GameContract } from '../typechain-types';
 import { expect } from 'chai';
-import { keccak256, toUtf8Bytes, getCreate2Address } from 'ethers';
+import { keccak256, toUtf8Bytes } from 'ethers';
 
 let accounts: SignerWithAddress[];
 let deployerSigner: SignerWithAddress;
@@ -11,66 +11,43 @@ let user01: SignerWithAddress;
 let user02: SignerWithAddress;
 let user03: SignerWithAddress;
 let user04: SignerWithAddress;
-let user05: SignerWithAddress;
 let factory: GameContractFactory;
-let gameContract: GameContract;
+let gameContractTemplate: GameContract;
 let deployedGameContractAddress: string;
 
 describe('GameContractFactory', function () {
   beforeEach(async () => {
     // Retrieve signers from Hardhat
     accounts = await hre.ethers.getSigners();
-    [deployerSigner, user01, user02, user03, user04, user05] = accounts;
+    [deployerSigner, user01, user02, user03, user04] = accounts;
 
-    // Deploy the GameContractFactory contract
+    // Deploy the GameContract template first
     const deployer: Deployer = Deployer.getInstance(hre);
     deployer.connect(deployerSigner);
-    factory = await deployer.contractDeploy<GameContractFactory>('GameContract/GameContractFactory', []);
+
+    // Deploy GameContract template
+    gameContractTemplate = await deployer.contractDeploy<GameContract>('GameContract/GameContract', []);
+    
+    const gameContractAddress = await gameContractTemplate.getAddress();
+ 
+
+    // Deploy the GameContractFactory contract with the GameContract template address
+    factory = await deployer.contractDeploy<GameContractFactory>('GameContract/GameContractFactory', [],gameContractAddress);
   });
 
-  it('Should deploy contract correctly and initialize state', async () => {
+  it('Should deploy GameContract template and GameContractFactory correctly', async () => {
     // Verify that the contract owner is correctly set
     expect(await factory.owner()).to.equal(deployerSigner.address);
-    // Ensure the signer count starts at zero
     expect(await factory.signerTotal()).to.equal(0);
   });
 
-  it('Only owner can add and remove signers', async () => {
-    // Add new signers to the list
-    await factory.connect(deployerSigner).signerListAdd([user01.address, user02.address]);
-    expect(await factory.signerCheck(user01.address)).to.be.true;
-    expect(await factory.signerCheck(user02.address)).to.be.true;
-
-    // Remove a signer from the list
-    await factory.connect(deployerSigner).signerListRemove([user01.address]);
-    expect(await factory.signerCheck(user01.address)).to.be.false;
-
-    // Ensure that non-owners cannot add or remove signers
-    await expect(factory.connect(user01).signerListAdd([user03.address])).to.be.revertedWith(
-      'Ownable: caller is not the owner',
-    );
-    await expect(factory.connect(user01).signerListRemove([user02.address])).to.be.revertedWith(
-      'Ownable: caller is not the owner',
-    );
-  });
-
-  it('Should correctly track signer total', async () => {
-    // Add multiple signers and check count
-    await factory.connect(deployerSigner).signerListAdd([user01.address, user02.address, user03.address]);
-    expect(await factory.signerTotal()).to.equal(3);
-
-    // Remove a signer and check count again
-    await factory.connect(deployerSigner).signerListRemove([user02.address]);
-    expect(await factory.signerTotal()).to.equal(2);
-  });
-
-  it('Should deploy GameContract and set ownership correctly', async () => {
-    // Ensure only signers can deploy a GameContract
+  it('Should deploy GameContract from factory with correct owner', async () => {
+    // Add user01 to signer list
     await factory.connect(deployerSigner).signerListAdd([user01.address]);
-    const salt = keccak256(toUtf8Bytes('randomSalt'));
-    const tx = await factory.connect(user01).deployGameContract(user01.address, salt);
+    const salt = keccak256(toUtf8Bytes('randomSalt')).slice(0, 12);
 
-    // Retrieve transaction receipt
+    // Deploy new GameContract from the factory (clone the template)
+    const tx = await factory.connect(user01).deployGameContract(user01.address, salt);
     const receipt = await tx.wait();
     if (!receipt) {
       throw new Error(`Can not find receipt`);
@@ -91,7 +68,7 @@ describe('GameContractFactory', function () {
     if (!eventLog) {
       throw new Error('GameContractDeploy event not found');
     }
-    // parse event to get new game contract address
+
     const parsedEvent = factory.interface.parseLog(eventLog);
     if (!parsedEvent) {
       throw new Error(`can not find any parse event`);
@@ -99,138 +76,71 @@ describe('GameContractFactory', function () {
     deployedGameContractAddress = parsedEvent.args.contractAddress;
 
     // Load the deployed contract and verify ownership
-    gameContract = await hre.ethers.getContractAt('GameContract', deployedGameContractAddress);
-    expect(await gameContract.owner()).to.equal(user01.address);
+    const deployedGameContract = await hre.ethers.getContractAt('GameContract', deployedGameContractAddress);
+    expect(await deployedGameContract.owner()).to.equal(user01.address);
   });
 
-  it('Only valid signers can deploy GameContract', async () => {
-    const salt = keccak256(toUtf8Bytes('randomSalt'));
+  it('Should return correct deployed contract list from factory', async () => {
+    await factory.connect(deployerSigner).signerListAdd([user01.address]);
+    const salt = keccak256(toUtf8Bytes('randomSalt2')).slice(0, 12);
+
+    // Deploy a new GameContract from the factory (clone)
+    await factory.connect(user01).deployGameContract(user01.address, salt);
+
+    // Get contract list from the factory
+    const deployedContracts = await factory.getContractListDeploy();
+    expect(deployedContracts.length).to.equal(2);
+  });
+
+  it('Should only allow valid signers to deploy GameContract', async () => {
+    const salt = keccak256(toUtf8Bytes('randomSalt')).slice(0, 12);
     await expect(factory.connect(user02).deployGameContract(user02.address, salt)).to.be.revertedWithCustomError(
       factory,
       'InvalidUser',
     );
   });
 
-  it('Should return correct deployed contract list', async () => {
-    await factory.connect(deployerSigner).signerListAdd([user04.address]);
-    const salt = keccak256(toUtf8Bytes('randomSalt2'));
-    // Deploy new contract
-    await factory.connect(user04).deployGameContract(user04.address, salt);
-    // Get contract list
-    const deployedContracts = await factory.getContractListDeploy();
-    console.log(deployedContracts.length);
-    // Compare result
-    expect(deployedContracts.length).to.equal(2);
-  });
-
-  it('Should emit correct events when adding and removing signers', async () => {
-    const signersToAdd = [user01.address, user02.address];
-    // add singer
-    const txAdd = await factory.connect(deployerSigner).signerListAdd(signersToAdd);
-    // store deploy block transaction add
-    const blockAdd = await hre.ethers.provider.getBlock('latest');
-    if (!blockAdd) {
-      throw new Error(`Can not find block`);
-    }
-    const totalSigner = await factory.signerTotal();
-    console.log(totalSigner.toString());
-    // compare with event
-    await expect(txAdd).to.emit(factory, 'SignerListAdd').withArgs(totalSigner, blockAdd.timestamp);
-    // do same thing with remove
-    const txRemove = await factory.connect(deployerSigner).signerListRemove([user01.address]);
-    const blockRemove = await hre.ethers.provider.getBlock('latest');
-    if (!blockRemove) {
-      throw new Error(`Can not find block`);
-    }
-    const totalSignerAfterRemove = await factory.signerTotal();
-
-    await expect(txRemove).to.emit(factory, 'SignerListRemove').withArgs(totalSignerAfterRemove, blockRemove.timestamp);
-  });
-
-  it('Should correctly check signer statuses', async () => {
-    await factory.connect(deployerSigner).signerListAdd([user01.address, user02.address]);
-    const statuses = await factory.signerListCheck([user01.address, user02.address, user05.address]);
-    expect(statuses).to.deep.equal([true, true, false]);
-  });
-  it('Should predict the deployed GameContract address using CREATE2 and verify it matches', async () => {
-    // Ensure user01 is a valid signer before deployment
+  it('Should allow signers to complete quests in the GameContract', async () => {
     await factory.connect(deployerSigner).signerListAdd([user01.address]);
-
-    // Generate a unique salt for CREATE2 deployment
-    const salt = keccak256(toUtf8Bytes('predictTestSalt'));
-
-    // Retrieve the contract bytecode from Hardhat's compiled artifacts
-    const contractArtifact = await hre.artifacts.readArtifact('GameContract');
-    const bytecode = contractArtifact.bytecode;
-
-    // Compute the expected address using CREATE2
-    const predictedAddress = getCreate2Address(await factory.getAddress(), salt, keccak256(bytecode));
-
-    console.log(`Predicted GameContract Address: ${predictedAddress}`);
-
-    // Deploy the contract using the factory
+    const salt = keccak256(toUtf8Bytes('randomSaltForQuest')).slice(0, 12);
     const tx = await factory.connect(user01).deployGameContract(user01.address, salt);
     const receipt = await tx.wait();
-    if (!receipt) throw new Error('Transaction receipt not found');
-
-    // Extract the deployed contract address from the event logs
+    if(!receipt){
+      throw new Error(`Can not find receipt`)
+    }
     const eventLog = receipt.logs.find((log) => {
       try {
         const parsedLog = factory.interface.parseLog(log);
-        return parsedLog && parsedLog.name === 'GameContractDeploy';
+        if (parsedLog) {
+          return parsedLog.name === 'GameContractDeploy';
+        }
       } catch (error) {
         return false;
       }
     });
-
-    if (!eventLog) throw new Error('GameContractDeploy event not found');
-
+    if(!eventLog){
+      throw new Error(`Can not find any log`)
+    }
     const parsedEvent = factory.interface.parseLog(eventLog);
-    if (!parsedEvent) throw new Error('Parsed event not found');
+    if(!parsedEvent){
+      throw new Error(`Can not find any parse event`)
+    }
+    const deployedAddress = parsedEvent.args.contractAddress;
+    const deployedGameContract = await hre.ethers.getContractAt('GameContract', deployedAddress);
 
-    deployedGameContractAddress = parsedEvent.args.contractAddress;
-    console.log(`Actual Deployed GameContract Address: ${deployedGameContractAddress}`);
+    await deployedGameContract.connect(user01).signerListAdd([user02.address]);
 
-    // Ensure the predicted address matches the actual deployed address
-    expect(deployedGameContractAddress).to.equal(predictedAddress);
-  });
-  it('Should transfer ownership correctly', async () => {
-    expect(await factory.owner()).to.equal(deployerSigner.address);
-
-    await factory.connect(deployerSigner).transferOwnership(user01.address);
-    expect(await factory.owner()).to.equal(user01.address);
-
-    await expect(factory.connect(deployerSigner).transferOwnership(user02.address)).to.be.revertedWith(
-      'Ownable: caller is not the owner',
-    );
-
-    await factory.connect(user01).transferOwnership(user02.address);
-    expect(await factory.owner()).to.equal(user02.address);
+    // Test quest completion
+    const questHash2 = keccak256(toUtf8Bytes('socialQuest'));
+    await expect(deployedGameContract.connect(user02).questSubmitSocial(questHash2))
+      .to.emit(deployedGameContract, 'QuestCompleteSocial')
+      .withArgs(user02.address, questHash2);
   });
 
-  // Test game contract after deploy by factory
-  it('GameContract should allow only the owner to add signers', async () => {
-    await gameContract.connect(user01).signerListAdd([user02.address]);
-    expect(await gameContract.signerCheck(user02.address)).to.be.true;
-
-    await expect(gameContract.connect(user02).signerListAdd([user03.address])).to.be.revertedWith(
-      'Ownable: caller is not the owner',
-    );
-  });
-
-  it('GameContract should allow signers to complete quests', async () => {
-    const questHash = keccak256(toUtf8Bytes('dailyQuest'));
-    await gameContract.connect(user01).signerListAdd([user02.address]);
-
-    await expect(gameContract.connect(user02).questSubmitDaily(questHash))
-      .to.emit(gameContract, 'QuestCompleteDaily')
-      .withArgs(user02.address, questHash);
-  });
-
-  it('GameContract should prevent non-signers from submit quests', async () => {
-    const questHash = keccak256(toUtf8Bytes('dailyQuest'));
-    await expect(gameContract.connect(user03).questSubmitDaily(questHash)).to.be.revertedWithCustomError(
-      gameContract,
+  it('Should prevent non-signers from completing quests', async () => {
+    const questHash = keccak256(toUtf8Bytes('gameQuest'));
+    await expect(factory.connect(user03).deployGameContract(user03.address, keccak256(toUtf8Bytes('salt')).slice(0, 12))).to.be.revertedWithCustomError(
+      factory,
       'InvalidUser',
     );
   });

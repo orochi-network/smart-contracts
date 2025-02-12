@@ -5,6 +5,9 @@ interface IGameContract {
     // Invalid User error
     error InvalidUser();
 
+    // init once time error
+    error OnlyAbleToInitOnce();
+
 
     // Events
     event QuestCompleteDaily(address indexed user, bytes32 indexed questName);
@@ -12,6 +15,15 @@ interface IGameContract {
     event QuestCompleteGame(address indexed user, bytes32 indexed questName);
     event SignerListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
     event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event Initialize(address indexed owner, uint256 indexed timestamp);
+
+
+    /**
+    * Initialize when create this game contract, once time use
+    * @param newGameContractOwner address - Address owner of this game contract
+    * Emits event Initialize with owner address and block timestamp
+    */
+    function initialize(address newGameContractOwner) external;
 
     /**
     * Add new User to list, only owner contract can transact this function

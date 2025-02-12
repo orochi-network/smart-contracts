@@ -1,7 +1,28 @@
 export const AbiGameContractFactory = [
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_implementation",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "InvalidUser",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UnableToInitNewContract",
     "type": "error"
   },
   {
@@ -81,6 +102,63 @@ export const AbiGameContractFactory = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oldImplementation",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "upgradeImplementation",
+        "type": "address"
+      }
+    ],
+    "name": "UpgradeImplementation",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "gameContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "_isGameContractExist",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isExist",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "contractListDeploy",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -88,13 +166,19 @@ export const AbiGameContractFactory = [
         "type": "address"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "uint96",
         "name": "salt",
-        "type": "bytes32"
+        "type": "uint96"
       }
     ],
     "name": "deployGameContract",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -118,6 +202,54 @@ export const AbiGameContractFactory = [
       {
         "internalType": "address",
         "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint96",
+        "name": "salt",
+        "type": "uint96"
+      },
+      {
+        "internalType": "address",
+        "name": "creatorAddress",
+        "type": "address"
+      }
+    ],
+    "name": "packingSalt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "packedSalt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint96",
+        "name": "salt",
+        "type": "uint96"
+      },
+      {
+        "internalType": "address",
+        "name": "creatorAddress",
+        "type": "address"
+      }
+    ],
+    "name": "predictWalletAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "predictedAddress",
         "type": "address"
       }
     ],
@@ -218,6 +350,25 @@ export const AbiGameContractFactory = [
     ],
     "name": "transferOwnership",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      }
+    ],
+    "name": "upgradeImplementation",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   }

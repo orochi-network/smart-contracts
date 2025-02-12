@@ -26,6 +26,7 @@ import type {
 export interface GameContractInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "initialize"
       | "owner"
       | "questSubmitDaily"
       | "questSubmitGame"
@@ -41,6 +42,7 @@ export interface GameContractInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "Initialize"
       | "OwnershipTransferred"
       | "QuestCompleteDaily"
       | "QuestCompleteGame"
@@ -49,6 +51,10 @@ export interface GameContractInterface extends Interface {
       | "SignerListRemove"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "questSubmitDaily",
@@ -91,6 +97,7 @@ export interface GameContractInterface extends Interface {
     values: [AddressLike]
   ): string;
 
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "questSubmitDaily",
@@ -132,6 +139,19 @@ export interface GameContractInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+}
+
+export namespace InitializeEvent {
+  export type InputTuple = [owner: AddressLike, timestamp: BigNumberish];
+  export type OutputTuple = [owner: string, timestamp: bigint];
+  export interface OutputObject {
+    owner: string;
+    timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace OwnershipTransferredEvent {
@@ -261,6 +281,12 @@ export interface GameContract extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  initialize: TypedContractMethod<
+    [newGameContractOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   owner: TypedContractMethod<[], [string], "view">;
 
   questSubmitDaily: TypedContractMethod<
@@ -320,6 +346,13 @@ export interface GameContract extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [newGameContractOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -366,6 +399,13 @@ export interface GameContract extends BaseContract {
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
   getEvent(
+    key: "Initialize"
+  ): TypedContractEvent<
+    InitializeEvent.InputTuple,
+    InitializeEvent.OutputTuple,
+    InitializeEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
@@ -409,6 +449,17 @@ export interface GameContract extends BaseContract {
   >;
 
   filters: {
+    "Initialize(address,uint256)": TypedContractEvent<
+      InitializeEvent.InputTuple,
+      InitializeEvent.OutputTuple,
+      InitializeEvent.OutputObject
+    >;
+    Initialize: TypedContractEvent<
+      InitializeEvent.InputTuple,
+      InitializeEvent.OutputTuple,
+      InitializeEvent.OutputObject
+    >;
+
     "OwnershipTransferred(address,address)": TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,

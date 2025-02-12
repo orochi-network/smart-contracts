@@ -26,9 +26,13 @@ import type {
 export interface GameContractFactoryInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "_isGameContractExist"
+      | "contractListDeploy"
       | "deployGameContract"
       | "getContractListDeploy"
       | "owner"
+      | "packingSalt"
+      | "predictWalletAddress"
       | "renounceOwnership"
       | "signerCheck"
       | "signerListAdd"
@@ -36,6 +40,7 @@ export interface GameContractFactoryInterface extends Interface {
       | "signerListRemove"
       | "signerTotal"
       | "transferOwnership"
+      | "upgradeImplementation"
   ): FunctionFragment;
 
   getEvent(
@@ -44,17 +49,34 @@ export interface GameContractFactoryInterface extends Interface {
       | "OwnershipTransferred"
       | "SignerListAdd"
       | "SignerListRemove"
+      | "UpgradeImplementation"
   ): EventFragment;
 
   encodeFunctionData(
+    functionFragment: "_isGameContractExist",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "contractListDeploy",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "deployGameContract",
-    values: [AddressLike, BytesLike]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getContractListDeploy",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "packingSalt",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "predictWalletAddress",
+    values: [BigNumberish, AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -83,7 +105,19 @@ export interface GameContractFactoryInterface extends Interface {
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "upgradeImplementation",
+    values: [AddressLike]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "_isGameContractExist",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "contractListDeploy",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "deployGameContract",
     data: BytesLike
@@ -94,6 +128,14 @@ export interface GameContractFactoryInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "packingSalt",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "predictWalletAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
@@ -119,6 +161,10 @@ export interface GameContractFactoryInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "upgradeImplementation",
     data: BytesLike
   ): Result;
 }
@@ -181,6 +227,25 @@ export namespace SignerListRemoveEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace UpgradeImplementationEvent {
+  export type InputTuple = [
+    oldImplementation: AddressLike,
+    upgradeImplementation: AddressLike
+  ];
+  export type OutputTuple = [
+    oldImplementation: string,
+    upgradeImplementation: string
+  ];
+  export interface OutputObject {
+    oldImplementation: string;
+    upgradeImplementation: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface GameContractFactory extends BaseContract {
   connect(runner?: ContractRunner | null): GameContractFactory;
   waitForDeployment(): Promise<this>;
@@ -224,15 +289,39 @@ export interface GameContractFactory extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  _isGameContractExist: TypedContractMethod<
+    [gameContractAddress: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  contractListDeploy: TypedContractMethod<
+    [arg0: BigNumberish],
+    [string],
+    "view"
+  >;
+
   deployGameContract: TypedContractMethod<
-    [gameContractOwner: AddressLike, salt: BytesLike],
-    [void],
+    [gameContractOwner: AddressLike, salt: BigNumberish],
+    [string],
     "nonpayable"
   >;
 
   getContractListDeploy: TypedContractMethod<[], [string[]], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
+
+  packingSalt: TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  predictWalletAddress: TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [string],
+    "view"
+  >;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -268,15 +357,27 @@ export interface GameContractFactory extends BaseContract {
     "nonpayable"
   >;
 
+  upgradeImplementation: TypedContractMethod<
+    [newImplementation: AddressLike],
+    [boolean],
+    "nonpayable"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
+    nameOrSignature: "_isGameContractExist"
+  ): TypedContractMethod<[gameContractAddress: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "contractListDeploy"
+  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+  getFunction(
     nameOrSignature: "deployGameContract"
   ): TypedContractMethod<
-    [gameContractOwner: AddressLike, salt: BytesLike],
-    [void],
+    [gameContractOwner: AddressLike, salt: BigNumberish],
+    [string],
     "nonpayable"
   >;
   getFunction(
@@ -285,6 +386,20 @@ export interface GameContractFactory extends BaseContract {
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "packingSalt"
+  ): TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "predictWalletAddress"
+  ): TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [string],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -318,6 +433,13 @@ export interface GameContractFactory extends BaseContract {
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upgradeImplementation"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike],
+    [boolean],
+    "nonpayable"
+  >;
 
   getEvent(
     key: "GameContractDeploy"
@@ -346,6 +468,13 @@ export interface GameContractFactory extends BaseContract {
     SignerListRemoveEvent.InputTuple,
     SignerListRemoveEvent.OutputTuple,
     SignerListRemoveEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpgradeImplementation"
+  ): TypedContractEvent<
+    UpgradeImplementationEvent.InputTuple,
+    UpgradeImplementationEvent.OutputTuple,
+    UpgradeImplementationEvent.OutputObject
   >;
 
   filters: {
@@ -391,6 +520,17 @@ export interface GameContractFactory extends BaseContract {
       SignerListRemoveEvent.InputTuple,
       SignerListRemoveEvent.OutputTuple,
       SignerListRemoveEvent.OutputObject
+    >;
+
+    "UpgradeImplementation(address,address)": TypedContractEvent<
+      UpgradeImplementationEvent.InputTuple,
+      UpgradeImplementationEvent.OutputTuple,
+      UpgradeImplementationEvent.OutputObject
+    >;
+    UpgradeImplementation: TypedContractEvent<
+      UpgradeImplementationEvent.InputTuple,
+      UpgradeImplementationEvent.OutputTuple,
+      UpgradeImplementationEvent.OutputObject
     >;
   };
 }

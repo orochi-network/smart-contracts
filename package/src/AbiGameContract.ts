@@ -5,6 +5,30 @@ export const AbiGameContract = [
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "OnlyAbleToInitOnce",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "Initialize",
+    "type": "event"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -117,6 +141,19 @@ export const AbiGameContract = [
     ],
     "name": "SignerListRemove",
     "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newGameContractOwner",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [],

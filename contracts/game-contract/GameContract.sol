@@ -7,11 +7,17 @@ contract GameContract is Ownable {
     // Invalid User
     error InvalidUser();
 
+    // Only able to init once time
+    error OnlyAbleToInitOnce();
+
     // Signer List
     mapping(address => bool) private _signerMap;
 
     // Signer Total
     uint256 private _signerTotal;
+
+    // init state
+    bool private _initialized = false;
 
     // Complete daily quest
     event QuestCompleteDaily(address indexed user, bytes32 indexed questName);
@@ -28,6 +34,9 @@ contract GameContract is Ownable {
     // Remove list Users
     event SignerListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
 
+    // Init event
+    event Initialize(address indexed owner, uint256 indexed timestamp);
+
     // We only allow User have been add by owner
     modifier onlyUser() {
         if (!_signerMap[msg.sender]) {
@@ -40,6 +49,16 @@ contract GameContract is Ownable {
     /*******************************************************
     * External section
     ********************************************************/
+
+    // init once time
+    function initialize(address newGameContractOwner) external {
+        if(_initialized){
+            revert OnlyAbleToInitOnce();
+        }
+        _transferOwnership(newGameContractOwner);
+        _initialized = true;
+        emit Initialize(newGameContractOwner, block.timestamp);
+    }
 
     // Add new Users in list
     function signerListAdd(address[] memory signerListToAdd) external onlyOwner {
@@ -77,6 +96,10 @@ contract GameContract is Ownable {
     function questSubmitGame(bytes32 questName) external onlyUser {
         emit QuestCompleteGame(msg.sender, questName);
     }
+
+    /*******************************************************
+    * External view section
+    ********************************************************/
 
     // Check list signer status which have add and which hasn't add
     function signerListCheck(address[] memory signerListToCheck) external view returns (bool[] memory) {

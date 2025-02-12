@@ -14,6 +14,7 @@ task('deploy:gameContractFactory', 'Deploy game contracts factory').setAction(
     await deployer.contractDeploy<GameContractFactory>(
       'GameContract/GameContractFactory',
       [],
+      '0x81a833654EC070583c44dE6A6dd2a00CFACB628d' //implement
     );
     await deployer.printReport();
   },
