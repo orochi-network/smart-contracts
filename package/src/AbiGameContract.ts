@@ -15,31 +15,6 @@ export const AbiGameContract = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "contractAddress",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ownerAddress",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "salt",
-        "type": "bytes32"
-      }
-    ],
-    "name": "Initialize",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "previousOwner",
         "type": "address"
       },
@@ -115,14 +90,14 @@ export const AbiGameContract = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "totalAddedUser",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "timestamp",
+        "name": "totalAddedUser",
         "type": "uint256"
       }
     ],
@@ -134,14 +109,14 @@ export const AbiGameContract = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "totalAddedUser",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "timestamp",
+        "name": "totalAddedUser",
         "type": "uint256"
       }
     ],
@@ -154,11 +129,6 @@ export const AbiGameContract = [
         "internalType": "address",
         "name": "newGameContractOwner",
         "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "salt",
-        "type": "bytes32"
       }
     ],
     "name": "initialize",

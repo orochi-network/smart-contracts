@@ -42,7 +42,6 @@ export interface GameContractInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "Initialize"
       | "OwnershipTransferred"
       | "QuestCompleteDaily"
       | "QuestCompleteGame"
@@ -53,7 +52,7 @@ export interface GameContractInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, BytesLike]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -132,28 +131,6 @@ export interface GameContractInterface extends Interface {
   decodeFunctionResult(functionFragment: "userTotal", data: BytesLike): Result;
 }
 
-export namespace InitializeEvent {
-  export type InputTuple = [
-    contractAddress: AddressLike,
-    ownerAddress: AddressLike,
-    salt: BytesLike
-  ];
-  export type OutputTuple = [
-    contractAddress: string,
-    ownerAddress: string,
-    salt: string
-  ];
-  export interface OutputObject {
-    contractAddress: string;
-    ownerAddress: string;
-    salt: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
 export namespace OwnershipTransferredEvent {
   export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
   export type OutputTuple = [previousOwner: string, newOwner: string];
@@ -207,14 +184,11 @@ export namespace QuestCompleteSocialEvent {
 }
 
 export namespace UserListAddEvent {
-  export type InputTuple = [
-    totalAddedUser: BigNumberish,
-    timestamp: BigNumberish
-  ];
-  export type OutputTuple = [totalAddedUser: bigint, timestamp: bigint];
+  export type InputTuple = [actor: AddressLike, totalAddedUser: BigNumberish];
+  export type OutputTuple = [actor: string, totalAddedUser: bigint];
   export interface OutputObject {
+    actor: string;
     totalAddedUser: bigint;
-    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -223,14 +197,11 @@ export namespace UserListAddEvent {
 }
 
 export namespace UserListRemoveEvent {
-  export type InputTuple = [
-    totalAddedUser: BigNumberish,
-    timestamp: BigNumberish
-  ];
-  export type OutputTuple = [totalAddedUser: bigint, timestamp: bigint];
+  export type InputTuple = [actor: AddressLike, totalAddedUser: BigNumberish];
+  export type OutputTuple = [actor: string, totalAddedUser: bigint];
   export interface OutputObject {
+    actor: string;
     totalAddedUser: bigint;
-    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -282,7 +253,7 @@ export interface GameContract extends BaseContract {
   ): Promise<this>;
 
   initialize: TypedContractMethod<
-    [newGameContractOwner: AddressLike, salt: BytesLike],
+    [newGameContractOwner: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -344,7 +315,7 @@ export interface GameContract extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [newGameContractOwner: AddressLike, salt: BytesLike],
+    [newGameContractOwner: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -386,13 +357,6 @@ export interface GameContract extends BaseContract {
     nameOrSignature: "userTotal"
   ): TypedContractMethod<[], [bigint], "view">;
 
-  getEvent(
-    key: "Initialize"
-  ): TypedContractEvent<
-    InitializeEvent.InputTuple,
-    InitializeEvent.OutputTuple,
-    InitializeEvent.OutputObject
-  >;
   getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
@@ -437,17 +401,6 @@ export interface GameContract extends BaseContract {
   >;
 
   filters: {
-    "Initialize(address,address,bytes32)": TypedContractEvent<
-      InitializeEvent.InputTuple,
-      InitializeEvent.OutputTuple,
-      InitializeEvent.OutputObject
-    >;
-    Initialize: TypedContractEvent<
-      InitializeEvent.InputTuple,
-      InitializeEvent.OutputTuple,
-      InitializeEvent.OutputObject
-    >;
-
     "OwnershipTransferred(address,address)": TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
@@ -492,7 +445,7 @@ export interface GameContract extends BaseContract {
       QuestCompleteSocialEvent.OutputObject
     >;
 
-    "UserListAdd(uint256,uint256)": TypedContractEvent<
+    "UserListAdd(address,uint256)": TypedContractEvent<
       UserListAddEvent.InputTuple,
       UserListAddEvent.OutputTuple,
       UserListAddEvent.OutputObject
@@ -503,7 +456,7 @@ export interface GameContract extends BaseContract {
       UserListAddEvent.OutputObject
     >;
 
-    "UserListRemove(uint256,uint256)": TypedContractEvent<
+    "UserListRemove(address,uint256)": TypedContractEvent<
       UserListRemoveEvent.InputTuple,
       UserListRemoveEvent.OutputTuple,
       UserListRemoveEvent.OutputObject

@@ -139,7 +139,7 @@ describe('Game Contract', function () {
     }
 
     // Check if the correct event is emitted with the expected arguments
-    await expect(tx).to.emit(contract, 'UserListAdd').withArgs(signersToAdd.length, block.timestamp);
+    await expect(tx).to.emit(contract, 'UserListAdd').withArgs(deployerSigner, signersToAdd.length);
 
     // Verify signer total count is correct
     expect(await contract.userTotal()).to.equal(signersToAdd.length);
@@ -163,7 +163,7 @@ describe('Game Contract', function () {
     // Check if the correct event is emitted with the expected arguments
     await expect(tx)
       .to.emit(contract, 'UserListRemove')
-      .withArgs(signersToAdd.length - signersToRemove.length, block.timestamp);
+      .withArgs(deployerSigner.address, signersToAdd.length - signersToRemove.length);
 
     // Verify signer total count is updated correctly
     expect(await contract.userTotal()).to.equal(signersToAdd.length - signersToRemove.length);

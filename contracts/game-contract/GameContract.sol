@@ -29,13 +29,11 @@ contract GameContract is Ownable {
     event QuestCompleteGame(address indexed user, bytes32 indexed questName);
 
     //  Add list Users
-    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListAdd(address indexed actor ,uint256 indexed totalAddedUser);
 
     // Remove list Users
-    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListRemove(address indexed actor , uint256 indexed totalAddedUser);
 
-    // Init event
-    event Initialize(address indexed contractAddress, address indexed ownerAddress, bytes32 indexed salt);
 
     // We only allow User have been add by owner
     modifier onlyUser() {
@@ -54,14 +52,13 @@ contract GameContract is Ownable {
     }
 
     /*******************************************************
-    * External section
+    * Owner section
     ********************************************************/
 
     // init once time
-    function initialize(address newGameContractOwner, bytes32 salt) external onlyOnceInitialize {
+    function initialize(address newGameContractOwner) external onlyOnceInitialize {
         _transferOwnership(newGameContractOwner);
         _initialized = true;
-        emit Initialize(address(this), newGameContractOwner, salt);
     }
 
     // Add new Users in list
@@ -72,7 +69,7 @@ contract GameContract is Ownable {
                 _userTotal += 1;
             }
         }
-        emit UserListAdd(_userTotal, block.timestamp);
+        emit UserListAdd(msg.sender, _userTotal);
     }
 
     // Remove old Users in list
@@ -83,8 +80,12 @@ contract GameContract is Ownable {
                 _userTotal -= 1;
             }
         }
-         emit UserListRemove(_userTotal, block.timestamp);
+         emit UserListRemove(msg.sender, _userTotal);
     }
+
+    /*******************************************************
+    * User section
+    ********************************************************/
 
     // submit transaction daily quest
     function questSubmitDaily(bytes32 questName) external onlyUser {

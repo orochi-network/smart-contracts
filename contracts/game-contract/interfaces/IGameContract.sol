@@ -13,15 +13,13 @@ interface IGameContract {
     event QuestCompleteDaily(address indexed user, bytes32 indexed questName);
     event QuestCompleteSocial(address indexed user, bytes32 indexed questName);
     event QuestCompleteGame(address indexed user, bytes32 indexed questName);
-    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
-    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
-    event Initialize(address indexed owner, uint256 indexed timestamp);
+    event UserListAdd(address indexed actor ,uint256 indexed totalAddedUser);
+    event UserListRemove(address indexed actor , uint256 indexed totalAddedUser);
 
 
     /**
     * Initialize when create this game contract, once time use
     * @param newGameContractOwner address - Address owner of this game contract
-    * Emits event Initialize with owner address and block timestamp
     */
     function initialize(address newGameContractOwner) external;
 

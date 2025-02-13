@@ -27,7 +27,6 @@ export interface GameContractFactoryInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "deployGameContract"
-      | "getGameContractOwner"
       | "isGameContractExist"
       | "owner"
       | "packingSalt"
@@ -54,10 +53,6 @@ export interface GameContractFactoryInterface extends Interface {
   encodeFunctionData(
     functionFragment: "deployGameContract",
     values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getGameContractOwner",
-    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "isGameContractExist",
@@ -107,10 +102,6 @@ export interface GameContractFactoryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getGameContractOwner",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "isGameContractExist",
     data: BytesLike
   ): Result;
@@ -153,18 +144,18 @@ export interface GameContractFactoryInterface extends Interface {
 
 export namespace GameContractDeployEvent {
   export type InputTuple = [
-    ownerAddress: AddressLike,
     contractAddress: AddressLike,
+    ownerAddress: AddressLike,
     salt: BytesLike
   ];
   export type OutputTuple = [
-    ownerAddress: string,
     contractAddress: string,
+    ownerAddress: string,
     salt: string
   ];
   export interface OutputObject {
-    ownerAddress: string;
     contractAddress: string;
+    ownerAddress: string;
     salt: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -188,14 +179,17 @@ export namespace OwnershipTransferredEvent {
 
 export namespace UpgradeImplementationEvent {
   export type InputTuple = [
+    actor: AddressLike,
     oldImplementation: AddressLike,
     upgradeImplementation: AddressLike
   ];
   export type OutputTuple = [
+    actor: string,
     oldImplementation: string,
     upgradeImplementation: string
   ];
   export interface OutputObject {
+    actor: string;
     oldImplementation: string;
     upgradeImplementation: string;
   }
@@ -206,14 +200,11 @@ export namespace UpgradeImplementationEvent {
 }
 
 export namespace UserListAddEvent {
-  export type InputTuple = [
-    totalAddedUser: BigNumberish,
-    timestamp: BigNumberish
-  ];
-  export type OutputTuple = [totalAddedUser: bigint, timestamp: bigint];
+  export type InputTuple = [actor: AddressLike, totalAddedUser: BigNumberish];
+  export type OutputTuple = [actor: string, totalAddedUser: bigint];
   export interface OutputObject {
+    actor: string;
     totalAddedUser: bigint;
-    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -222,14 +213,11 @@ export namespace UserListAddEvent {
 }
 
 export namespace UserListRemoveEvent {
-  export type InputTuple = [
-    totalAddedUser: BigNumberish,
-    timestamp: BigNumberish
-  ];
-  export type OutputTuple = [totalAddedUser: bigint, timestamp: bigint];
+  export type InputTuple = [actor: AddressLike, totalAddedUser: BigNumberish];
+  export type OutputTuple = [actor: string, totalAddedUser: bigint];
   export interface OutputObject {
+    actor: string;
     totalAddedUser: bigint;
-    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -284,12 +272,6 @@ export interface GameContractFactory extends BaseContract {
     [gameContractOwner: AddressLike, salt: BigNumberish],
     [string],
     "nonpayable"
-  >;
-
-  getGameContractOwner: TypedContractMethod<
-    [gameContractAddress: AddressLike],
-    [string],
-    "view"
   >;
 
   isGameContractExist: TypedContractMethod<
@@ -359,9 +341,6 @@ export interface GameContractFactory extends BaseContract {
     [string],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "getGameContractOwner"
-  ): TypedContractMethod<[gameContractAddress: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "isGameContractExist"
   ): TypedContractMethod<[gameContractAddress: AddressLike], [boolean], "view">;
@@ -474,7 +453,7 @@ export interface GameContractFactory extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
-    "UpgradeImplementation(address,address)": TypedContractEvent<
+    "UpgradeImplementation(address,address,address)": TypedContractEvent<
       UpgradeImplementationEvent.InputTuple,
       UpgradeImplementationEvent.OutputTuple,
       UpgradeImplementationEvent.OutputObject
@@ -485,7 +464,7 @@ export interface GameContractFactory extends BaseContract {
       UpgradeImplementationEvent.OutputObject
     >;
 
-    "UserListAdd(uint256,uint256)": TypedContractEvent<
+    "UserListAdd(address,uint256)": TypedContractEvent<
       UserListAddEvent.InputTuple,
       UserListAddEvent.OutputTuple,
       UserListAddEvent.OutputObject
@@ -496,7 +475,7 @@ export interface GameContractFactory extends BaseContract {
       UserListAddEvent.OutputObject
     >;
 
-    "UserListRemove(uint256,uint256)": TypedContractEvent<
+    "UserListRemove(address,uint256)": TypedContractEvent<
       UserListRemoveEvent.InputTuple,
       UserListRemoveEvent.OutputTuple,
       UserListRemoveEvent.OutputObject

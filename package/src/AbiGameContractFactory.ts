@@ -31,13 +31,13 @@ export const AbiGameContractFactory = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "ownerAddress",
+        "name": "contractAddress",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "contractAddress",
+        "name": "ownerAddress",
         "type": "address"
       },
       {
@@ -75,6 +75,12 @@ export const AbiGameContractFactory = [
       {
         "indexed": true,
         "internalType": "address",
+        "name": "actor",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "oldImplementation",
         "type": "address"
       },
@@ -93,14 +99,14 @@ export const AbiGameContractFactory = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "totalAddedUser",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "timestamp",
+        "name": "totalAddedUser",
         "type": "uint256"
       }
     ],
@@ -112,14 +118,14 @@ export const AbiGameContractFactory = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "totalAddedUser",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "timestamp",
+        "name": "totalAddedUser",
         "type": "uint256"
       }
     ],
@@ -148,25 +154,6 @@ export const AbiGameContractFactory = [
       }
     ],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "gameContractAddress",
-        "type": "address"
-      }
-    ],
-    "name": "getGameContractOwner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

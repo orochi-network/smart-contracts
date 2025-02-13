@@ -11,26 +11,23 @@ contract GameContractFactory is Ownable {
     // Address of template game contract
     address private implementation;
 
-    // Contract deployed array 
-    mapping(address => address) private _gameContractMapDeploy;
-
-    // Signer list
+    // User list
     mapping(address => bool) private _userMap;
 
-    // Signer total
+    // User total
     uint256 private _userTotal;
 
     // Game Contract deployed event
-    event GameContractDeploy(address indexed ownerAddress, address indexed contractAddress, bytes32 indexed salt);
+    event GameContractDeploy(address indexed contractAddress, address indexed ownerAddress, bytes32 indexed salt);
 
     //  Add list Users
-    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListAdd(address indexed actor, uint256 indexed totalAddedUser);
 
     // Remove list Users
-    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
+    event UserListRemove(address indexed actor, uint256 indexed totalAddedUser);
 
     // Upgrade implementation
-    event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
+    event UpgradeImplementation(address indexed actor, address indexed oldImplementation, address indexed upgradeImplementation);
 
     // Invalid User
     error InvalidUser();
@@ -60,12 +57,24 @@ contract GameContractFactory is Ownable {
 
     constructor(address _implementation) onlyValidAddress(_implementation){
         implementation = _implementation;
+        emit UpgradeImplementation(msg.sender , address(0), _implementation);
     }
 
 
     /*******************************************************
-    * External section
+    * Owner section
     ********************************************************/
+
+    // Upgrade new implementation
+    function upgradeImplementation(
+        address newImplementation
+    ) external onlyOwner onlyValidAddress(newImplementation) returns (bool) {
+        address oldImplementation = implementation;
+        // Overwrite current implementation address
+        implementation = newImplementation;
+        emit UpgradeImplementation(msg.sender, oldImplementation, newImplementation);
+        return true;
+    }
 
     // Add new Users in list
     function userListAdd(address[] memory userListToAdd) external onlyOwner {
@@ -75,7 +84,7 @@ contract GameContractFactory is Ownable {
                 _userTotal += 1;
             }
         }
-        emit UserListAdd(_userTotal, block.timestamp);
+        emit UserListAdd(msg.sender, _userTotal);
     }
 
     // Remove old Users in list
@@ -86,28 +95,22 @@ contract GameContractFactory is Ownable {
                 _userTotal -= 1;
             }
         }
-        emit UserListRemove(_userTotal, block.timestamp);
+        emit UserListRemove(msg.sender, _userTotal);
     }
+
+    /*******************************************************
+    * User section
+    ********************************************************/
 
     // Deploy game contract
     function deployGameContract(address gameContractOwner, uint96 salt) external onlyUser returns (address) {
-        address clone = implementation.cloneDeterministic(_packing(salt, msg.sender));
+        address newGameContract = implementation.cloneDeterministic(_packing(salt, msg.sender));
 
-        GameContract(clone).initialize(gameContractOwner, _packing(salt, msg.sender));
-        _gameContractMapDeploy[clone] = msg.sender;
-        emit GameContractDeploy(gameContractOwner, clone, _packing(salt, msg.sender));
-        return clone;
+        GameContract(newGameContract).initialize(gameContractOwner);
+        emit GameContractDeploy(newGameContract, gameContractOwner, _packing(salt, msg.sender));
+        return newGameContract;
     }
     
-    // Upgrade new implementation
-    function upgradeImplementation(
-        address newImplementation
-    ) external onlyOwner onlyValidAddress(newImplementation) returns (bool) {
-        // Overwrite current implementation address
-        implementation = newImplementation;
-        emit UpgradeImplementation(implementation, newImplementation);
-        return true;
-    }
 
     /*******************************************************
     * Internal pure section
@@ -127,11 +130,6 @@ contract GameContractFactory is Ownable {
     // Predict deploy address with this salt
     function predictWalletAddress(uint96 salt, address creatorAddress) external view returns (address predictedAddress) {
         return implementation.predictDeterministicAddress(_packing(salt, creatorAddress));
-    }
-    
-    // Get contract owner
-    function getGameContractOwner(address gameContractAddress) external view returns (address) {
-        return _gameContractMapDeploy[gameContractAddress];
     }
 
     // Check if contract existed

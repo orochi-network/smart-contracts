@@ -7,10 +7,10 @@ interface IGameContractFactory {
 
 
     // Events
-    event GameContractDeploy(address indexed owner, address indexed contractAddress);
-    event UserListAdd(uint256 indexed totalAddedUser, uint256 indexed timestamp);
-    event UserListRemove(uint256 indexed totalAddedUser, uint256 indexed timestamp);
-    event UpgradeImplementation(address indexed oldImplementation, address indexed upgradeImplementation);
+    event GameContractDeploy(address indexed contractAddress, address indexed ownerAddress, bytes32 indexed salt);
+    event UserListAdd(address indexed actor, uint256 indexed totalAddedUser);
+    event UserListRemove(address indexed actor, uint256 indexed totalAddedUser);
+    event UpgradeImplementation(address indexed actor, address indexed oldImplementation, address indexed upgradeImplementation);
 
     /**
     * Add new User to list, only owner contract can transact this function
@@ -29,18 +29,25 @@ interface IGameContractFactory {
     /**
     * Use to deploy game contract
     * @param _GameContractOwner address - Owner address of game contract deployed
-    * @param salt address - Salt to set up deploy smart contract address
+    * @param salt uint92 - Salt to set up deploy smart contract address
     * Emits event GameContractDeploy with owner address and game contract address
     */
     function deployGameContract(address _GameContractOwner, bytes32 salt) external;
 
     /**
-    * Return all game contract has been deployed by this factory
-    * @return address[] - Returns an array of address game contract
+    * Use to deploy game contract
+    * @param gameContractAddress address - Address of game contract deployed you want to check
     */
-    function getContractListDeploy() external view returns (address[] memory);
-
-        /**
+    function isGameContractExist(address gameContractAddress) external view;
+    
+    /**
+    * Use to predict address before deploy
+    * @param creatorAddress address - Address of deployer game contract
+    * @param salt uint92 - Salt to set up deploy smart contract address
+    */
+    function predictWalletAddress(uint96 salt, address creatorAddress) external view ;
+    
+    /**
     * Check status of each address in the list
     * @param userListToCheck address[] - List of addresses to check
     * @return bool[] - Returns an array of booleans corresponding to each address status

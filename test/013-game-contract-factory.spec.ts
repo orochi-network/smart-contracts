@@ -1,9 +1,10 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import hre from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import Deployer from '../helpers/deployer';
 import { GameContractFactory, GameContract } from '../typechain-types';
 import { expect } from 'chai';
 import { keccak256, toUtf8Bytes } from 'ethers';
+import { gameContract } from '../typechain-types/contracts';
 
 let accounts: SignerWithAddress[];
 let deployerSigner: SignerWithAddress;
@@ -91,8 +92,8 @@ describe('GameContractFactory', function () {
     await factory.connect(user01).deployGameContract(user01.address, salt);
 
     // Get contract address deploy
-    const deployedContracts = await factory.getGameContractOwner(factory.predictWalletAddress(salt,user01.address));
-    expect(deployedContracts).to.equal(user01.address);
+    const deployedContracts = await ethers.getContractAt("GameContract", await factory.predictWalletAddress(salt,user01.address))
+    expect( await deployedContracts.owner()).to.equal(user01.address);
   });
 
   it('Should only allow valid signers to deploy GameContract', async () => {
