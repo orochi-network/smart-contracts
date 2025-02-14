@@ -52,7 +52,7 @@ contract GameContract is Ownable {
     }
 
     /*******************************************************
-    * Owner section
+    * Once time init external section
     ********************************************************/
 
     // init once time
@@ -60,6 +60,10 @@ contract GameContract is Ownable {
         _transferOwnership(newGameContractOwner);
         _initialized = true;
     }
+
+    /*******************************************************
+    * Owner section
+    ********************************************************/
 
     // Add new Users in list
     function userListAdd(address[] memory userListToAdd) external onlyOwner {

@@ -119,7 +119,7 @@ contract GameContractFactory is Ownable {
     // packing salt and address to generate unique salt for this address
     function _packing(uint96 a, address b) internal pure returns (bytes32 packed) {
         assembly {
-        packed := or(shl(160, a), b)
+            packed := or(shl(160, a), b)
         }
     }
 
