@@ -23,16 +23,17 @@ import type {
   TypedContractMethod,
 } from "./common.js";
 
-export interface GameContractInterface extends Interface {
+export interface GameContractFactoryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "initialize"
+      | "deployGameContract"
+      | "isGameContractExist"
       | "owner"
-      | "questSubmitDaily"
-      | "questSubmitGame"
-      | "questSubmitSocial"
+      | "packingSalt"
+      | "predictWalletAddress"
       | "renounceOwnership"
       | "transferOwnership"
+      | "upgradeImplementation"
       | "userCheck"
       | "userListAdd"
       | "userListCheck"
@@ -42,30 +43,29 @@ export interface GameContractInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "GameContractDeploy"
       | "OwnershipTransferred"
-      | "QuestCompleteDaily"
-      | "QuestCompleteGame"
-      | "QuestCompleteSocial"
+      | "UpgradeImplementation"
       | "UserListAdd"
       | "UserListRemove"
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "initialize",
+    functionFragment: "deployGameContract",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isGameContractExist",
     values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "questSubmitDaily",
-    values: [BytesLike]
+    functionFragment: "packingSalt",
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "questSubmitGame",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "questSubmitSocial",
-    values: [BytesLike]
+    functionFragment: "predictWalletAddress",
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -73,6 +73,10 @@ export interface GameContractInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "upgradeImplementation",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -93,18 +97,21 @@ export interface GameContractInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "userTotal", values?: undefined): string;
 
-  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "deployGameContract",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isGameContractExist",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "questSubmitDaily",
+    functionFragment: "packingSalt",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "questSubmitGame",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "questSubmitSocial",
+    functionFragment: "predictWalletAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -113,6 +120,10 @@ export interface GameContractInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "upgradeImplementation",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "userCheck", data: BytesLike): Result;
@@ -131,6 +142,28 @@ export interface GameContractInterface extends Interface {
   decodeFunctionResult(functionFragment: "userTotal", data: BytesLike): Result;
 }
 
+export namespace GameContractDeployEvent {
+  export type InputTuple = [
+    contractAddress: AddressLike,
+    ownerAddress: AddressLike,
+    salt: BytesLike
+  ];
+  export type OutputTuple = [
+    contractAddress: string,
+    ownerAddress: string,
+    salt: string
+  ];
+  export interface OutputObject {
+    contractAddress: string;
+    ownerAddress: string;
+    salt: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace OwnershipTransferredEvent {
   export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
   export type OutputTuple = [previousOwner: string, newOwner: string];
@@ -144,38 +177,21 @@ export namespace OwnershipTransferredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace QuestCompleteDailyEvent {
-  export type InputTuple = [user: AddressLike, questName: BytesLike];
-  export type OutputTuple = [user: string, questName: string];
+export namespace UpgradeImplementationEvent {
+  export type InputTuple = [
+    actor: AddressLike,
+    oldImplementation: AddressLike,
+    upgradeImplementation: AddressLike
+  ];
+  export type OutputTuple = [
+    actor: string,
+    oldImplementation: string,
+    upgradeImplementation: string
+  ];
   export interface OutputObject {
-    user: string;
-    questName: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace QuestCompleteGameEvent {
-  export type InputTuple = [user: AddressLike, questName: BytesLike];
-  export type OutputTuple = [user: string, questName: string];
-  export interface OutputObject {
-    user: string;
-    questName: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace QuestCompleteSocialEvent {
-  export type InputTuple = [user: AddressLike, questName: BytesLike];
-  export type OutputTuple = [user: string, questName: string];
-  export interface OutputObject {
-    user: string;
-    questName: string;
+    actor: string;
+    oldImplementation: string;
+    upgradeImplementation: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -209,11 +225,11 @@ export namespace UserListRemoveEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface GameContract extends BaseContract {
-  connect(runner?: ContractRunner | null): GameContract;
+export interface GameContractFactory extends BaseContract {
+  connect(runner?: ContractRunner | null): GameContractFactory;
   waitForDeployment(): Promise<this>;
 
-  interface: GameContractInterface;
+  interface: GameContractFactoryInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -252,30 +268,30 @@ export interface GameContract extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  initialize: TypedContractMethod<
-    [newGameContractOwner: AddressLike],
-    [void],
+  deployGameContract: TypedContractMethod<
+    [gameContractOwner: AddressLike, salt: BigNumberish],
+    [string],
     "nonpayable"
+  >;
+
+  isGameContractExist: TypedContractMethod<
+    [gameContractAddress: AddressLike],
+    [boolean],
+    "view"
   >;
 
   owner: TypedContractMethod<[], [string], "view">;
 
-  questSubmitDaily: TypedContractMethod<
-    [questName: BytesLike],
-    [void],
-    "nonpayable"
+  packingSalt: TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [bigint],
+    "view"
   >;
 
-  questSubmitGame: TypedContractMethod<
-    [questName: BytesLike],
-    [void],
-    "nonpayable"
-  >;
-
-  questSubmitSocial: TypedContractMethod<
-    [questName: BytesLike],
-    [void],
-    "nonpayable"
+  predictWalletAddress: TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [string],
+    "view"
   >;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
@@ -283,6 +299,12 @@ export interface GameContract extends BaseContract {
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
     [void],
+    "nonpayable"
+  >;
+
+  upgradeImplementation: TypedContractMethod<
+    [newImplementation: AddressLike],
+    [boolean],
     "nonpayable"
   >;
 
@@ -313,30 +335,45 @@ export interface GameContract extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "initialize"
+    nameOrSignature: "deployGameContract"
   ): TypedContractMethod<
-    [newGameContractOwner: AddressLike],
-    [void],
+    [gameContractOwner: AddressLike, salt: BigNumberish],
+    [string],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "isGameContractExist"
+  ): TypedContractMethod<[gameContractAddress: AddressLike], [boolean], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "questSubmitDaily"
-  ): TypedContractMethod<[questName: BytesLike], [void], "nonpayable">;
+    nameOrSignature: "packingSalt"
+  ): TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [bigint],
+    "view"
+  >;
   getFunction(
-    nameOrSignature: "questSubmitGame"
-  ): TypedContractMethod<[questName: BytesLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "questSubmitSocial"
-  ): TypedContractMethod<[questName: BytesLike], [void], "nonpayable">;
+    nameOrSignature: "predictWalletAddress"
+  ): TypedContractMethod<
+    [salt: BigNumberish, creatorAddress: AddressLike],
+    [string],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upgradeImplementation"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike],
+    [boolean],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "userCheck"
   ): TypedContractMethod<[userToCheck: AddressLike], [boolean], "view">;
@@ -358,6 +395,13 @@ export interface GameContract extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
 
   getEvent(
+    key: "GameContractDeploy"
+  ): TypedContractEvent<
+    GameContractDeployEvent.InputTuple,
+    GameContractDeployEvent.OutputTuple,
+    GameContractDeployEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
@@ -365,25 +409,11 @@ export interface GameContract extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
-    key: "QuestCompleteDaily"
+    key: "UpgradeImplementation"
   ): TypedContractEvent<
-    QuestCompleteDailyEvent.InputTuple,
-    QuestCompleteDailyEvent.OutputTuple,
-    QuestCompleteDailyEvent.OutputObject
-  >;
-  getEvent(
-    key: "QuestCompleteGame"
-  ): TypedContractEvent<
-    QuestCompleteGameEvent.InputTuple,
-    QuestCompleteGameEvent.OutputTuple,
-    QuestCompleteGameEvent.OutputObject
-  >;
-  getEvent(
-    key: "QuestCompleteSocial"
-  ): TypedContractEvent<
-    QuestCompleteSocialEvent.InputTuple,
-    QuestCompleteSocialEvent.OutputTuple,
-    QuestCompleteSocialEvent.OutputObject
+    UpgradeImplementationEvent.InputTuple,
+    UpgradeImplementationEvent.OutputTuple,
+    UpgradeImplementationEvent.OutputObject
   >;
   getEvent(
     key: "UserListAdd"
@@ -401,6 +431,17 @@ export interface GameContract extends BaseContract {
   >;
 
   filters: {
+    "GameContractDeploy(address,address,bytes32)": TypedContractEvent<
+      GameContractDeployEvent.InputTuple,
+      GameContractDeployEvent.OutputTuple,
+      GameContractDeployEvent.OutputObject
+    >;
+    GameContractDeploy: TypedContractEvent<
+      GameContractDeployEvent.InputTuple,
+      GameContractDeployEvent.OutputTuple,
+      GameContractDeployEvent.OutputObject
+    >;
+
     "OwnershipTransferred(address,address)": TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
@@ -412,37 +453,15 @@ export interface GameContract extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
-    "QuestCompleteDaily(address,bytes32)": TypedContractEvent<
-      QuestCompleteDailyEvent.InputTuple,
-      QuestCompleteDailyEvent.OutputTuple,
-      QuestCompleteDailyEvent.OutputObject
+    "UpgradeImplementation(address,address,address)": TypedContractEvent<
+      UpgradeImplementationEvent.InputTuple,
+      UpgradeImplementationEvent.OutputTuple,
+      UpgradeImplementationEvent.OutputObject
     >;
-    QuestCompleteDaily: TypedContractEvent<
-      QuestCompleteDailyEvent.InputTuple,
-      QuestCompleteDailyEvent.OutputTuple,
-      QuestCompleteDailyEvent.OutputObject
-    >;
-
-    "QuestCompleteGame(address,bytes32)": TypedContractEvent<
-      QuestCompleteGameEvent.InputTuple,
-      QuestCompleteGameEvent.OutputTuple,
-      QuestCompleteGameEvent.OutputObject
-    >;
-    QuestCompleteGame: TypedContractEvent<
-      QuestCompleteGameEvent.InputTuple,
-      QuestCompleteGameEvent.OutputTuple,
-      QuestCompleteGameEvent.OutputObject
-    >;
-
-    "QuestCompleteSocial(address,bytes32)": TypedContractEvent<
-      QuestCompleteSocialEvent.InputTuple,
-      QuestCompleteSocialEvent.OutputTuple,
-      QuestCompleteSocialEvent.OutputObject
-    >;
-    QuestCompleteSocial: TypedContractEvent<
-      QuestCompleteSocialEvent.InputTuple,
-      QuestCompleteSocialEvent.OutputTuple,
-      QuestCompleteSocialEvent.OutputObject
+    UpgradeImplementation: TypedContractEvent<
+      UpgradeImplementationEvent.InputTuple,
+      UpgradeImplementationEvent.OutputTuple,
+      UpgradeImplementationEvent.OutputObject
     >;
 
     "UserListAdd(address,uint256)": TypedContractEvent<
