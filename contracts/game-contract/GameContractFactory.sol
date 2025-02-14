@@ -2,49 +2,27 @@
 pragma solidity 0.8.19;
 
 import "./GameContract.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./UserManager.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract GameContractFactory is Ownable {
+contract GameContractFactory is UserManager {
+    
     using Clones for address;
 
     // Address of template game contract
     address private implementation;
 
-    // User list
-    mapping(address => bool) private _userMap;
-
-    // User total
-    uint256 private _userTotal;
-
     // Game Contract deployed event
     event GameContractDeploy(address indexed contractAddress, address indexed ownerAddress, bytes32 indexed salt);
 
-    //  Add list Users
-    event UserListAdd(address indexed actor, uint256 indexed totalAddedUser);
-
-    // Remove list Users
-    event UserListRemove(address indexed actor, uint256 indexed totalAddedUser);
-
     // Upgrade implementation
     event UpgradeImplementation(address indexed actor, address indexed oldImplementation, address indexed upgradeImplementation);
-
-    // Invalid User
-    error InvalidUser();
 
     // Invalid Address
     error InvalidAddress();
 
     // Deploy fail
     error UnableToInitNewContract();
-
-    // We only allow User have been add by owner
-    modifier onlyUser() {
-        if (!_userMap[msg.sender]) {
-            revert InvalidUser();
-        }
-        _;
-    }
 
     // Check address is valid
     modifier onlyValidAddress(address validatingAddress) {
@@ -74,28 +52,6 @@ contract GameContractFactory is Ownable {
         implementation = newImplementation;
         emit UpgradeImplementation(msg.sender, oldImplementation, newImplementation);
         return true;
-    }
-
-    // Add new Users in list
-    function userListAdd(address[] memory userListToAdd) external onlyOwner {
-        for (uint256 i = 0; i < userListToAdd.length; i += 1) {
-            if (!_userMap[userListToAdd[i]]) { 
-                _userMap[userListToAdd[i]] = true; 
-                _userTotal += 1;
-            }
-        }
-        emit UserListAdd(msg.sender, _userTotal);
-    }
-
-    // Remove old Users in list
-    function userListRemove(address[] memory userListToRemove) external onlyOwner {
-        for (uint256 i = 0; i < userListToRemove.length; i += 1) {
-            if (_userMap[userListToRemove[i]]) { 
-                _userMap[userListToRemove[i]] = false; 
-                _userTotal -= 1;
-            }
-        }
-        emit UserListRemove(msg.sender, _userTotal);
     }
 
     /*******************************************************
@@ -135,25 +91,6 @@ contract GameContractFactory is Ownable {
     // Check if contract existed
     function isGameContractExist(address gameContractAddress) external view returns (bool isExist) {
         return gameContractAddress.code.length > 0;
-    }
-
-    // Check list user status which have add and which hasn't add
-    function userListCheck(address[] memory userListToCheck) external view returns (bool[] memory) {
-        bool[] memory statusList = new bool[](userListToCheck.length);
-        for (uint256 i = 0; i < userListToCheck.length; i += 1) {
-            statusList[i] = _userMap[userListToCheck[i]];
-        }
-        return statusList; 
-    }
-
-    // Check user status 
-    function userCheck(address userToCheck) external view returns (bool) {
-        return _userMap[userToCheck];
-    }
-
-    // Total user has been added
-    function userTotal() external view returns (uint256) {
-        return _userTotal;
     }
 
     // Packing salt and creator address
