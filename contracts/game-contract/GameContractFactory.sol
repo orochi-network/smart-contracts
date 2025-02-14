@@ -3,10 +3,11 @@ pragma solidity 0.8.19;
 
 import "./GameContract.sol";
 import "./UserManager.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract GameContractFactory is UserManager {
-    
+contract GameContractFactory is UserManager, Ownable {
+
     using Clones for address;
 
     // Address of template game contract
@@ -54,6 +55,16 @@ contract GameContractFactory is UserManager {
         return true;
     }
 
+    // Add new Users in list
+    function userListAdd(address[] memory userListToAdd) external onlyOwner {
+        _userListAdd(userListToAdd);
+    }
+
+    // Remove new Users in list
+    function userListRemove(address[] memory userListToRemove) external onlyOwner {
+        _userListRemove(userListToRemove);
+    }
+
     /*******************************************************
     * User section
     ********************************************************/
@@ -96,5 +107,20 @@ contract GameContractFactory is UserManager {
     // Packing salt and creator address
     function packingSalt(uint96 salt, address creatorAddress) external pure returns (uint256 packedSalt) {
         return uint256(_packing(salt, creatorAddress));
+    }
+
+    // Check list user status which have added and which hasn't
+    function userListCheck(address[] memory userListToCheck) external view returns (bool[] memory) {
+        return _userListCheck(userListToCheck);
+    }
+
+    // Check user status 
+    function userCheck(address userToCheck) external view returns (bool) {
+        return _userCheck(userToCheck);
+    }
+
+    // Total user has been added
+    function userTotal() external view returns (uint256) {
+        return _userTotal();
     }
 }
