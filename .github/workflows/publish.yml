@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
     permissions:
       contents: read
       id-token: write
@@ -29,6 +29,8 @@ jobs:
         env:
           DEV_ENV_VARS: ${{ secrets.DEV_ENV_VARS }}
         run: echo $DEV_ENV_VARS | base64 -d >> .env
+      - name: Install compare-versions package
+        run: yarn add -D compare-versions@6.1.0
       - name: Publish smart contracts
         env:
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
@@ -38,13 +40,22 @@ jobs:
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           NPM_VERSION=$(npm show "$PACKAGE_NAME" version 2>/dev/null || echo 0.0.0)
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          NPM_NUMBER=$(echo $NPM_VERSION | sed 's/[^0-9]//g')
-          PACKAGE_NUMBER=$(echo $PACKAGE_VERSION | sed 's/[^0-9]//g')
-          max_length=$((${#NPM_NUMBER} > ${#PACKAGE_NUMBER} ? ${#NPM_NUMBER} : ${#PACKAGE_NUMBER}))
-          FIXED_NPM_VERSION=$(echo $NPM_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#NPM_NUMBER})))))
-          FIXED_PACKAGE_NUMBER=$(echo $PACKAGE_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PACKAGE_NUMBER})))))
 
-          if [ ${FIXED_NPM_VERSION} -ge ${FIXED_PACKAGE_NUMBER} ]; then
+          echo "NPM_VERSION = " $NPM_VERSION
+          echo "PACKAGE_VERSION = " $PACKAGE_VERSION 
+
+          VERSION_COMPARE=$(node -e "
+            const compare = require('compare-versions');
+            const npmVersion = '$NPM_VERSION';
+            const packageVersion = '$PACKAGE_VERSION';
+            if (compare.compareVersions(packageVersion, npmVersion) === 1) {
+              console.log('true');
+            } else {
+              console.log('false');
+            }
+          ")
+
+          if [ "$VERSION_COMPARE" = "false" ]; then
             echo "Ignore ${PACKAGE_NAME} since no changes"
           else
             cd ../
