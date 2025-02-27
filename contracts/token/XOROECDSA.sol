@@ -11,7 +11,7 @@ contract XOROECDSA {
   // Using Bytes for bytes
   using Bytes for bytes;
 
-  // Verifiy digital signature
+  // Verify digital signature
   using ECDSA for bytes;
   using ECDSA for bytes32;
 
