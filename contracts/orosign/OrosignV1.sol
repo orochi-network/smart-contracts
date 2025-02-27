@@ -239,7 +239,7 @@ contract OrosignV1 is IOrosignV1, Permissioned, ReentrancyGuard {
         uint128(nonce),
         target,
         value,
-        // Add addres of this contract to prevent replay attack
+        // Add address of this contract to prevent replay attack
         address(this),
         data
       );
