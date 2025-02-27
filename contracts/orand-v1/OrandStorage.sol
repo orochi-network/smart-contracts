@@ -21,7 +21,7 @@ contract OrandStorage is IOrandStorage, IOrandECDSA {
 
   //=======================[  Internal  ]====================
 
-  // Packing adderss and uint96 to a single bytes32
+  // Packing address and uint96 to a single bytes32
   // 96 bits a ++ 160 bits b
   function _packing(uint96 a, address b) internal pure returns (uint256 packed) {
     assembly {
