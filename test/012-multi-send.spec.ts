@@ -39,196 +39,7 @@ describe('MultiSend', function () {
 
     // Execute multiSend with an empty recipient list
     const tx = await contract.connect(deployerSigner).multiSend(recipient, amountPerRecipient, {
-      value: import { expect } from 'chai';
-      import { ethers } from 'hardhat';
-      import { OroNft } from '../typechain-types';
-      import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-      
-      let accounts: SignerWithAddress[];
-      let deployerSigner: SignerWithAddress;
-      let user01: SignerWithAddress;
-      let user02: SignerWithAddress;
-      let user03: SignerWithAddress;
-      let user04: SignerWithAddress;
-      let contract: OroNft;
-      
-      describe('OroNft Contract', function () {
-        beforeEach(async () => {
-          accounts = await ethers.getSigners();
-          [deployerSigner, user01, user02, user03, user04] = accounts;
-      
-          const OroNft = await ethers.getContractFactory('OroNft');
-          contract = await OroNft.deploy(
-            "https://baseuri.com/", 
-            Math.floor(Date.now() / 1000), 
-            Math.floor(Date.now() / 1000) + 100, 
-            Math.floor(Date.now() / 1000) + 101, 
-            Math.floor(Date.now() / 1000) + 200, 
-            Math.floor(Date.now() / 1000) + 300
-          );
-          await contract.deployed();
-        });
-      
-        it('Should deploy contract correctly and initialize state', async () => {
-          const maxSupply = await contract.getMaxSupply();
-          const guaranteedSupply = await contract.getGuaranteedSupply();
-          const fcfsSupply = await contract.getFcfsSupply();
-      
-          expect(maxSupply).to.equal(3000);
-          expect(guaranteedSupply).to.equal(1600);
-          expect(fcfsSupply).to.equal(1400);
-        });
-      
-        it('Should mint NFT in Guaranteed Phase', async () => {
-          await ethers.provider.send('evm_increaseTime', [101]);
-          await ethers.provider.send('evm_mine', []);
-      
-          await contract.addGuarantee([user01.address]);
-      
-          const initialBalance = await ethers.provider.getBalance(user01.address);
-          await contract.connect(user01).guaranteedMint();
-      
-          const finalBalance = await ethers.provider.getBalance(user01.address);
-          const tokenId = await contract.getTokenIndex(user01.address);
-      
-          expect(finalBalance).to.equal(initialBalance);
-          expect(tokenId).to.equal(1);
-        });
-      
-        it('Should not mint NFT outside the Guaranteed Phase', async () => {
-          await expect(contract.connect(user01).guaranteedMint()).to.be.revertedWith('Not in Guaranteed Phase');
-        });
-      
-        it('Should mint NFT in FCFS Phase with enough ETH', async () => {
-          await ethers.provider.send('evm_increaseTime', [202]);
-          await ethers.provider.send('evm_mine', []);
-      
-          const initialBalance = await ethers.provider.getBalance(user01.address);
-          await contract.connect(user01).fcfsMint({ value: ethers.utils.parseEther('0.05') });
-      
-          const finalBalance = await ethers.provider.getBalance(user01.address);
-          expect(finalBalance).to.equal(initialBalance.sub(ethers.utils.parseEther('0.05')));
-        });
-      
-        it('Should revert if insufficient ETH in FCFS Phase', async () => {
-          await ethers.provider.send('evm_increaseTime', [202]);
-          await ethers.provider.send('evm_mine', []);
-      
-          await expect(contract.connect(user01).fcfsMint({ value: ethers.utils.parseEther('0.01') })).to.be.revertedWith('Insufficient ETH');
-        });
-      
-        it('Should mint NFT in Public Phase', async () => {
-          await ethers.provider.send('evm_increaseTime', [302]);
-          await ethers.provider.send('evm_mine', []);
-      
-          const initialBalance = await ethers.provider.getBalance(user01.address);
-          await contract.connect(user01).publicMint({ value: ethers.utils.parseEther('0.1') });
-      
-          const finalBalance = await ethers.provider.getBalance(user01.address);
-          expect(finalBalance).to.equal(initialBalance.sub(ethers.utils.parseEther('0.1')));
-        });
-      
-        it('Should revert minting outside valid phases', async () => {
-          await expect(contract.connect(user01).publicMint({ value: ethers.utils.parseEther('0.1') })).to.be.revertedWith('Not in Public Phase');
-        });
-      
-        it('Should handle changing sale phase times correctly', async () => {
-          await contract.setSalePhaseTimes(
-            Math.floor(Date.now() / 1000) + 10, // Guaranteed start
-            Math.floor(Date.now() / 1000) + 100, // Guaranteed end
-            Math.floor(Date.now() / 1000) + 101, // FCFS start
-            Math.floor(Date.now() / 1000) + 200, // FCFS end
-            Math.floor(Date.now() / 1000) + 300  // Public start
-          );
-      
-          const newStart = await contract.getGuaranteedStartTime();
-          expect(newStart).to.equal(Math.floor(Date.now() / 1000) + 10);
-        });
-      
-        it('Should not allow invalid phase order for sale times', async () => {
-          await expect(
-            contract.setSalePhaseTimes(
-              Math.floor(Date.now() / 1000) + 10, // Guaranteed start
-              Math.floor(Date.now() / 1000) + 5,  // Invalid Guaranteed end
-              Math.floor(Date.now() / 1000) + 101, // FCFS start
-              Math.floor(Date.now() / 1000) + 200, // FCFS end
-              Math.floor(Date.now() / 1000) + 300  // Public start
-            )
-          ).to.be.revertedWith('Guarantee start time must be before end time');
-        });
-      
-        it('Should allow updating guaranteed supply correctly', async () => {
-          await contract.setGuaranteedSupply(1700);
-          const newSupply = await contract.getGuaranteedSupply();
-          expect(newSupply).to.equal(1700);
-        });
-      
-        it('Should handle adding multiple guarantees correctly', async () => {
-          await contract.addGuarantee([user01.address, user02.address]);
-          const guaranteeAmount = await contract.getGuaranteeAmount();
-          expect(guaranteeAmount).to.equal(2);
-      
-          await expect(
-            contract.addGuarantee([user01.address, user02.address, user03.address])
-          ).to.be.revertedWith('Cannot add more than allowed Guarantee Supply');
-        });
-      
-        it('Should handle removing non-existing guarantees without errors', async () => {
-          await contract.addGuarantee([user01.address, user02.address, user03.address]);
-          expect(await contract.signerTotal()).to.equal(3);
-      
-          await contract.removeGuarantee(user04.address);  // Non-existent user
-          expect(await contract.signerTotal()).to.equal(3);
-      
-          await contract.removeGuarantee(user03.address);  // Existing user
-          expect(await contract.signerTotal()).to.equal(2);
-        });
-      
-        it('Should handle quest submission by valid signers only', async () => {
-          const loginQuest = keccak256(toUtf8Bytes('login'));
-      
-          await contract.addGuarantee([user01.address]);
-      
-          await expect(contract.connect(user01).questSubmitDaily(loginQuest))
-            .to.emit(contract, 'QuestCompleteDaily')
-            .withArgs(user01.address, loginQuest);
-      
-          await expect(contract.connect(user02).questSubmitDaily(loginQuest))
-            .to.be.revertedWithCustomError(contract, 'InvalidUser');
-        });
-      
-        it('Should handle bytes32 quest names for events', async () => {
-          const questName = keccak256(toUtf8Bytes('playGame'));
-          await contract.connect(deployerSigner).addGuarantee([user01.address]);
-      
-          await expect(contract.connect(user01).questSubmitGame(questName))
-            .to.emit(contract, 'QuestCompleteGame')
-            .withArgs(user01.address, questName);
-        });
-      
-        it('Should emit AddListSigner event with correct data', async () => {
-          const signersToAdd = [user01.address, user02.address];
-          const tx = await contract.connect(deployerSigner).signerListAdd(signersToAdd);
-      
-          const block = await ethers.provider.getBlock('latest');
-          expect(await contract.signerTotal()).to.equal(signersToAdd.length);
-          await expect(tx).to.emit(contract, 'SignerListAdd').withArgs(signersToAdd.length, block.timestamp);
-        });
-      
-        it('Should handle ownership transfer correctly', async () => {
-          expect(await contract.owner()).to.equal(deployerSigner.address);
-      
-          await contract.connect(deployerSigner).transferOwnership(user01.address);
-          expect(await contract.owner()).to.equal(user01.address);
-      
-          await expect(contract.connect(deployerSigner).transferOwnership(user02.address))
-            .to.be.revertedWith('Ownable: caller is not the owner');
-          
-          await contract.connect(user01).transferOwnership(user02.address);
-          expect(await contract.owner()).to.equal(user02.address);
-        });
-      });
-      , // No ETH sent
+      value: hre.ethers.parseEther('0'), // No ETH sent
     });
     const receipt = await tx.wait();
 
@@ -246,7 +57,7 @@ describe('MultiSend', function () {
     const senderFinalBalance = await hre.ethers.provider.getBalance(deployerSigner.address);
 
     // Verify sender's final balance only reflects gas deduction
-    expect(senderFinalBalance).to.equal(senderInitialBalance - BigInt(totalGasCost));
+    expect(senderFinalBalance).to.equal(senderInitialBalance - totalGasCost);
   });
 
   // insufficient amount
@@ -383,7 +194,7 @@ describe('MultiSend', function () {
     console.log('Gas Cost: ', gasCost.toString());
 
     // Refund 3.6 ethers
-    const expectedSenderFinalBalance = senderInitialBalance - hre.ethers.parseEther('2.4') - BigInt(gasCost);
+    const expectedSenderFinalBalance = senderInitialBalance - hre.ethers.parseEther('2.4') - gasCost;
     console.log('Expected Sender Final Balance after refund and gas: ', expectedSenderFinalBalance.toString());
 
     // Check that the sender's final balance is correct
@@ -491,7 +302,7 @@ describe('MultiSend', function () {
     console.log('Gas Cost: ', gasCost.toString());
 
     // Refund 2.6 ethers
-    const expectedSenderFinalBalance = senderInitialBalance - totalSent - BigInt(gasCost);
+    const expectedSenderFinalBalance = senderInitialBalance - totalSent - gasCost;
     console.log('Expected Sender Final Balance after refund and gas: ', expectedSenderFinalBalance.toString());
 
     // Check that the sender's final balance is correct
