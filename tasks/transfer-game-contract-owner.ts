@@ -5,10 +5,10 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { getWallet } from '../helpers/wallet';
 import { GameContract } from '../typechain-types';
 
-const CONTRACT_ADDRESS = '0xB767AA723fb26D9287261b90506D7d267fE81ee6';
+const CONTRACT_ADDRESS = '0xDE3412F8BF81a3E5C8b7a8b46e292cf0372FCCB2';
 
 task('transferOwnership:gameContract', 'Transfer ownership to owner contract').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
-  const OwnerAddress = '0x73100880b1B6F0De121CAc27C418BF77183e3768';
+  const OwnerAddress = '0xb0ceb5bd649bae066340e5ea106a5d49e66c0446';
   const { chainId } = await hre.ethers.provider.getNetwork();
   const account = await getWallet(hre, chainId);
   const contract = (await hre.ethers.getContractAt('GameContract', CONTRACT_ADDRESS, account)) as GameContract;
