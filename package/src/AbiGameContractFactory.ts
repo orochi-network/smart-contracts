@@ -1,4 +1,20 @@
-export const AbiGameContract = [
+export const AbiGameContractFactory = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_implementation",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
   {
     "inputs": [],
     "name": "InvalidUser",
@@ -6,8 +22,33 @@ export const AbiGameContract = [
   },
   {
     "inputs": [],
-    "name": "OnlyAbleToInitOnce",
+    "name": "UnableToInitNewContract",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
+      }
+    ],
+    "name": "GameContractDeploy",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -34,55 +75,23 @@ export const AbiGameContract = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "user",
+        "name": "actor",
         "type": "address"
       },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "questName",
-        "type": "bytes32"
-      }
-    ],
-    "name": "QuestCompleteDaily",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "user",
+        "name": "oldImplementation",
         "type": "address"
       },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "questName",
-        "type": "bytes32"
-      }
-    ],
-    "name": "QuestCompleteGame",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "user",
+        "name": "upgradeImplementation",
         "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "questName",
-        "type": "bytes32"
       }
     ],
-    "name": "QuestCompleteSocial",
+    "name": "UpgradeImplementation",
     "type": "event"
   },
   {
@@ -127,13 +136,43 @@ export const AbiGameContract = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "newGameContractOwner",
+        "name": "gameContractOwner",
+        "type": "address"
+      },
+      {
+        "internalType": "uint96",
+        "name": "salt",
+        "type": "uint96"
+      }
+    ],
+    "name": "deployGameContract",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "initialize",
-    "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "gameContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "isGameContractExist",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isExist",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -152,40 +191,49 @@ export const AbiGameContract = [
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "questName",
-        "type": "bytes32"
+        "internalType": "uint96",
+        "name": "salt",
+        "type": "uint96"
+      },
+      {
+        "internalType": "address",
+        "name": "creatorAddress",
+        "type": "address"
       }
     ],
-    "name": "questSubmitDaily",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "packingSalt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "packedSalt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "questName",
-        "type": "bytes32"
-      }
-    ],
-    "name": "questSubmitGame",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
+        "internalType": "uint96",
+        "name": "salt",
+        "type": "uint96"
+      },
       {
-        "internalType": "bytes32",
-        "name": "questName",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "creatorAddress",
+        "type": "address"
       }
     ],
-    "name": "questSubmitSocial",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "predictWalletAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "predictedAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -205,6 +253,25 @@ export const AbiGameContract = [
     ],
     "name": "transferOwnership",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      }
+    ],
+    "name": "upgradeImplementation",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
