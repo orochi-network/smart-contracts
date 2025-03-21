@@ -4,21 +4,15 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
-import './interfaces/IOroNft.sol';
 
-contract OroNft is IOroNft, ERC721, Ownable {
+contract OroNft is ERC721, Ownable {
   using Strings for uint256;
 
   uint256 private MAX_SUPPLY = 3000;
   uint256 private GUARANTEED_SUPPLY = 1600;
   uint256 private FCFS_SUPPLY = 1400;
-  uint256 private nextTokenId = 1;
+  uint256 private totalMint = 0;
   string private baseURI;
-  uint256 private guaranteedStartTime;
-  uint256 private guaranteedEndTime;
-  uint256 private fcfsStartTime;
-  uint256 private fcfsEndTime;
-  uint256 private publicStartTime;
   uint256 private fcfsMintPrice = 0.05 ether;
   uint256 private publicMintPrice = 0.1 ether;
   mapping(address => bool) private isGuaranteed;
@@ -28,29 +22,29 @@ contract OroNft is IOroNft, ERC721, Ownable {
   mapping(address => uint256) private tokenIndex;
   uint256 private guaranteeAmount = 0;
   uint256 private fcfsAmount = 0;
+  uint256 currentPhase = 0;
+  uint256 private constant PHASE_GUARATEED = 1;
+  uint256 private constant PHASE_FCFS = 2;
+  uint256 private constant PHASE_PUBLIC = 3;
+  uint256 private constant LOCK_PHASE = 0;
+  uint256 private guaranteedMint = 0;
+  uint256 private fcfsMint = 0;
+  address private protocolWallet;
 
+  // Events
+  event NftMint(address indexed minter, uint256 indexed tokenId);
+  event GuaranteeAdd(address indexed wallet, uint256 amount);
+  event FcfsAdd(address indexed wallet, uint256 amount);
+  event BaseURIUpdate(string newDefaultUri);
+  
   constructor(
     string memory _baseURI,
-    uint256 _guaranteedStartTime,
-    uint256 _guaranteedEndTime,
-    uint256 _fcfsStartTime,
-    uint256 _fcfsEndTime,
-    uint256 _publicStartTime,
     string memory _name,
-    string memory _symbol
+    string memory _symbol,
+    address _protocolWallet
   ) ERC721(_name, _symbol) {
-    require(_guaranteedStartTime >= block.timestamp, 'Guaranteed start must not be less than current time');
-    require(_guaranteedEndTime >= block.timestamp, 'Guaranteed end must not be less than current time');
-    require(_fcfsStartTime >= block.timestamp, 'FCFS start must not be less than current time');
-    require(_fcfsEndTime >= block.timestamp, 'FCFS end must not be less than current time');
-    require(_publicStartTime >= block.timestamp, 'Public start must not be less than current time');
-
     baseURI = _baseURI;
-    guaranteedStartTime = _guaranteedStartTime;
-    guaranteedEndTime = _guaranteedEndTime;
-    fcfsStartTime = _fcfsStartTime;
-    fcfsEndTime = _fcfsEndTime;
-    publicStartTime = _publicStartTime;
+    protocolWallet = _protocolWallet;
   }
 
   /*******************************************************
@@ -61,80 +55,17 @@ contract OroNft is IOroNft, ERC721, Ownable {
     _;
   }
 
-  modifier isGuaranteedPhase() {
-    require(block.timestamp >= guaranteedStartTime && block.timestamp <= guaranteedEndTime, 'Not in Guaranteed Phase');
-    _;
-  }
-
-  modifier isFcfsPhase() {
-    require(block.timestamp >= fcfsStartTime && block.timestamp <= fcfsEndTime, 'Not in FCFS Phase');
-    _;
-  }
-
-  modifier isPublicPhase() {
-    require(block.timestamp >= publicStartTime, 'Not in Public Phase');
-    _;
-  }
-
   /*******************************************************
    * External functions(Owner)
    ********************************************************/
-  function salePhaseSetTimes(
-    uint256 _guaranteedStartTime,
-    uint256 _guaranteedEndTime,
-    uint256 _fcfsStartTime,
-    uint256 _fcfsEndTime,
-    uint256 _publicStartTime
-  ) external onlyOwner {
-    // Check ordering among phases (basic logic remains)
-    require(_guaranteedStartTime < _guaranteedEndTime, 'guaranteedStart < guaranteedEnd required');
-    require(_guaranteedEndTime < _fcfsStartTime, 'guaranteedEnd < fcfsStart required');
-    require(_fcfsStartTime < _fcfsEndTime, 'fcfsStart < fcfsEnd required');
-    require(_fcfsEndTime < _publicStartTime, 'fcfsEnd < publicStart required');
 
-    uint256 currentTime = block.timestamp;
+  function protocolWalletSet(address _newWallet) external onlyOwner {
+    protocolWallet = _newWallet;
+  }
 
-    // Guaranteed Phase restrictions
-    // If we are currently in guaranteed phase or have passed guaranteedStart, cannot change guaranteedStart
-    if (currentTime >= guaranteedStartTime) {
-      require(
-        _guaranteedStartTime == guaranteedStartTime,
-        'Cannot modify guaranteedStart because Guaranteed has begun'
-      );
-    }
-    // If we have passed guaranteedEndTime, cannot change either guaranteedStart or guaranteedEnd
-    if (currentTime > guaranteedEndTime) {
-      require(
-        _guaranteedStartTime == guaranteedStartTime && _guaranteedEndTime == guaranteedEndTime,
-        'Cannot modify Guaranteed times after Guaranteed phase finished'
-      );
-    }
-
-    // FCFS Phase restrictions
-    // If we are currently in FCFS or we have passed fcfsStart, cannot change fcfsStart
-    if (currentTime >= fcfsStartTime) {
-      require(_fcfsStartTime == fcfsStartTime, 'Cannot modify fcfsStart because FCFS has begun');
-    }
-    // If we have passed fcfsEndTime, cannot change FCFS start or end
-    if (currentTime > fcfsEndTime) {
-      require(
-        _fcfsStartTime == fcfsStartTime && _fcfsEndTime == fcfsEndTime,
-        'Cannot modify FCFS times after FCFS phase finished'
-      );
-    }
-
-    // Public Phase restrictions
-    // If we are currently in or past public start, cannot change publicStart
-    if (currentTime >= publicStartTime) {
-      require(_publicStartTime == publicStartTime, 'Cannot modify publicStart because Public has begun');
-    }
-
-    // Finally, if all checks are passed, update storage
-    guaranteedStartTime = _guaranteedStartTime;
-    guaranteedEndTime = _guaranteedEndTime;
-    fcfsStartTime = _fcfsStartTime;
-    fcfsEndTime = _fcfsEndTime;
-    publicStartTime = _publicStartTime;
+  function currentPhaseSet(uint256 _phase) external onlyOwner {
+    require(_phase >= LOCK_PHASE && _phase <= PHASE_PUBLIC, 'Invalid phase');
+    currentPhase = _phase;
   }
 
   function fcfsMintPricesSet(uint256 _price) external onlyOwner {
@@ -146,11 +77,6 @@ contract OroNft is IOroNft, ERC721, Ownable {
   }
 
   function guaranteedSupplySet(uint256 _newGuaranteeSupply) external onlyOwner {
-    require(block.timestamp <= guaranteedEndTime, 'Cannot change Guaranteed supply after the phase ends');
-    if (block.timestamp > guaranteedStartTime && block.timestamp < guaranteedEndTime) {
-      require(_newGuaranteeSupply >= nextTokenId - 1, 'New Guaranteed supply must be greater than the current supply');
-    }
-    require(_newGuaranteeSupply > GUARANTEED_SUPPLY, 'New Guaranteed supply must be greater than the current supply');
     MAX_SUPPLY = _newGuaranteeSupply + FCFS_SUPPLY;
     GUARANTEED_SUPPLY = _newGuaranteeSupply;
   }
@@ -162,7 +88,7 @@ contract OroNft is IOroNft, ERC721, Ownable {
 
   function guaranteeAdd(address[] calldata wallets) external onlyOwner {
     require(guaranteeAmount + wallets.length <= GUARANTEED_SUPPLY, 'Cannot add more than allowed Guarantee Supply');
-    for (uint256 i = 0; i < wallets.length; i++) {
+    for (uint256 i = 0; i < wallets.length; i += 1) {
       if (!isGuaranteed[wallets[i]]) {
         isGuaranteed[wallets[i]] = true;
         guaranteeAmount += 1;
@@ -178,7 +104,7 @@ contract OroNft is IOroNft, ERC721, Ownable {
   }
 
   function fcfsAdd(address[] calldata wallets) external onlyOwner {
-    for (uint256 i = 0; i < wallets.length; i++) {
+    for (uint256 i = 0; i < wallets.length; i += 1) {
       if (!isFcfs[wallets[i]]) {
         isFcfs[wallets[i]] = true;
         fcfsAmount += 1;
@@ -193,52 +119,37 @@ contract OroNft is IOroNft, ERC721, Ownable {
     fcfsAmount -= 1;
   }
 
-  // Some user might send ETH to the contract by mistake
   function withdraw() external onlyOwner {
-    payable(owner()).transfer(address(this).balance);
+    payable(protocolWallet).transfer(address(this).balance);
   }
 
   /*******************************************************
    * External Mint functions (Users)
    ********************************************************/
-  function guaranteedMint() external isGuaranteedPhase onlyOnce {
-    require(isGuaranteed[msg.sender], 'Not in Guarantee');
-    require(nextTokenId <= GUARANTEED_SUPPLY, 'No Guaranteed NFTs left');
-    _safeMint(msg.sender, nextTokenId);
-    hasMinted[msg.sender] = true;
-    tokenIndex[msg.sender] = nextTokenId;
-    emit NftMint(msg.sender, nextTokenId);
-    nextTokenId += 1;
-  }
+  function mintOroNft() external onlyOnce {
+    require(currentPhase > 0, 'Cannot mint before the sale starts');
+    if (currentPhase == PHASE_GUARATEED) {
+      require(isGuaranteed[msg.sender], 'Not in Guarantee');
+      require(totalMint + 1 <= GUARANTEED_SUPPLY, 'No Guaranteed NFTs left');
+      guaranteedMint += 1;
+    }
+    if (currentPhase == PHASE_FCFS) {
+      require(isFcfs[msg.sender], 'Not in FCFS list');
+      require(totalMint + 1 <= GUARANTEED_SUPPLY + FCFS_SUPPLY, 'No FCFS NFTs left');
+      fcfsMint += 1;
+    }
 
-  function fcfsMint() external payable isFcfsPhase onlyOnce {
-    require(isFcfs[msg.sender], 'Not in FCFS list');
-    require(nextTokenId <= GUARANTEED_SUPPLY + FCFS_SUPPLY, 'No FCFS NFTs left');
-    require(msg.value >= fcfsMintPrice, 'Insufficient ETH');
-    _safeMint(msg.sender, nextTokenId);
+    require(totalMint + 1 <= MAX_SUPPLY, 'No NFTs left');
+    _safeMint(msg.sender, totalMint + 1);
     hasMinted[msg.sender] = true;
-    tokenIndex[msg.sender] = nextTokenId;
-    emit NftMint(msg.sender, nextTokenId);
-    nextTokenId += 1;
-  }
-
-  function publicMint() external payable isPublicPhase onlyOnce {
-    require(nextTokenId <= MAX_SUPPLY, 'No NFTs left');
-    require(msg.value >= publicMintPrice, 'Insufficient ETH');
-    _safeMint(msg.sender, nextTokenId);
-    hasMinted[msg.sender] = true;
-    tokenIndex[msg.sender] = nextTokenId;
-    emit NftMint(msg.sender, nextTokenId);
-    nextTokenId += 1;
+    tokenIndex[msg.sender] = totalMint + 1;
+    emit NftMint(msg.sender, totalMint + 1);
+    totalMint += 1;
   }
 
   /*******************************************************
    * Token URI functions
    ********************************************************/
-  function tokenURISet(uint256 tokenId, string memory uri) external onlyOwner {
-    tokenURIs[tokenId] = uri;
-  }
-
   function baseURISet(string memory _newBaseURI) external onlyOwner {
     baseURI = _newBaseURI;
     emit BaseURIUpdate(_newBaseURI);
@@ -255,24 +166,16 @@ contract OroNft is IOroNft, ERC721, Ownable {
   /*******************************************************
    * External view section
    ********************************************************/
-  function guaranteedStartTimeGet() external view returns (uint256) {
-    return guaranteedStartTime;
+  function guaranteeMintGet() external view returns (uint256) {
+    return guaranteedMint;
   }
 
-  function guaranteedEndTimeGet() external view returns (uint256) {
-    return guaranteedEndTime;
+  function fcfsMintGet() external view returns (uint256) {
+    return fcfsMint;
   }
 
-  function fcfsStartTimeGet() external view returns (uint256) {
-    return fcfsStartTime;
-  }
-
-  function fcfsEndTimeGet() external view returns (uint256) {
-    return fcfsEndTime;
-  }
-
-  function publicStartTimeGet() external view returns (uint256) {
-    return publicStartTime;
+  function publicMintGet() external view returns (uint256) {
+    return totalMint - guaranteedMint - fcfsMint;
   }
 
   function fcfsMintPriceGet() external view returns (uint256) {
@@ -305,5 +208,9 @@ contract OroNft is IOroNft, ERC721, Ownable {
 
   function fcfsAmountGet() external view returns (uint256) {
     return fcfsAmount;
+  }
+
+  function totalMintGet() external view returns (uint256) {
+    return totalMint;
   }
 }
