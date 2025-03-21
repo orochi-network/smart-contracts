@@ -39,6 +39,7 @@ function cpAbi(src, dst) {
   writeFileSync(dst, `export const ${basename(dst, '.ts')} = ${JSON.stringify(abi, null, '  ')};`);
 }
 
+
 cp('../typechain-types/common.ts', './src/common.ts');
 cp('../contracts/orand-v2/interfaces/IOrandConsumerV2.sol', './IOrandConsumerV2.sol');
 cp('../contracts/orocle-v1/interfaces/IOrocleAggregatorV1.sol', './IOrocleAggregatorV1.sol');
@@ -49,8 +50,9 @@ cp('../contracts/orocle-v2/interfaces/IOrocleAggregatorV2.sol', './IOrocleAggreg
 cp('../contracts/multi-send/interfaces/IMultiSend.sol', './IMultiSend.sol');
 cp('../contracts/game-contract/interfaces/IGameContract.sol', './IGameContract.sol');
 cp('../contracts/game-contract/interfaces/IGameContractFactory.sol', './IGameContractFactory.sol');
+cp('../contracts/oro-nft/interfaces/IOroNFT.sol', './IOroNFT.sol');
 
-
+cpAbi('../artifacts/contracts/oro-nft/OroNFT.sol/OroNFT.json', './src/AbiOroNFT.ts');
 cpAbi('../artifacts/contracts/orosign/OrosignMasterV1.sol/OrosignMasterV1.json', './src/AbiOrosignMasterV1.ts');
 cpAbi('../artifacts/contracts/orosign/OrosignV1.sol/OrosignV1.json', './src/AbiOrosignV1.ts');
 cpAbi('../artifacts/contracts/multicast/MultiCast.sol/Multicast.json', './src/AbiMulticast.ts');
@@ -71,6 +73,7 @@ cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/AbiO
 cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/AbiOrandProviderV3.ts');
 cpAbi('../artifacts/contracts/token/XORO.sol/XORO.json', './src/AbiXORO.ts');
 
+cpTypes('../typechain-types/contracts/oro-nft/OroNFT.ts', './src/OroNft.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignMasterV1.ts', './src/OrosignMasterV1.ts');
 cpTypes('../typechain-types/contracts/orosign/OrosignV1.ts', './src/OrosignV1.ts');
 cpTypes('../typechain-types/contracts/multicast/MultiCast.sol/Multicast.ts', './src/Multicast.ts');
