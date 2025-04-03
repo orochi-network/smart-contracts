@@ -103,11 +103,12 @@ contract DiceGameV3 is IOrandConsumerV3, Ownable {
       currentGame.result = uint128((randomness % 6) + 1);
       gameResult[fulfilled] = currentGame;
       fulfilled += 1;
-      return true;
+      // We will let the provider know that all are not fulfilled
+      return false;
     }
     // We will let the provider know that all are fulfilled
     IOrocleAggregatorV2(oracle).fulfill(0, '0x');
-    return false;
+    return true;
   }
 
   //=======================[  External  ]====================
