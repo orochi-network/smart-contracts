@@ -8,14 +8,6 @@ error WrongGuessingValue(uint128 guessing);
 
 // Application should be an implement of IOrandConsumerV2 interface
 contract DiceGameV3 is IOrandConsumerV3, Ownable {
-  uint256 private testCount = 0;
-
-  uint256 private testCountTwo = 0;
-
-  event TestCount(uint256 count);
-
-  event TestCountTwo(uint256 count);
-
   // Set new provider
   event SetProvider(address indexed oldProvider, address indexed newProvider);
 
@@ -111,26 +103,15 @@ contract DiceGameV3 is IOrandConsumerV3, Ownable {
       currentGame.result = uint128((randomness % 6) + 1);
       gameResult[fulfilled] = currentGame;
       fulfilled += 1;
-      testCountTwo += 1;
-      emit TestCountTwo(testCountTwo);
+      // We will let the provider know that all are not fulfilled
       return false;
     }
-    testCount += 1;
-    emit TestCount(testCount);
     // We will let the provider know that all are fulfilled
     IOrocleAggregatorV2(oracle).fulfill(0, '0x');
     return true;
   }
 
   //=======================[  External  ]====================
-
-  function createTestGame() external onlyOwner {
-    for (uint256 i = 0; i < 10; i++) {
-      gameResult[totalGame] = Game({ guessed: 1, result: 0 });
-      emit NewGuess(msg.sender, totalGame, 1);
-      totalGame += 1;
-    }
-  }
 
   // Player can guessing any number in range of 1-6
   function guessingDiceNumber(uint128 guessing) external returns (bool) {

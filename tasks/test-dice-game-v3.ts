@@ -11,7 +11,7 @@ task('test:dice-game-v3', 'Test dice game with OrandProviderV3').setAction(
     const { chainId } = await hre.ethers.provider.getNetwork();
     const account = await getWallet(hre, chainId);
     const contract = (await hre.ethers.getContractAt('DiceGameV3', DICE_GAME_CONTRACT_ADDRESS, account)) as DiceGameV3;
-    const tx = await contract.createTestGame();
+    const tx = await contract.guessingDiceNumber(2);
     console.log('Successful transaction', tx);
   },
 );
