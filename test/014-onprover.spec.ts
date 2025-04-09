@@ -1,7 +1,7 @@
 import hre from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { OnToken } from '../typechain-types';
+import { ONProver } from '../typechain-types';
 import Deployer from '../helpers/deployer';
 import { AbiCoder, keccak256, getBytes } from 'ethers';
 
@@ -10,7 +10,7 @@ let deployer: SignerWithAddress;
 let user1: SignerWithAddress;
 let onProver2: SignerWithAddress;
 let prover: SignerWithAddress;
-let contract: OnToken;
+let contract: ONProver;
 
 const DAILY_LIMIT = hre.ethers.parseUnits('5000', 18);
 
@@ -52,7 +52,7 @@ async function getCheckPoint(): Promise<bigint> {
   return BigInt(Number(currentCheckpoint) + intervals * Number(interval));
 }
 
-describe('OnToken', function () {
+describe('ONProver', function () {
   before(async () => {
     // Setup accounts
     accounts = await hre.ethers.getSigners();
@@ -61,11 +61,11 @@ describe('OnToken', function () {
     // Deploy the contract
     const deployHelper = Deployer.getInstance(hre);
     deployHelper.connect(deployer);
-    contract = await deployHelper.contractDeploy<OnToken>(
-      'OnToken/OnToken',
+    contract = await deployHelper.contractDeploy<ONProver>(
+      'onprover/ONProver',
       [],
-      'OnToken Token',
-      'OnToken',
+      'ONProver',
+      'ONProver',
       prover.address,
     );
 

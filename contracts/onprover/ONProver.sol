@@ -7,10 +7,10 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import { ECDSA } from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 /**
- * @title ON Token
- * @author OnProver Project
+ * @title ONProver Token
+ * @author ONProver Project
  */
-contract OnToken is ERC20, Ownable, ReentrancyGuard {
+contract ONProver is ERC20, Ownable, ReentrancyGuard {
   // Timestamp marking the start time of the current daily claim period
   uint64 private dailyCheckpoint;
 

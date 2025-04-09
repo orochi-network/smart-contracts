@@ -64,7 +64,7 @@ cpAbi(
   '../artifacts/contracts/game-contract/GameContractFactory.sol/GameContractFactory.json',
   './src/AbiGameContractFactory.ts',
 );
-cpAbi('../artifacts/contracts/on-token/OnToken.sol/OnToken.json', './src/AbiOnToken.ts');
+cpAbi('../artifacts/contracts/onprover/ONProver.sol/ONProver.json', './src/AbiONProver.ts');
 
 cpAbi('../artifacts/contracts/orocle-v2/OrocleV2.sol/OrocleV2.json', './src/AbiOrocleV2.ts');
 cpAbi('../artifacts/contracts/orand-v3/OrandProviderV3.sol/OrandProviderV3.json', './src/AbiOrandProviderV3.ts');
@@ -83,7 +83,7 @@ cpTypes('../typechain-types/contracts/token/XORO.ts', './src/XORO.ts');
 cpTypes('../typechain-types/contracts/game-contract/GameContract.ts', './src/GameContract.ts');
 cpTypes('../typechain-types/contracts/game-contract/GameContractFactory.ts', './src/GameContractFactory.ts');
 cpTypes('../typechain-types/contracts/multi-send/MultiSend.ts', './src/MultiSend.ts');
-cpTypes('../typechain-types/contracts/on-token/Ontoken.ts', './src/OnToken.ts');
+cpTypes('../typechain-types/contracts/onprover/ONProver.ts', './src/ONProver.ts');
 
 writeFileSync(
   './src/index.ts',
