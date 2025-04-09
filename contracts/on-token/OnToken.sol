@@ -159,6 +159,8 @@ contract OnToken is ERC20, Ownable, ReentrancyGuard {
    * @param newTime New checkpoint timestamp
    */
   function setDailyCheckpoint(uint64 newTime) external onlyOwner {
+    require(newTime < block.timestamp, 'new checkpoint must be in the past');
+
     uint64 oldTime = dailyCheckpoint;
 
     dailyCheckpoint = newTime;
@@ -229,7 +231,7 @@ contract OnToken is ERC20, Ownable, ReentrancyGuard {
 
     // Recover the signer address
     address signer = ECDSA.recover(
-      ECDSA.toEthSignedMessageHash(keccak256(abi.encode(msg.sender, amount, salt))),
+      ECDSA.toEthSignedMessageHash(keccak256(abi.encode(msg.sender, amount, salt, dailyCheckpoint))),
       signature
     );
     require(_isValidSigner(signer), 'Invalid signature');
@@ -254,6 +256,18 @@ contract OnToken is ERC20, Ownable, ReentrancyGuard {
     emit TokenClaimDaily(keccak256(signature), msg.sender, amount);
   }
 
+  /**
+   * @notice Owner can send existing tokens from the contract.
+   * @param to Address to receive the tokens
+   * @param amount Amount of tokens to transfer
+   */
+  function withdraw(address to, uint256 amount) external onlyOwner {
+    require(to != address(0), 'Invalid recipient');
+    require(balanceOf(address(this)) >= amount, 'Insufficient contract balance');
+
+    _transfer(address(this), to, amount);
+  }
+
   /*******************************************************
    * Private Section
    ********************************************************/
@@ -263,11 +277,15 @@ contract OnToken is ERC20, Ownable, ReentrancyGuard {
    */
   function _restartDailyPool() private {
     uint64 oldTime = dailyCheckpoint;
+    uint64 nowTime = uint64(block.timestamp);
 
-    dailyCheckpoint = uint64(block.timestamp);
+    uint64 passed = nowTime - oldTime;
+    uint64 intervals = passed / dailyRestartInterval;
 
+    dailyCheckpoint = oldTime + intervals * dailyRestartInterval;
+
+    // Reset claim
     dailyTokenClaimed = 0;
-
     emit DailyCheckpointSet(oldTime, dailyCheckpoint);
     emit DailyPoolReset(dailyUserClaimCount, oldTime, dailyCheckpoint);
 

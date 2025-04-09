@@ -5,7 +5,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { getWallet } from '../helpers/wallet';
 import { OnToken } from '../typechain-types';
 
-const CONTRACT_ADDRESS = '0x25391103feAFf67dBF392CFC73C91319AD1dcD13';
+const CONTRACT_ADDRESS = '';
 const MINT_ADDRESS = '';
 const AMOUNT = 1000000000;
 
