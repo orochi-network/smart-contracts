@@ -93,7 +93,7 @@ contract ONProver is ERC20, Ownable, ReentrancyGuard {
    ********************************************************/
 
   /**
-   * Deploy and initialize the ON token contract
+   * Deploy and initialize the ONProver contract
    * @param name Token name
    * @param symbol Token symbol
    * @param initProver Authorized prover address
