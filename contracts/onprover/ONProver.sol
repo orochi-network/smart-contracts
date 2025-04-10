@@ -1,271 +1,202 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import { ECDSA } from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import '../libraries/Operatable.sol';
+import '../libraries/Bytes.sol';
+import './OrochiNetworkToken.sol';
+
+// All possible errors in the contract
+error InvalidAddress(address inputAddress);
+error ExceedDailyLimit(uint128 dailyLimit);
+error InvalidProofLength(uint256 proofLength);
+error InvalidProofSignature(address signer);
+error InvalidUserNonce(address user, uint96 nonce);
+error InvalidReceiption(address receiption, address proofReceiption);
+error InactivatedCampaign(uint64 startTime, uint64 endTime);
 
 /**
- * @title ONProver Token
- * @author ONProver Project
+ * @title ONProver Contract
  */
-contract ONProver is ERC20, Ownable, ReentrancyGuard {
-  // Timestamp marking the start time of the current daily claim period
-  uint64 private dailyCheckpoint;
+contract ONProver is Ownable, Operatable, ReentrancyGuard {
+  struct DailyClaim {
+    // Total amount of tokens claimed today
+    uint128 claimed;
+    // Number of individual claims today
+    uint128 userCount;
+  }
 
-  // Duration of the daily claim period (default is 24 hours)
-  uint64 private dailyRestartInterval = 86400;
+  struct Configuration {
+    // Maximum number of tokens that can be claimed per day
+    uint128 maxDailyLimit;
+    // Start time of campaign
+    uint64 timeStart;
+    // End time of campaign
+    uint64 timeEnd;
+    // Token contract
+    OrochiNetworkToken tokenContract;
+  }
 
-  // Maximum amount of tokens that can be claimed per day
-  uint256 private dailyTokenLimit;
-
-  // Total amount of tokens claimed during the current daily period
-  uint256 private dailyTokenClaimed;
-
-  // Number of individual claims made today
-  uint64 private dailyUserClaimCount;
-
-  // Address of the authorized prover who can sign claims
-  address private prover;
+  struct Transaction {
+    // Receiver address of the transaction
+    address to;
+    // Nonce value of the transaction
+    uint96 nonce;
+    // Value of the transaction
+    uint128 value;
+  }
 
   // Mapping to track if a signature has been redeemed
-  mapping(bytes32 => bool) private redeemedOnceTime;
+  mapping(address => uint96) private userNonce;
+
+  // Mapping to track daily claim
+  mapping(uint256 => DailyClaim) dailyClaimStorage;
+
+  // Configuration for the ONProver token
+  Configuration private config;
+
+  // Byte manipulation
+  using Bytes for bytes;
+
+  // Verifiy digital signature
+  using ECDSA for bytes;
+  using ECDSA for bytes32;
 
   /*******************************************************
    * Events
    ********************************************************/
 
   /**
-   * Emitted when a user claims tokens
-   * @param signature Hash of the claim signature
-   * @param to Address receiving the tokens
-   * @param amount Amount of tokens claimed
+   * Emitted when a user claims token
+   * @param to Address receiving the token
+   * @param amount Amount of token claimed
    */
-  event TokenClaim(bytes32 indexed signature, address indexed to, uint256 indexed amount);
+  event TokenClaim(address indexed to, uint256 indexed amount);
 
   /**
    * Emitted when a user claims tokens via daily claim
-   * @param signature Hash of the claim signature
-   * @param to Address receiving the tokens
-   * @param amount Amount of tokens claimed in daily claim
+   * @param to Address receiving the token
+   * @param amount Amount of token claimed in daily claim
+   * @param day Day since the start of the campaign
    */
-  event TokenClaimDaily(bytes32 indexed signature, address indexed to, uint256 indexed amount);
+  event TokenClaimDaily(address indexed to, uint256 indexed amount, uint256 day);
 
   /**
-   * Emitted when a new prover is set
-   * @param oldSigner Address of the old prover
-   * @param newSigner Address of the new prover
+   * Update configuration start time
+   * @param timeStart  Start time of the campaign in seconds since epoch
    */
-  event ProverSet(address indexed oldSigner, address indexed newSigner);
+  event UpdateConfigTimeStart(uint64 timeStart);
 
   /**
-   * Emitted when the daily token limit is updated
-   * @param oldLimit Previous daily token limit
-   * @param newLimit New daily token limit
+   * Update configuration end time
+   * @param timeEnd End time of the campaign in seconds since epoch
    */
-  event DailyTokenLimitSet(uint256 indexed oldLimit, uint256 indexed newLimit);
+  event UpdateConfigTimeEnd(uint64 timeEnd);
 
   /**
-   * Emitted when the daily checkpoint is updated
-   * @param oldTime Previous checkpoint timestamp
-   * @param newTime New checkpoint timestamp
+   * Update configuration max daily limit
+   * @param maxDailyLimit Max daily limit of token in one day
    */
-  event DailyCheckpointSet(uint64 indexed oldTime, uint64 indexed newTime);
+  event UpdateConfigMaxDailyLimit(uint128 maxDailyLimit);
 
   /**
-   * Emitted when the daily pool is reset
-   * @param claimCount Number of claims before reset
-   * @param oldTime Previous checkpoint timestamp
-   * @param newTime New checkpoint timestamp after reset
+   * Update configuration token contract
+   * @param tokenContract New token contract address
    */
-  event DailyPoolReset(uint64 indexed claimCount, uint256 indexed oldTime, uint256 indexed newTime);
-
-  /**
-   * Emitted when the daily restart time is updated
-   * @param oldTime Previous dailyRestartInterval value
-   * @param newTime New dailyRestartInterval value
-   */
-  event DailyTimeSet(uint64 indexed oldTime, uint64 indexed newTime);
+  event UpdateConfigTokenContract(address tokenContract);
 
   /*******************************************************
    * Constructor
    ********************************************************/
 
   /**
-   * Deploy and initialize the ONProver contract
-   * @param name Token name
-   * @param symbol Token symbol
-   * @param initProver Authorized prover address
+   * Deploy and initialize the Orochi Network Token contract
+   * @param listOperator List of operator will be add
    */
-  constructor(string memory name, string memory symbol, address initProver) ERC20(name, symbol) {
-    dailyCheckpoint = uint64(block.timestamp);
-
-    prover = initProver;
+  constructor(Configuration memory cfg, address[] memory listOperator) {
+    for (uint256 i = 0; i < listOperator.length; i += 1) {
+      if (listOperator[i] == address(0)) {
+        revert InvalidAddress(listOperator[i]);
+      }
+      _addOperator(listOperator[i]);
+    }
+    config = cfg;
   }
 
   /*******************************************************
    * Modifiers
    ********************************************************/
 
-  /**
-   * Ensure a signature has not been redeemed before
-   * @param signature Signature to verify
-   */
-  modifier onlyRedeemedOnceTime(bytes memory signature) {
-    require(!_isRedeemed(signature), 'Signature already redeemed');
+  modifier onlyActivatedCampaign() {
+    if (block.timestamp >= config.timeStart && block.timestamp <= config.timeEnd) {
+      revert InactivatedCampaign(config.timeStart, config.timeEnd);
+    }
     _;
   }
 
   /*******************************************************
-   * External Owner Functions
+   * External Owner
    ********************************************************/
 
   /**
-   * Mint tokens to a specific address
-   * @param to Address to receive minted tokens
-   * @param amount Amount of tokens to mint
+   * Add new operator to operator list
+   * @param operatorNew New operator
    */
-  function mint(address to, uint256 amount) external onlyOwner {
-    _mint(to, amount);
+  function addOperator(address operatorNew) external onlyOwner returns (bool) {
+    return _addOperator(operatorNew);
   }
 
   /**
-   * Set a new prover address
-   * @param newProver Address of the new prover
+   * Remove an operator from operator list
+   * @param operatorOld Old operator
    */
-  function setProver(address newProver) external onlyOwner {
-    address oldProver = prover;
-
-    prover = newProver;
-
-    emit ProverSet(oldProver, newProver);
+  function removeOperator(address operatorOld) external onlyOwner returns (bool) {
+    return _removeOperator(operatorOld);
   }
 
   /**
-   * Set the maximum daily claim limit
-   * @param newLimit New daily token limit
+   * Set configuration for the campaign
+   * @param cfg Configuration to set
    */
-  function setDailyTokenLimit(uint256 newLimit) external onlyOwner {
-    uint256 oldLimit = dailyTokenLimit;
-
-    dailyTokenLimit = newLimit;
-
-    emit DailyTokenLimitSet(oldLimit, newLimit);
-  }
-
-  /**
-   * Manually set a new daily checkpoint
-   * @param newTime New checkpoint timestamp
-   */
-  function setDailyCheckpoint(uint64 newTime) external onlyOwner {
-    require(newTime < block.timestamp, 'new checkpoint must be in the past');
-
-    uint64 oldTime = dailyCheckpoint;
-
-    dailyCheckpoint = newTime;
-
-    emit DailyCheckpointSet(oldTime, newTime);
-  }
-
-  /**
-   * Set a new daily reset duration
-   * @param newTime New time in seconds for daily reset
-   */
-  function setTimeRestartDaily(uint64 newTime) external onlyOwner {
-    uint64 oldTime = dailyRestartInterval;
-
-    dailyRestartInterval = newTime;
-
-    emit DailyTimeSet(oldTime, newTime);
+  function setConfiguration(Configuration memory cfg) external onlyOwner returns (bool) {
+    if (cfg.timeStart != 0) {
+      config.timeStart = cfg.timeStart;
+      emit UpdateConfigTimeStart(cfg.timeStart);
+    }
+    if (cfg.timeEnd != 0) {
+      config.timeEnd = cfg.timeEnd;
+      emit UpdateConfigTimeEnd(cfg.timeEnd);
+    }
+    if (cfg.maxDailyLimit != 0) {
+      config.maxDailyLimit = cfg.maxDailyLimit;
+      emit UpdateConfigMaxDailyLimit(cfg.maxDailyLimit);
+    }
+    if (address(cfg.tokenContract) != address(0)) {
+      config.tokenContract = cfg.tokenContract;
+      emit UpdateConfigTokenContract(address(cfg.tokenContract));
+    }
+    return true;
   }
 
   /*******************************************************
    * External User Functions (requires signature)
    ********************************************************/
 
-  /**
-   * Claim tokens using a valid signature
-   * @param signature Signed message authorizing claim
-   * @param amount Amount of tokens to claim
-   * @param salt Unique random salt for claim
-   */
-  function claim(
-    bytes memory signature,
-    uint256 amount,
-    uint96 salt
-  ) external nonReentrant onlyRedeemedOnceTime(signature) {
-    // Recover the signer address from the signature
-    address signer = ECDSA.recover(
-      ECDSA.toEthSignedMessageHash(keccak256(abi.encode(msg.sender, amount, salt))),
-      signature
-    );
-    require(_isValidSigner(signer), 'Invalid signature');
-
-    // Transfer tokens to the user
-    _transfer(address(this), msg.sender, amount);
-
-    // Mark the signature as used
-    _setRedeemedOnceTime(signature);
-
-    emit TokenClaim(keccak256(signature), msg.sender, amount);
-  }
-
-  /**
-   * Claim tokens daily with limit enforcement
-   * @param signature Signed message authorizing claim
-   * @param amount Amount of tokens to claim
-   * @param salt Unique random salt for claim
-   */
-  function claimDaily(
-    bytes memory signature,
-    uint256 amount,
-    uint96 salt
-  ) external nonReentrant onlyRedeemedOnceTime(signature) {
-    // Reset daily pool if time has passed
-    if (block.timestamp - dailyCheckpoint >= dailyRestartInterval) {
-      _restartDailyPool();
+  function claim(bytes memory proof) external onlyActivatedCampaign nonReentrant {
+    (bool isDailyClaim, uint128 claimed) = _claim(proof);
+    if (isDailyClaim) {
+      uint256 today = _getCurrentDay();
+      dailyClaimStorage[today].userCount += 1;
+      dailyClaimStorage[today].claimed += claimed;
+      if (dailyClaimStorage[today].claimed > config.maxDailyLimit) {
+        revert ExceedDailyLimit(config.maxDailyLimit);
+      }
+      emit TokenClaimDaily(msg.sender, claimed, today);
+    } else {
+      emit TokenClaim(msg.sender, claimed);
     }
-
-    require(dailyTokenClaimed < dailyTokenLimit, 'Limit per day reached');
-
-    // Recover the signer address
-    address signer = ECDSA.recover(
-      ECDSA.toEthSignedMessageHash(keccak256(abi.encode(msg.sender, amount, salt, dailyCheckpoint))),
-      signature
-    );
-    require(_isValidSigner(signer), 'Invalid signature');
-
-    // Calculate how much can be transferred
-    uint256 transferable = amount;
-
-    if (dailyTokenClaimed + amount > dailyTokenLimit) {
-      transferable = dailyTokenLimit - dailyTokenClaimed;
-    }
-
-    // Transfer tokens to the user
-    _transfer(address(this), msg.sender, transferable);
-
-    // Mark the signature as used
-    _setRedeemedOnceTime(signature);
-
-    // Update claimed amount and count
-    dailyTokenClaimed += transferable;
-    dailyUserClaimCount += 1;
-
-    emit TokenClaimDaily(keccak256(signature), msg.sender, amount);
-  }
-
-  /**
-   * @notice Owner can send existing tokens from the contract.
-   * @param to Address to receive the tokens
-   * @param amount Amount of tokens to transfer
-   */
-  function withdraw(address to, uint256 amount) external onlyOwner {
-    require(to != address(0), 'Invalid recipient');
-    require(balanceOf(address(this)) >= amount, 'Insufficient contract balance');
-
-    _transfer(address(this), to, amount);
   }
 
   /*******************************************************
@@ -273,106 +204,115 @@ contract ONProver is ERC20, Ownable, ReentrancyGuard {
    ********************************************************/
 
   /**
-   * Restart the daily pool
+   * Decompose the proof into its components.
+   * @param proof Input proof
+   * @return signature ECDSA signature 65 bytes
+   * @return messageHash Hash of the transaction
+   * @return isDailyClaim True if it's a daily claim, false otherwise
+   * @return transaction Transaction details
    */
-  function _restartDailyPool() private {
-    uint64 oldTime = dailyCheckpoint;
-    uint64 nowTime = uint64(block.timestamp);
+  function _decomposeProof(
+    bytes memory proof
+  )
+    private
+    pure
+    returns (bytes memory signature, bytes32 messageHash, bool isDailyClaim, Transaction memory transaction)
+  {
+    // Proof format: |65 bytes signature|20 bytes address|12 bytes nonce|16 bytes value|1 bytes isDailyClaim|
+    // Total: 114 bytes
+    if (proof.length != 114) {
+      revert InvalidProofLength(proof.length);
+    }
+    signature = proof.readBytes(0, 65);
+    bytes memory rawTx = proof.readBytes(65, 48);
+    messageHash = keccak256(rawTx);
+    transaction = Transaction({
+      // 20 bytes
+      to: rawTx.readAddress(0),
+      // 12 bytes
+      nonce: uint96(rawTx.readUintUnsafe(20, 96)),
+      // 16 bytes
+      value: uint128(proof.readUintUnsafe(32, 128))
+    });
+    isDailyClaim = proof[113] > 0;
+  }
 
-    uint64 passed = nowTime - oldTime;
-    uint64 intervals = passed / dailyRestartInterval;
+  /**
+   * Claim token from token contract
+   * @param proof ECDSA signature and transaction details
+   * @return dailyClaim Is the claim for daily reward
+   * @return value Value of token to claim
+   */
+  function _claim(bytes memory proof) private returns (bool dailyClaim, uint128 value) {
+    (bytes memory signature, bytes32 messageHash, bool isDailyClaim, Transaction memory transaction) = _decomposeProof(
+      proof
+    );
 
-    dailyCheckpoint = oldTime + intervals * dailyRestartInterval;
+    if (transaction.nonce != userNonce[msg.sender]) {
+      revert InvalidUserNonce(msg.sender, transaction.nonce);
+    }
 
-    // Reset claim
-    dailyTokenClaimed = 0;
-    emit DailyCheckpointSet(oldTime, dailyCheckpoint);
-    emit DailyPoolReset(dailyUserClaimCount, oldTime, dailyCheckpoint);
+    if (msg.sender != transaction.to) {
+      revert InvalidReceiption(msg.sender, transaction.to);
+    }
 
-    dailyUserClaimCount = 0;
+    address signer = messageHash.recover(signature);
+
+    if (!_isOperator(signer)) {
+      revert InvalidProofSignature(signer);
+    }
+    config.tokenContract.mint(transaction.to, transaction.value);
+    userNonce[msg.sender] += 1;
+    return (isDailyClaim, transaction.value);
+  }
+
+  /**
+   * Get current day since start
+   */
+  function _getCurrentDay() private view returns (uint256) {
+    return (block.timestamp - config.timeStart) / 86400;
   }
 
   /*******************************************************
-   * Internal Functions
+   * External View
    ********************************************************/
 
   /**
-   * Mark a signature as redeemed
-   * @param signature Signature to mark
+   * Get current day since start
    */
-  function _setRedeemedOnceTime(bytes memory signature) internal {
-    redeemedOnceTime[keccak256(signature)] = true;
-  }
-
-  /*******************************************************
-   * External View Functions
-   ********************************************************/
-
-  /**
-   * Get the current daily token limit
-   */
-  function dailyTokenLimitGet() external view returns (uint256) {
-    return dailyTokenLimit;
+  function getCurrentDay() external view returns (uint256) {
+    return _getCurrentDay();
   }
 
   /**
-   * Get the current daily checkpoint timestamp
+   * Get metric for today
    */
-  function dailyCheckpointGet() external view returns (uint64) {
-    return dailyCheckpoint;
+  function getMetricToday() external view returns (DailyClaim memory) {
+    return dailyClaimStorage[_getCurrentDay()];
   }
 
   /**
-   * Get the total number of tokens claimed today
+   * Get metric for a specific day
+   * @param day The day to get the metric for
+   * @return The daily claim metrics for that day
    */
-  function dailyTokenClaimedGet() external view returns (uint256) {
-    return dailyTokenClaimed;
+  function getMetricByDate(uint256 day) external view returns (DailyClaim memory) {
+    return dailyClaimStorage[day];
   }
 
   /**
-   * Get the duration set for daily reset
+   * Get configuration settings
+   * @return The configuration settings
    */
-  function timeRestartDailyGet() external view returns (uint64) {
-    return dailyRestartInterval;
+  function getConfig() external view returns (Configuration memory) {
+    return config;
   }
 
   /**
-   * Get the number of claims made today
+   * Get nonce for a specific user
+   * @param user The address of the user
    */
-  function dailyUserClaimCountGet() external view returns (uint64) {
-    return dailyUserClaimCount;
-  }
-
-  /**
-   * Get the address of the prover
-   */
-  function proverGet() external view returns (address) {
-    return prover;
-  }
-  /**
-   * Get the status of a signature
-   * @param signature Signature to check
-   */
-  function getRedeemState(bytes memory signature) external view returns (bool) {
-    return _isRedeemed(signature);
-  }
-  /*******************************************************
-   * Internal View Functions
-   ********************************************************/
-
-  /**
-   * Check if a signer is valid
-   * @param signer Address of the signer
-   */
-  function _isValidSigner(address signer) internal view returns (bool) {
-    return signer == prover;
-  }
-
-  /**
-   * Check if a signature has already been redeemed
-   * @param signature Signature to check
-   */
-  function _isRedeemed(bytes memory signature) internal view returns (bool) {
-    return redeemedOnceTime[keccak256(signature)];
+  function getUserNonce(address user) external view returns (uint256) {
+    return userNonce[user];
   }
 }
