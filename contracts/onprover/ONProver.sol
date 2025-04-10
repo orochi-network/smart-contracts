@@ -14,8 +14,9 @@ error ExceedDailyLimit(uint128 dailyLimit);
 error InvalidProofLength(uint256 proofLength);
 error InvalidProofSignature(address signer);
 error InvalidUserNonce(address user, uint96 nonce);
-error InvalidReceiption(address receiption, address proofReceiption);
+error InvalidRecipient(address recipient, address proofRecipient);
 error InactivatedCampaign(uint64 startTime, uint64 endTime);
+error UnableToMint(address recipient, uint128 amount);
 
 /**
  * @title ONProver Contract
@@ -248,20 +249,28 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
       proof
     );
 
+    // Make sure the nonce is valid
     if (transaction.nonce != userNonce[msg.sender]) {
       revert InvalidUserNonce(msg.sender, transaction.nonce);
     }
 
+    // Make sure the sender is the recipient of the token
     if (msg.sender != transaction.to) {
-      revert InvalidReceiption(msg.sender, transaction.to);
+      revert InvalidRecipient(msg.sender, transaction.to);
     }
 
     address signer = messageHash.recover(signature);
 
+    // Make sure the signature is valid for the message hash
     if (!_isOperator(signer)) {
       revert InvalidProofSignature(signer);
     }
-    config.tokenContract.mint(transaction.to, transaction.value);
+
+    //Check mint proccess recipient
+    if (!config.tokenContract.mint(transaction.to, transaction.value)) {
+      revert UnableToMint(transaction.to, transaction.value);
+    }
+
     userNonce[msg.sender] += 1;
     return (isDailyClaim, transaction.value);
   }

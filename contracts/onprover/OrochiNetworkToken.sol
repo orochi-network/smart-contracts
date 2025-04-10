@@ -57,7 +57,8 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
    * @param to Address to receive minted tokens
    * @param amount Amount of tokens to mint
    */
-  function mint(address to, uint256 amount) external onlyOperator nonReentrant {
+  function mint(address to, uint256 amount) external onlyOperator nonReentrant returns (bool) {
     _mint(to, amount);
+    return true;
   }
 }
