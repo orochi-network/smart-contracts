@@ -17,6 +17,7 @@ error InvalidUserNonce(address user, uint96 nonce);
 error InvalidRecipient(address recipient, address proofRecipient);
 error InactivatedCampaign(uint64 startTime, uint64 endTime);
 error UnableToMint(address recipient, uint128 amount);
+error InvalidTransactionTimestamp(uint64 timestamp);
 
 /**
  * @title ONProver Contract
@@ -45,6 +46,9 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
     address to;
     // Nonce value of the transaction
     uint96 nonce;
+    // Timestamp of the transaction
+    // NOTE: don't use Date.now() on client side, use block.timestamp instead.
+    uint64 timestamp;
     // Value of the transaction
     uint128 value;
   }
@@ -53,7 +57,10 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
   mapping(address => uint96) private userNonce;
 
   // Mapping to track daily claim
-  mapping(uint256 => DailyClaim) dailyClaimStorage;
+  mapping(uint256 => DailyClaim) private dailyClaimStorage;
+
+  // Mapping to track total claim for each address
+  mapping(address => uint256) private totalClaimed;
 
   // Configuration for the ONProver token
   Configuration private config;
@@ -185,18 +192,29 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
    * External User Functions (requires signature)
    ********************************************************/
 
+  /**
+   * Claim tokens for a campaign using proof
+   * @param proof Proof from operator
+   */
   function claim(bytes memory proof) external onlyActivatedCampaign nonReentrant {
-    (bool isDailyClaim, uint128 claimed) = _claim(proof);
-    if (isDailyClaim) {
+    Transaction memory transaction = _claim(proof);
+    totalClaimed[msg.sender] += transaction.value;
+
+    // If the timestamp is not zero, it means this claim is for daily token claim.
+    if (transaction.timestamp > 0) {
       uint256 today = _getCurrentDay();
       dailyClaimStorage[today].userCount += 1;
-      dailyClaimStorage[today].claimed += claimed;
+      dailyClaimStorage[today].claimed += transaction.value;
       if (dailyClaimStorage[today].claimed > config.maxDailyLimit) {
         revert ExceedDailyLimit(config.maxDailyLimit);
       }
-      emit TokenClaimDaily(msg.sender, claimed, today);
+      // Check if the timestamp is within the valid range (24 hours) from now.
+      if (transaction.timestamp < (config.timeStart + (today + 1) * 86400)) {
+        revert InvalidTransactionTimestamp(transaction.timestamp);
+      }
+      emit TokenClaimDaily(msg.sender, transaction.value, today);
     } else {
-      emit TokenClaim(msg.sender, claimed);
+      emit TokenClaim(msg.sender, transaction.value);
     }
   }
 
@@ -209,19 +227,14 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
    * @param proof Input proof
    * @return signature ECDSA signature 65 bytes
    * @return messageHash Hash of the transaction
-   * @return isDailyClaim True if it's a daily claim, false otherwise
    * @return transaction Transaction details
    */
   function _decomposeProof(
     bytes memory proof
-  )
-    private
-    pure
-    returns (bytes memory signature, bytes32 messageHash, bool isDailyClaim, Transaction memory transaction)
-  {
-    // Proof format: |65 bytes signature|20 bytes address|12 bytes nonce|16 bytes value|1 bytes isDailyClaim|
-    // Total: 114 bytes
-    if (proof.length != 114) {
+  ) private pure returns (bytes memory signature, bytes32 messageHash, Transaction memory transaction) {
+    // Proof format: |65 bytes signature|20 bytes address|12 bytes nonce|8 bytes timestamp|16 bytes value|
+    // Total: 121 bytes
+    if (proof.length != 121) {
       revert InvalidProofLength(proof.length);
     }
     signature = proof.readBytes(0, 65);
@@ -232,22 +245,20 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
       to: rawTx.readAddress(0),
       // 12 bytes
       nonce: uint96(rawTx.readUintUnsafe(20, 96)),
+      // 8 bytes
+      timestamp: uint64(rawTx.readUintUnsafe(32, 64)),
       // 16 bytes
-      value: uint128(proof.readUintUnsafe(32, 128))
+      value: uint128(proof.readUintUnsafe(40, 128))
     });
-    isDailyClaim = proof[113] > 0;
   }
 
   /**
    * Claim token from token contract
    * @param proof ECDSA signature and transaction details
-   * @return dailyClaim Is the claim for daily reward
-   * @return value Value of token to claim
+   * @return transaction Transaction details
    */
-  function _claim(bytes memory proof) private returns (bool dailyClaim, uint128 value) {
-    (bytes memory signature, bytes32 messageHash, bool isDailyClaim, Transaction memory transaction) = _decomposeProof(
-      proof
-    );
+  function _claim(bytes memory proof) private returns (Transaction memory) {
+    (bytes memory signature, bytes32 messageHash, Transaction memory transaction) = _decomposeProof(proof);
 
     // Make sure the nonce is valid
     if (transaction.nonce != userNonce[msg.sender]) {
@@ -272,7 +283,7 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
     }
 
     userNonce[msg.sender] += 1;
-    return (isDailyClaim, transaction.value);
+    return transaction;
   }
 
   /**
@@ -285,6 +296,13 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
   /*******************************************************
    * External View
    ********************************************************/
+
+  /**
+   * Get total claimed token by user
+   */
+  function getTotalClaim(address userAddress) external view returns (uint256) {
+    return totalClaimed[userAddress];
+  }
 
   /**
    * Get current day since start
