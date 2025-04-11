@@ -10,7 +10,7 @@ const TIME_END = 0;
 const TOKEN_ADDRESS = '';
 const INITIAL_OPERATORS = [''];
 
-task('deploy:ONProver', 'Deploy ONProver').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
+task('deploy:onprover', 'Deploy ONProver').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
   const { chainId } = await hre.ethers.provider.getNetwork();
   const account = await getWallet(hre, chainId);
   const deployer: Deployer = Deployer.getInstance(hre).connect(account);

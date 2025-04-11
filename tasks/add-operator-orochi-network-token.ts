@@ -6,7 +6,7 @@ import { OrochiNetworkToken } from '../typechain-types';
 const TOKEN_ADDRESS = '';
 const OPERATOR_TO_ADD = '';
 
-task('add:OperatorToken', 'Add operator to OrochiNetworkToken').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
+task('add:ontoken', 'Add operator to OrochiNetworkToken').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
   const { chainId } = await hre.ethers.provider.getNetwork();
   const account = await getWallet(hre, chainId);
   const token = (await hre.ethers.getContractAt('OrochiNetworkToken', TOKEN_ADDRESS, account)) as OrochiNetworkToken;

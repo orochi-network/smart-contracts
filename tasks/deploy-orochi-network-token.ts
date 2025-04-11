@@ -4,7 +4,7 @@ import { Deployer } from '../helpers';
 import { getWallet } from '../helpers/wallet';
 import { OrochiNetworkToken } from '../typechain-types';
 
-task('deploy:OrochiNetworkToken', 'Deploy OrochiNetworkToken').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
+task('deploy:ontoken', 'Deploy OrochiNetworkToken').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
   const { chainId } = await hre.ethers.provider.getNetwork();
 
   const account = await getWallet(hre, chainId);

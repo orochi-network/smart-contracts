@@ -6,7 +6,7 @@ import { ONProver } from '../typechain-types';
 const ONPROVER_ADDRESS = '';
 const OPERATOR_ADDRESS = '';
 
-task('add:ONProver', 'Add operator to ONProver').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
+task('add:onprover', 'Add operator to ONProver').setAction(async (_, hre: HardhatRuntimeEnvironment) => {
   const { chainId } = await hre.ethers.provider.getNetwork();
   const account = await getWallet(hre, chainId);
   const onProver = (await hre.ethers.getContractAt('ONProver', ONPROVER_ADDRESS, account)) as ONProver;

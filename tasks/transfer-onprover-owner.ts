@@ -8,7 +8,7 @@ import { ONProver } from '../typechain-types';
 const CONTRACT_ADDRESS = '';
 const OWNERADDRESS = '';
 
-task('transferOwnership:ONProver', 'Transfer ownership to owner contract').setAction(
+task('transferowner:onprover', 'Transfer ownership to owner contract').setAction(
   async (_, hre: HardhatRuntimeEnvironment) => {
     const { chainId } = await hre.ethers.provider.getNetwork();
     const account = await getWallet(hre, chainId);
