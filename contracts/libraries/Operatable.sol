@@ -7,6 +7,7 @@ contract Operatable {
   mapping(address => bool) private operator;
 
   event AddOperator(address indexed newOperator);
+
   event RemoveOperator(address indexed OldOperator);
 
   modifier onlyOperator() {
@@ -33,6 +34,6 @@ contract Operatable {
   }
 
   function isOperator(address checkAddress) external view returns (bool) {
-    return _isOperator(checkAddress);
+    return operator[checkAddress];
   }
 }
