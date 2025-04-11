@@ -228,21 +228,18 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
   /**
    * Decompose the proof into its components.
    * @param proof Input proof
-   * @return signature ECDSA signature 65 bytes
-   * @return messageHash Hash of the transaction
-   * @return transaction Transaction details
+   * @return signer Address of the signer
+   * @return transaction Detail of the transaction
    */
-  function _decomposeProof(
-    bytes memory proof
-  ) private pure returns (bytes memory signature, bytes32 messageHash, Transaction memory transaction) {
+  function _decomposeProof(bytes memory proof) private pure returns (address signer, Transaction memory transaction) {
     // Proof format: |65 bytes signature|20 bytes address|12 bytes nonce|8 bytes timestamp|16 bytes value|
     // Total: 121 bytes
     if (proof.length != 121) {
       revert InvalidProofLength(proof.length);
     }
-    signature = proof.readBytes(0, 65);
+    bytes memory signature = proof.readBytes(0, 65);
     bytes memory rawTx = proof.readBytes(65, 56);
-    messageHash = keccak256(rawTx);
+    signer = rawTx.toEthSignedMessageHash().recover(signature);
     transaction = Transaction({
       // 20 bytes
       to: rawTx.readAddress(0),
@@ -261,7 +258,7 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
    * @return transaction Transaction details
    */
   function _claim(bytes memory proof) private returns (Transaction memory) {
-    (bytes memory signature, bytes32 messageHash, Transaction memory transaction) = _decomposeProof(proof);
+    (address signer, Transaction memory transaction) = _decomposeProof(proof);
 
     // Make sure the nonce is valid
     if (transaction.nonce != userNonce[msg.sender]) {
@@ -272,8 +269,6 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
     if (msg.sender != transaction.to) {
       revert InvalidRecipient(msg.sender, transaction.to);
     }
-
-    address signer = messageHash.toEthSignedMessageHash().recover(signature);
 
     // Make sure the signature is valid for the message hash
     if (!_isOperator(signer)) {
