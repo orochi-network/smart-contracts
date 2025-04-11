@@ -14,7 +14,7 @@ task('transferOwnership:ONProver', 'Transfer ownership to owner contract').setAc
     const account = await getWallet(hre, chainId);
     const contract = (await hre.ethers.getContractAt('ONProver', CONTRACT_ADDRESS, account)) as ONProver;
     const tx = await contract.transferOwnership(OWNERADDRESS);
-    console.log('Successfully transfer ownership to', OWNERADDRESS, ', at txhash:  ', tx.hash);
+    console.log('Successfully transfer ownership to', OWNERADDRESS, ', at txhash:', tx.hash);
   },
 );
 
