@@ -89,7 +89,7 @@ const signProof = async (
   signer: SignerWithAddress,
 ): Promise<`0x${string}`> => {
   const rawProof = buildProof(to as `0x${string}`, nonce, timestamp, value);
-  const signature = await signer.signMessage(getBytes(keccak256(rawProof)));
+  const signature = await signer.signMessage(getBytes(rawProof));
   return ByteBuffer.getInstance()
     .writeBytes(signature as `0x${string}`) // write signature
     .writeBytes(rawProof) // append raw proof
