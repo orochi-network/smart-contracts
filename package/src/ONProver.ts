@@ -23,304 +23,168 @@ import type {
   TypedContractMethod,
 } from "./common.js";
 
+export declare namespace ONProver {
+  export type ConfigurationStruct = {
+    maxDailyLimit: BigNumberish;
+    timeStart: BigNumberish;
+    timeEnd: BigNumberish;
+    tokenContract: AddressLike;
+  };
+
+  export type ConfigurationStructOutput = [
+    maxDailyLimit: bigint,
+    timeStart: bigint,
+    timeEnd: bigint,
+    tokenContract: string
+  ] & {
+    maxDailyLimit: bigint;
+    timeStart: bigint;
+    timeEnd: bigint;
+    tokenContract: string;
+  };
+
+  export type DailyClaimStruct = {
+    claimed: BigNumberish;
+    userCount: BigNumberish;
+  };
+
+  export type DailyClaimStructOutput = [claimed: bigint, userCount: bigint] & {
+    claimed: bigint;
+    userCount: bigint;
+  };
+}
+
 export interface ONProverInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "allowance"
-      | "approve"
-      | "balanceOf"
+      | "addOperator"
       | "claim"
-      | "claimDaily"
-      | "dailyCheckpointGet"
-      | "dailyTokenClaimedGet"
-      | "dailyTokenLimitGet"
-      | "dailyUserClaimCountGet"
-      | "decimals"
-      | "decreaseAllowance"
-      | "getRedeemState"
-      | "increaseAllowance"
-      | "mint"
-      | "name"
+      | "getConfig"
+      | "getCurrentDay"
+      | "getMetricByDate"
+      | "getMetricToday"
+      | "getTotalClaim"
+      | "getUserNonce"
+      | "isOperator"
       | "owner"
-      | "proverGet"
+      | "removeOperator"
       | "renounceOwnership"
-      | "setDailyCheckpoint"
-      | "setDailyTokenLimit"
-      | "setProver"
-      | "setTimeRestartDaily"
-      | "symbol"
-      | "timeRestartDailyGet"
-      | "totalSupply"
-      | "transfer"
-      | "transferFrom"
+      | "setConfiguration"
       | "transferOwnership"
-      | "withdraw"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "Approval"
-      | "DailyCheckpointSet"
-      | "DailyPoolReset"
-      | "DailyTimeSet"
-      | "DailyTokenLimitSet"
+      | "AddOperator"
       | "OwnershipTransferred"
-      | "ProverSet"
+      | "RemoveOperator"
       | "TokenClaim"
       | "TokenClaimDaily"
-      | "Transfer"
+      | "UpdateConfigMaxDailyLimit"
+      | "UpdateConfigTimeEnd"
+      | "UpdateConfigTimeStart"
+      | "UpdateConfigTokenContract"
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "allowance",
-    values: [AddressLike, AddressLike]
+    functionFragment: "addOperator",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(functionFragment: "claim", values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: "getConfig", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getCurrentDay",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "approve",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "getMetricByDate",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "balanceOf",
+    functionFragment: "getMetricToday",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTotalClaim",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "claim",
-    values: [BytesLike, BigNumberish, BigNumberish]
+    functionFragment: "getUserNonce",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "claimDaily",
-    values: [BytesLike, BigNumberish, BigNumberish]
+    functionFragment: "isOperator",
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "dailyCheckpointGet",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "dailyTokenClaimedGet",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "dailyTokenLimitGet",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "dailyUserClaimCountGet",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "decreaseAllowance",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRedeemState",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "increaseAllowance",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mint",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(functionFragment: "proverGet", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "removeOperator",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "setDailyCheckpoint",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDailyTokenLimit",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setProver",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setTimeRestartDaily",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "timeRestartDailyGet",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalSupply",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transfer",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferFrom",
-    values: [AddressLike, AddressLike, BigNumberish]
+    functionFragment: "setConfiguration",
+    values: [ONProver.ConfigurationStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "withdraw",
-    values: [AddressLike, BigNumberish]
-  ): string;
 
-  decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "addOperator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "claimDaily", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getConfig", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "dailyCheckpointGet",
+    functionFragment: "getCurrentDay",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "dailyTokenClaimedGet",
+    functionFragment: "getMetricByDate",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "dailyTokenLimitGet",
+    functionFragment: "getMetricToday",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "dailyUserClaimCountGet",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "decreaseAllowance",
+    functionFragment: "getTotalClaim",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getRedeemState",
+    functionFragment: "getUserNonce",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "increaseAllowance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "isOperator", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "proverGet", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "removeOperator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setDailyCheckpoint",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDailyTokenLimit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setProver", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setTimeRestartDaily",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "timeRestartDailyGet",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalSupply",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "transferFrom",
+    functionFragment: "setConfiguration",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
-export namespace ApprovalEvent {
-  export type InputTuple = [
-    owner: AddressLike,
-    spender: AddressLike,
-    value: BigNumberish
-  ];
-  export type OutputTuple = [owner: string, spender: string, value: bigint];
+export namespace AddOperatorEvent {
+  export type InputTuple = [newOperator: AddressLike];
+  export type OutputTuple = [newOperator: string];
   export interface OutputObject {
-    owner: string;
-    spender: string;
-    value: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace DailyCheckpointSetEvent {
-  export type InputTuple = [oldTime: BigNumberish, newTime: BigNumberish];
-  export type OutputTuple = [oldTime: bigint, newTime: bigint];
-  export interface OutputObject {
-    oldTime: bigint;
-    newTime: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace DailyPoolResetEvent {
-  export type InputTuple = [
-    claimCount: BigNumberish,
-    oldTime: BigNumberish,
-    newTime: BigNumberish
-  ];
-  export type OutputTuple = [
-    claimCount: bigint,
-    oldTime: bigint,
-    newTime: bigint
-  ];
-  export interface OutputObject {
-    claimCount: bigint;
-    oldTime: bigint;
-    newTime: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace DailyTimeSetEvent {
-  export type InputTuple = [oldTime: BigNumberish, newTime: BigNumberish];
-  export type OutputTuple = [oldTime: bigint, newTime: bigint];
-  export interface OutputObject {
-    oldTime: bigint;
-    newTime: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace DailyTokenLimitSetEvent {
-  export type InputTuple = [oldLimit: BigNumberish, newLimit: BigNumberish];
-  export type OutputTuple = [oldLimit: bigint, newLimit: bigint];
-  export interface OutputObject {
-    oldLimit: bigint;
-    newLimit: bigint;
+    newOperator: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -341,12 +205,11 @@ export namespace OwnershipTransferredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace ProverSetEvent {
-  export type InputTuple = [oldSigner: AddressLike, newSigner: AddressLike];
-  export type OutputTuple = [oldSigner: string, newSigner: string];
+export namespace RemoveOperatorEvent {
+  export type InputTuple = [OldOperator: AddressLike];
+  export type OutputTuple = [OldOperator: string];
   export interface OutputObject {
-    oldSigner: string;
-    newSigner: string;
+    OldOperator: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -355,14 +218,9 @@ export namespace ProverSetEvent {
 }
 
 export namespace TokenClaimEvent {
-  export type InputTuple = [
-    signature: BytesLike,
-    to: AddressLike,
-    amount: BigNumberish
-  ];
-  export type OutputTuple = [signature: string, to: string, amount: bigint];
+  export type InputTuple = [to: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [to: string, amount: bigint];
   export interface OutputObject {
-    signature: string;
     to: string;
     amount: bigint;
   }
@@ -374,15 +232,15 @@ export namespace TokenClaimEvent {
 
 export namespace TokenClaimDailyEvent {
   export type InputTuple = [
-    signature: BytesLike,
     to: AddressLike,
-    amount: BigNumberish
+    amount: BigNumberish,
+    day: BigNumberish
   ];
-  export type OutputTuple = [signature: string, to: string, amount: bigint];
+  export type OutputTuple = [to: string, amount: bigint, day: bigint];
   export interface OutputObject {
-    signature: string;
     to: string;
     amount: bigint;
+    day: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -390,17 +248,47 @@ export namespace TokenClaimDailyEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace TransferEvent {
-  export type InputTuple = [
-    from: AddressLike,
-    to: AddressLike,
-    value: BigNumberish
-  ];
-  export type OutputTuple = [from: string, to: string, value: bigint];
+export namespace UpdateConfigMaxDailyLimitEvent {
+  export type InputTuple = [maxDailyLimit: BigNumberish];
+  export type OutputTuple = [maxDailyLimit: bigint];
   export interface OutputObject {
-    from: string;
-    to: string;
-    value: bigint;
+    maxDailyLimit: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdateConfigTimeEndEvent {
+  export type InputTuple = [timeEnd: BigNumberish];
+  export type OutputTuple = [timeEnd: bigint];
+  export interface OutputObject {
+    timeEnd: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdateConfigTimeStartEvent {
+  export type InputTuple = [timeStart: BigNumberish];
+  export type OutputTuple = [timeStart: bigint];
+  export interface OutputObject {
+    timeStart: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdateConfigTokenContractEvent {
+  export type InputTuple = [tokenContract: AddressLike];
+  export type OutputTuple = [tokenContract: string];
+  export interface OutputObject {
+    tokenContract: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -451,112 +339,60 @@ export interface ONProver extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  allowance: TypedContractMethod<
-    [owner: AddressLike, spender: AddressLike],
+  addOperator: TypedContractMethod<
+    [operatorNew: AddressLike],
+    [boolean],
+    "nonpayable"
+  >;
+
+  claim: TypedContractMethod<[proof: BytesLike], [void], "nonpayable">;
+
+  getConfig: TypedContractMethod<
+    [],
+    [ONProver.ConfigurationStructOutput],
+    "view"
+  >;
+
+  getCurrentDay: TypedContractMethod<[], [bigint], "view">;
+
+  getMetricByDate: TypedContractMethod<
+    [day: BigNumberish],
+    [ONProver.DailyClaimStructOutput],
+    "view"
+  >;
+
+  getMetricToday: TypedContractMethod<
+    [],
+    [ONProver.DailyClaimStructOutput],
+    "view"
+  >;
+
+  getTotalClaim: TypedContractMethod<
+    [userAddress: AddressLike],
     [bigint],
     "view"
   >;
 
-  approve: TypedContractMethod<
-    [spender: AddressLike, amount: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
+  getUserNonce: TypedContractMethod<[user: AddressLike], [bigint], "view">;
 
-  balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
-
-  claim: TypedContractMethod<
-    [signature: BytesLike, amount: BigNumberish, salt: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  claimDaily: TypedContractMethod<
-    [signature: BytesLike, amount: BigNumberish, salt: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  dailyCheckpointGet: TypedContractMethod<[], [bigint], "view">;
-
-  dailyTokenClaimedGet: TypedContractMethod<[], [bigint], "view">;
-
-  dailyTokenLimitGet: TypedContractMethod<[], [bigint], "view">;
-
-  dailyUserClaimCountGet: TypedContractMethod<[], [bigint], "view">;
-
-  decimals: TypedContractMethod<[], [bigint], "view">;
-
-  decreaseAllowance: TypedContractMethod<
-    [spender: AddressLike, subtractedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-
-  getRedeemState: TypedContractMethod<
-    [signature: BytesLike],
+  isOperator: TypedContractMethod<
+    [checkAddress: AddressLike],
     [boolean],
     "view"
   >;
 
-  increaseAllowance: TypedContractMethod<
-    [spender: AddressLike, addedValue: BigNumberish],
+  owner: TypedContractMethod<[], [string], "view">;
+
+  removeOperator: TypedContractMethod<
+    [operatorOld: AddressLike],
     [boolean],
     "nonpayable"
   >;
-
-  mint: TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  name: TypedContractMethod<[], [string], "view">;
-
-  owner: TypedContractMethod<[], [string], "view">;
-
-  proverGet: TypedContractMethod<[], [string], "view">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  setDailyCheckpoint: TypedContractMethod<
-    [newTime: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  setDailyTokenLimit: TypedContractMethod<
-    [newLimit: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  setProver: TypedContractMethod<
-    [newProver: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  setTimeRestartDaily: TypedContractMethod<
-    [newTime: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  symbol: TypedContractMethod<[], [string], "view">;
-
-  timeRestartDailyGet: TypedContractMethod<[], [bigint], "view">;
-
-  totalSupply: TypedContractMethod<[], [bigint], "view">;
-
-  transfer: TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-
-  transferFrom: TypedContractMethod<
-    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+  setConfiguration: TypedContractMethod<
+    [cfg: ONProver.ConfigurationStruct],
     [boolean],
     "nonpayable"
   >;
@@ -567,178 +403,67 @@ export interface ONProver extends BaseContract {
     "nonpayable"
   >;
 
-  withdraw: TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "allowance"
+    nameOrSignature: "addOperator"
+  ): TypedContractMethod<[operatorNew: AddressLike], [boolean], "nonpayable">;
+  getFunction(
+    nameOrSignature: "claim"
+  ): TypedContractMethod<[proof: BytesLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getConfig"
+  ): TypedContractMethod<[], [ONProver.ConfigurationStructOutput], "view">;
+  getFunction(
+    nameOrSignature: "getCurrentDay"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getMetricByDate"
   ): TypedContractMethod<
-    [owner: AddressLike, spender: AddressLike],
-    [bigint],
+    [day: BigNumberish],
+    [ONProver.DailyClaimStructOutput],
     "view"
   >;
   getFunction(
-    nameOrSignature: "approve"
-  ): TypedContractMethod<
-    [spender: AddressLike, amount: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
+    nameOrSignature: "getMetricToday"
+  ): TypedContractMethod<[], [ONProver.DailyClaimStructOutput], "view">;
   getFunction(
-    nameOrSignature: "balanceOf"
-  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+    nameOrSignature: "getTotalClaim"
+  ): TypedContractMethod<[userAddress: AddressLike], [bigint], "view">;
   getFunction(
-    nameOrSignature: "claim"
-  ): TypedContractMethod<
-    [signature: BytesLike, amount: BigNumberish, salt: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: "getUserNonce"
+  ): TypedContractMethod<[user: AddressLike], [bigint], "view">;
   getFunction(
-    nameOrSignature: "claimDaily"
-  ): TypedContractMethod<
-    [signature: BytesLike, amount: BigNumberish, salt: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "dailyCheckpointGet"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "dailyTokenClaimedGet"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "dailyTokenLimitGet"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "dailyUserClaimCountGet"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "decimals"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "decreaseAllowance"
-  ): TypedContractMethod<
-    [spender: AddressLike, subtractedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "getRedeemState"
-  ): TypedContractMethod<[signature: BytesLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "increaseAllowance"
-  ): TypedContractMethod<
-    [spender: AddressLike, addedValue: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "mint"
-  ): TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "name"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: "isOperator"
+  ): TypedContractMethod<[checkAddress: AddressLike], [boolean], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "proverGet"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: "removeOperator"
+  ): TypedContractMethod<[operatorOld: AddressLike], [boolean], "nonpayable">;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "setDailyCheckpoint"
-  ): TypedContractMethod<[newTime: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setDailyTokenLimit"
-  ): TypedContractMethod<[newLimit: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setProver"
-  ): TypedContractMethod<[newProver: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setTimeRestartDaily"
-  ): TypedContractMethod<[newTime: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "symbol"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "timeRestartDailyGet"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "totalSupply"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "transfer"
+    nameOrSignature: "setConfiguration"
   ): TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
-    [boolean],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "transferFrom"
-  ): TypedContractMethod<
-    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [cfg: ONProver.ConfigurationStruct],
     [boolean],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "withdraw"
-  ): TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
 
   getEvent(
-    key: "Approval"
+    key: "AddOperator"
   ): TypedContractEvent<
-    ApprovalEvent.InputTuple,
-    ApprovalEvent.OutputTuple,
-    ApprovalEvent.OutputObject
-  >;
-  getEvent(
-    key: "DailyCheckpointSet"
-  ): TypedContractEvent<
-    DailyCheckpointSetEvent.InputTuple,
-    DailyCheckpointSetEvent.OutputTuple,
-    DailyCheckpointSetEvent.OutputObject
-  >;
-  getEvent(
-    key: "DailyPoolReset"
-  ): TypedContractEvent<
-    DailyPoolResetEvent.InputTuple,
-    DailyPoolResetEvent.OutputTuple,
-    DailyPoolResetEvent.OutputObject
-  >;
-  getEvent(
-    key: "DailyTimeSet"
-  ): TypedContractEvent<
-    DailyTimeSetEvent.InputTuple,
-    DailyTimeSetEvent.OutputTuple,
-    DailyTimeSetEvent.OutputObject
-  >;
-  getEvent(
-    key: "DailyTokenLimitSet"
-  ): TypedContractEvent<
-    DailyTokenLimitSetEvent.InputTuple,
-    DailyTokenLimitSetEvent.OutputTuple,
-    DailyTokenLimitSetEvent.OutputObject
+    AddOperatorEvent.InputTuple,
+    AddOperatorEvent.OutputTuple,
+    AddOperatorEvent.OutputObject
   >;
   getEvent(
     key: "OwnershipTransferred"
@@ -748,11 +473,11 @@ export interface ONProver extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
-    key: "ProverSet"
+    key: "RemoveOperator"
   ): TypedContractEvent<
-    ProverSetEvent.InputTuple,
-    ProverSetEvent.OutputTuple,
-    ProverSetEvent.OutputObject
+    RemoveOperatorEvent.InputTuple,
+    RemoveOperatorEvent.OutputTuple,
+    RemoveOperatorEvent.OutputObject
   >;
   getEvent(
     key: "TokenClaim"
@@ -769,67 +494,44 @@ export interface ONProver extends BaseContract {
     TokenClaimDailyEvent.OutputObject
   >;
   getEvent(
-    key: "Transfer"
+    key: "UpdateConfigMaxDailyLimit"
   ): TypedContractEvent<
-    TransferEvent.InputTuple,
-    TransferEvent.OutputTuple,
-    TransferEvent.OutputObject
+    UpdateConfigMaxDailyLimitEvent.InputTuple,
+    UpdateConfigMaxDailyLimitEvent.OutputTuple,
+    UpdateConfigMaxDailyLimitEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdateConfigTimeEnd"
+  ): TypedContractEvent<
+    UpdateConfigTimeEndEvent.InputTuple,
+    UpdateConfigTimeEndEvent.OutputTuple,
+    UpdateConfigTimeEndEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdateConfigTimeStart"
+  ): TypedContractEvent<
+    UpdateConfigTimeStartEvent.InputTuple,
+    UpdateConfigTimeStartEvent.OutputTuple,
+    UpdateConfigTimeStartEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdateConfigTokenContract"
+  ): TypedContractEvent<
+    UpdateConfigTokenContractEvent.InputTuple,
+    UpdateConfigTokenContractEvent.OutputTuple,
+    UpdateConfigTokenContractEvent.OutputObject
   >;
 
   filters: {
-    "Approval(address,address,uint256)": TypedContractEvent<
-      ApprovalEvent.InputTuple,
-      ApprovalEvent.OutputTuple,
-      ApprovalEvent.OutputObject
+    "AddOperator(address)": TypedContractEvent<
+      AddOperatorEvent.InputTuple,
+      AddOperatorEvent.OutputTuple,
+      AddOperatorEvent.OutputObject
     >;
-    Approval: TypedContractEvent<
-      ApprovalEvent.InputTuple,
-      ApprovalEvent.OutputTuple,
-      ApprovalEvent.OutputObject
-    >;
-
-    "DailyCheckpointSet(uint64,uint64)": TypedContractEvent<
-      DailyCheckpointSetEvent.InputTuple,
-      DailyCheckpointSetEvent.OutputTuple,
-      DailyCheckpointSetEvent.OutputObject
-    >;
-    DailyCheckpointSet: TypedContractEvent<
-      DailyCheckpointSetEvent.InputTuple,
-      DailyCheckpointSetEvent.OutputTuple,
-      DailyCheckpointSetEvent.OutputObject
-    >;
-
-    "DailyPoolReset(uint64,uint256,uint256)": TypedContractEvent<
-      DailyPoolResetEvent.InputTuple,
-      DailyPoolResetEvent.OutputTuple,
-      DailyPoolResetEvent.OutputObject
-    >;
-    DailyPoolReset: TypedContractEvent<
-      DailyPoolResetEvent.InputTuple,
-      DailyPoolResetEvent.OutputTuple,
-      DailyPoolResetEvent.OutputObject
-    >;
-
-    "DailyTimeSet(uint64,uint64)": TypedContractEvent<
-      DailyTimeSetEvent.InputTuple,
-      DailyTimeSetEvent.OutputTuple,
-      DailyTimeSetEvent.OutputObject
-    >;
-    DailyTimeSet: TypedContractEvent<
-      DailyTimeSetEvent.InputTuple,
-      DailyTimeSetEvent.OutputTuple,
-      DailyTimeSetEvent.OutputObject
-    >;
-
-    "DailyTokenLimitSet(uint256,uint256)": TypedContractEvent<
-      DailyTokenLimitSetEvent.InputTuple,
-      DailyTokenLimitSetEvent.OutputTuple,
-      DailyTokenLimitSetEvent.OutputObject
-    >;
-    DailyTokenLimitSet: TypedContractEvent<
-      DailyTokenLimitSetEvent.InputTuple,
-      DailyTokenLimitSetEvent.OutputTuple,
-      DailyTokenLimitSetEvent.OutputObject
+    AddOperator: TypedContractEvent<
+      AddOperatorEvent.InputTuple,
+      AddOperatorEvent.OutputTuple,
+      AddOperatorEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<
@@ -843,18 +545,18 @@ export interface ONProver extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
-    "ProverSet(address,address)": TypedContractEvent<
-      ProverSetEvent.InputTuple,
-      ProverSetEvent.OutputTuple,
-      ProverSetEvent.OutputObject
+    "RemoveOperator(address)": TypedContractEvent<
+      RemoveOperatorEvent.InputTuple,
+      RemoveOperatorEvent.OutputTuple,
+      RemoveOperatorEvent.OutputObject
     >;
-    ProverSet: TypedContractEvent<
-      ProverSetEvent.InputTuple,
-      ProverSetEvent.OutputTuple,
-      ProverSetEvent.OutputObject
+    RemoveOperator: TypedContractEvent<
+      RemoveOperatorEvent.InputTuple,
+      RemoveOperatorEvent.OutputTuple,
+      RemoveOperatorEvent.OutputObject
     >;
 
-    "TokenClaim(bytes32,address,uint256)": TypedContractEvent<
+    "TokenClaim(address,uint256)": TypedContractEvent<
       TokenClaimEvent.InputTuple,
       TokenClaimEvent.OutputTuple,
       TokenClaimEvent.OutputObject
@@ -865,7 +567,7 @@ export interface ONProver extends BaseContract {
       TokenClaimEvent.OutputObject
     >;
 
-    "TokenClaimDaily(bytes32,address,uint256)": TypedContractEvent<
+    "TokenClaimDaily(address,uint256,uint256)": TypedContractEvent<
       TokenClaimDailyEvent.InputTuple,
       TokenClaimDailyEvent.OutputTuple,
       TokenClaimDailyEvent.OutputObject
@@ -876,15 +578,48 @@ export interface ONProver extends BaseContract {
       TokenClaimDailyEvent.OutputObject
     >;
 
-    "Transfer(address,address,uint256)": TypedContractEvent<
-      TransferEvent.InputTuple,
-      TransferEvent.OutputTuple,
-      TransferEvent.OutputObject
+    "UpdateConfigMaxDailyLimit(uint128)": TypedContractEvent<
+      UpdateConfigMaxDailyLimitEvent.InputTuple,
+      UpdateConfigMaxDailyLimitEvent.OutputTuple,
+      UpdateConfigMaxDailyLimitEvent.OutputObject
     >;
-    Transfer: TypedContractEvent<
-      TransferEvent.InputTuple,
-      TransferEvent.OutputTuple,
-      TransferEvent.OutputObject
+    UpdateConfigMaxDailyLimit: TypedContractEvent<
+      UpdateConfigMaxDailyLimitEvent.InputTuple,
+      UpdateConfigMaxDailyLimitEvent.OutputTuple,
+      UpdateConfigMaxDailyLimitEvent.OutputObject
+    >;
+
+    "UpdateConfigTimeEnd(uint64)": TypedContractEvent<
+      UpdateConfigTimeEndEvent.InputTuple,
+      UpdateConfigTimeEndEvent.OutputTuple,
+      UpdateConfigTimeEndEvent.OutputObject
+    >;
+    UpdateConfigTimeEnd: TypedContractEvent<
+      UpdateConfigTimeEndEvent.InputTuple,
+      UpdateConfigTimeEndEvent.OutputTuple,
+      UpdateConfigTimeEndEvent.OutputObject
+    >;
+
+    "UpdateConfigTimeStart(uint64)": TypedContractEvent<
+      UpdateConfigTimeStartEvent.InputTuple,
+      UpdateConfigTimeStartEvent.OutputTuple,
+      UpdateConfigTimeStartEvent.OutputObject
+    >;
+    UpdateConfigTimeStart: TypedContractEvent<
+      UpdateConfigTimeStartEvent.InputTuple,
+      UpdateConfigTimeStartEvent.OutputTuple,
+      UpdateConfigTimeStartEvent.OutputObject
+    >;
+
+    "UpdateConfigTokenContract(address)": TypedContractEvent<
+      UpdateConfigTokenContractEvent.InputTuple,
+      UpdateConfigTokenContractEvent.OutputTuple,
+      UpdateConfigTokenContractEvent.OutputObject
+    >;
+    UpdateConfigTokenContract: TypedContractEvent<
+      UpdateConfigTokenContractEvent.InputTuple,
+      UpdateConfigTokenContractEvent.OutputTuple,
+      UpdateConfigTokenContractEvent.OutputObject
     >;
   };
 }

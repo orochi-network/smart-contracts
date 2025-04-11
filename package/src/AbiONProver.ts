@@ -2,129 +2,187 @@ export const AbiONProver = [
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "maxDailyLimit",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timeStart",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timeEnd",
+            "type": "uint64"
+          },
+          {
+            "internalType": "contract OrochiNetworkToken",
+            "name": "tokenContract",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct ONProver.Configuration",
+        "name": "cfg",
+        "type": "tuple"
       },
       {
-        "internalType": "string",
-        "name": "symbol",
-        "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "initProver",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "listOperator",
+        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint128",
+        "name": "dailyLimit",
+        "type": "uint128"
+      }
+    ],
+    "name": "ExceedDailyLimit",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "startTime",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "endTime",
+        "type": "uint64"
+      }
+    ],
+    "name": "InactivatedCampaign",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "inputAddress",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proofLength",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidProofLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidProofSignature",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "proofRecipient",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidRecipient",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "timestamp",
+        "type": "uint64"
+      }
+    ],
+    "name": "InvalidTransactionTimestamp",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "uint96",
+        "name": "nonce",
+        "type": "uint96"
+      }
+    ],
+    "name": "InvalidUserNonce",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "requiredLen",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxLen",
+        "type": "uint256"
+      }
+    ],
+    "name": "OutOfRange",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "uint128",
+        "name": "amount",
+        "type": "uint128"
+      }
+    ],
+    "name": "UnableToMint",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "newOperator",
         "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
       }
     ],
-    "name": "Approval",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint64",
-        "name": "oldTime",
-        "type": "uint64"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint64",
-        "name": "newTime",
-        "type": "uint64"
-      }
-    ],
-    "name": "DailyCheckpointSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint64",
-        "name": "claimCount",
-        "type": "uint64"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "oldTime",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "newTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "DailyPoolReset",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint64",
-        "name": "oldTime",
-        "type": "uint64"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint64",
-        "name": "newTime",
-        "type": "uint64"
-      }
-    ],
-    "name": "DailyTimeSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "oldLimit",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "newLimit",
-        "type": "uint256"
-      }
-    ],
-    "name": "DailyTokenLimitSet",
+    "name": "AddOperator",
     "type": "event"
   },
   {
@@ -152,28 +210,16 @@ export const AbiONProver = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "oldSigner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newSigner",
+        "name": "OldOperator",
         "type": "address"
       }
     ],
-    "name": "ProverSet",
+    "name": "RemoveOperator",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "signature",
-        "type": "bytes32"
-      },
       {
         "indexed": true,
         "internalType": "address",
@@ -195,12 +241,6 @@ export const AbiONProver = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "signature",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
         "internalType": "address",
         "name": "to",
         "type": "address"
@@ -209,6 +249,12 @@ export const AbiONProver = [
         "indexed": true,
         "internalType": "uint256",
         "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "day",
         "type": "uint256"
       }
     ],
@@ -219,65 +265,63 @@ export const AbiONProver = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
+        "internalType": "uint128",
+        "name": "maxDailyLimit",
+        "type": "uint128"
       }
     ],
-    "name": "Transfer",
+    "name": "UpdateConfigMaxDailyLimit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "timeEnd",
+        "type": "uint64"
+      }
+    ],
+    "name": "UpdateConfigTimeEnd",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "timeStart",
+        "type": "uint64"
+      }
+    ],
+    "name": "UpdateConfigTimeStart",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "tokenContract",
+        "type": "address"
+      }
+    ],
+    "name": "UpdateConfigTokenContract",
     "type": "event"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "spender",
+        "name": "operatorNew",
         "type": "address"
       }
     ],
-    "name": "allowance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "approve",
+    "name": "addOperator",
     "outputs": [
       {
         "internalType": "bool",
@@ -291,38 +335,9 @@ export const AbiONProver = [
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "balanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "bytes",
-        "name": "signature",
+        "name": "proof",
         "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint96",
-        "name": "salt",
-        "type": "uint96"
       }
     ],
     "name": "claim",
@@ -331,36 +346,35 @@ export const AbiONProver = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint96",
-        "name": "salt",
-        "type": "uint96"
-      }
-    ],
-    "name": "claimDaily",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
-    "name": "dailyCheckpointGet",
+    "name": "getConfig",
     "outputs": [
       {
-        "internalType": "uint64",
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "maxDailyLimit",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timeStart",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timeEnd",
+            "type": "uint64"
+          },
+          {
+            "internalType": "contract OrochiNetworkToken",
+            "name": "tokenContract",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct ONProver.Configuration",
         "name": "",
-        "type": "uint64"
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -368,51 +382,12 @@ export const AbiONProver = [
   },
   {
     "inputs": [],
-    "name": "dailyTokenClaimedGet",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "dailyTokenLimitGet",
+    "name": "getCurrentDay",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "dailyUserClaimCountGet",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "decimals",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -421,41 +396,54 @@ export const AbiONProver = [
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
-        "name": "subtractedValue",
+        "name": "day",
         "type": "uint256"
       }
     ],
-    "name": "decreaseAllowance",
+    "name": "getMetricByDate",
     "outputs": [
       {
-        "internalType": "bool",
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "claimed",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint128",
+            "name": "userCount",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct ONProver.DailyClaim",
         "name": "",
-        "type": "bool"
+        "type": "tuple"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
-      }
-    ],
-    "name": "getRedeemState",
+    "inputs": [],
+    "name": "getMetricToday",
     "outputs": [
       {
-        "internalType": "bool",
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "claimed",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint128",
+            "name": "userCount",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct ONProver.DailyClaim",
         "name": "",
-        "type": "bool"
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -465,52 +453,54 @@ export const AbiONProver = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "spender",
+        "name": "userAddress",
         "type": "address"
-      },
+      }
+    ],
+    "name": "getTotalClaim",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "addedValue",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "increaseAllowance",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "to",
+        "name": "user",
         "type": "address"
-      },
+      }
+    ],
+    "name": "getUserNonce",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "mint",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "name",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "checkAddress",
+        "type": "address"
+      }
+    ],
+    "name": "isOperator",
     "outputs": [
       {
-        "internalType": "string",
+        "internalType": "bool",
         "name": "",
-        "type": "string"
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -530,16 +520,22 @@ export const AbiONProver = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "proverGet",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "operatorOld",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
+    "name": "removeOperator",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -552,137 +548,34 @@ export const AbiONProver = [
   {
     "inputs": [
       {
-        "internalType": "uint64",
-        "name": "newTime",
-        "type": "uint64"
+        "components": [
+          {
+            "internalType": "uint128",
+            "name": "maxDailyLimit",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timeStart",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timeEnd",
+            "type": "uint64"
+          },
+          {
+            "internalType": "contract OrochiNetworkToken",
+            "name": "tokenContract",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct ONProver.Configuration",
+        "name": "cfg",
+        "type": "tuple"
       }
     ],
-    "name": "setDailyCheckpoint",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "newLimit",
-        "type": "uint256"
-      }
-    ],
-    "name": "setDailyTokenLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newProver",
-        "type": "address"
-      }
-    ],
-    "name": "setProver",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint64",
-        "name": "newTime",
-        "type": "uint64"
-      }
-    ],
-    "name": "setTimeRestartDaily",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "symbol",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "timeRestartDailyGet",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transferFrom",
+    "name": "setConfiguration",
     "outputs": [
       {
         "internalType": "bool",
@@ -702,24 +595,6 @@ export const AbiONProver = [
       }
     ],
     "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

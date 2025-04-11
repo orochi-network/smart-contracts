@@ -138,7 +138,7 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
    ********************************************************/
 
   modifier onlyActivatedCampaign() {
-    if (block.timestamp >= config.timeStart && block.timestamp <= config.timeEnd) {
+    if (block.timestamp < config.timeStart || block.timestamp > config.timeEnd) {
       revert InactivatedCampaign(config.timeStart, config.timeEnd);
     }
     _;
@@ -209,7 +209,10 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
         revert ExceedDailyLimit(config.maxDailyLimit);
       }
       // Check if the timestamp is within the valid range (24 hours) from now.
-      if (transaction.timestamp < (config.timeStart + (today + 1) * 86400)) {
+      if (
+        transaction.timestamp >= (config.timeStart + (today + 1) * 86400) ||
+        transaction.timestamp < (config.timeStart + today * 86400)
+      ) {
         revert InvalidTransactionTimestamp(transaction.timestamp);
       }
       emit TokenClaimDaily(msg.sender, transaction.value, today);
@@ -238,7 +241,7 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
       revert InvalidProofLength(proof.length);
     }
     signature = proof.readBytes(0, 65);
-    bytes memory rawTx = proof.readBytes(65, 48);
+    bytes memory rawTx = proof.readBytes(65, 56);
     messageHash = keccak256(rawTx);
     transaction = Transaction({
       // 20 bytes
@@ -248,7 +251,7 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
       // 8 bytes
       timestamp: uint64(rawTx.readUintUnsafe(32, 64)),
       // 16 bytes
-      value: uint128(proof.readUintUnsafe(40, 128))
+      value: uint128(rawTx.readUintUnsafe(40, 128))
     });
   }
 
@@ -270,7 +273,7 @@ contract ONProver is Ownable, Operatable, ReentrancyGuard {
       revert InvalidRecipient(msg.sender, transaction.to);
     }
 
-    address signer = messageHash.recover(signature);
+    address signer = messageHash.toEthSignedMessageHash().recover(signature);
 
     // Make sure the signature is valid for the message hash
     if (!_isOperator(signer)) {
