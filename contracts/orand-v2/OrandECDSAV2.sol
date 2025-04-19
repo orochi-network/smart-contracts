@@ -15,7 +15,7 @@ contract OrandECDSAV2 is IOrandECDSAV2 {
   // Byte manipulation
   using Bytes for bytes;
 
-  // Verifiy digital signature
+  // Verify digital signature
   using ECDSA for bytes;
   using ECDSA for bytes32;
 
