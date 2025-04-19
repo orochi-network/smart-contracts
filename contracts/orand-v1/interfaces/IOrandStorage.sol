@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 error CanotOverwiteEpoch(address receiverAddress, uint256 receiverEpoch, uint256 randomness);
 
 interface IOrandStorage {
-  // Tranmission form of ECVRF epoch proof
+  // Transmission form of ECVRF epoch proof
   struct ECVRFEpochProof {
     uint256 y;
     uint256[2] gamma;
