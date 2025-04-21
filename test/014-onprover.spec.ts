@@ -356,3 +356,40 @@ it('should emit correct TokenClaim event', async () => {
   // Expect TokenClaim event emitted correctly
   await expect(onProver.connect(user03).claim(proof)).to.emit(onProver, 'TokenClaim');
 });
+
+it('should allow operator to burn tokens', async () => {
+  const balanceBefore = await token.balanceOf(user04.address);
+  expect(balanceBefore).to.equal(hre.ethers.parseUnits('4600', 18));
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('8500', 18));
+  // Operator burns tokens from user04
+  const burnAmount = hre.ethers.parseUnits('2000', 18);
+  await expect(token.connect(operator).burn(user04.address, burnAmount)).to.not.be.reverted;
+
+  // Verify user04's balance after burn
+  const balance = await token.balanceOf(user04.address);
+  expect(balance).to.equal(hre.ethers.parseUnits('2600', 18));
+
+  // Verify total supply after burn
+  const totalSupply = await token.totalSupply();
+  expect(totalSupply).to.equal(hre.ethers.parseUnits('6500', 18));
+});
+
+it('should burn to zero', async () => {
+  // User04 burns all their tokens
+  const balanceBefore = await token.balanceOf(user04.address);
+  expect(balanceBefore).to.equal(hre.ethers.parseUnits('2600', 18));
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('6500', 18));
+
+  // User04 burns all their tokens
+  await expect(token.connect(operator).burn(user04.address, balanceBefore)).to.not.be.reverted;
+
+  // Verify user04's balance after burn
+  const balance = await token.balanceOf(user04.address);
+  expect(balance).to.equal(0n);
+
+  // Verify total supply after burn
+  const totalSupply = await token.totalSupply();
+  expect(totalSupply).to.equal(hre.ethers.parseUnits('3900', 18));
+});

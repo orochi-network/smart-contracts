@@ -61,4 +61,14 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
     _mint(to, amount);
     return true;
   }
+
+  /**
+   * Burn tokens from a specific address
+   * @param from Address to burn tokens from
+   * @param amount Amount of tokens to burn
+   */
+  function burn(address from, uint256 amount) external onlyOperator nonReentrant returns (bool) {
+    _burn(from, amount);
+    return true;
+  }
 }

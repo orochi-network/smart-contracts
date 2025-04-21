@@ -63,6 +63,10 @@ const config: HardhatUserConfig = {
       url: 'https://rpc.ancient8.gg',
       chainId: 888888888,
     },
+    monadTestnet: {
+      url: 'https://testnet-rpc.monad.xyz',
+      chainId: 10143,
+    },
     u2umain: {
       url: 'https://rpc-mainnet.uniultra.xyz',
       chainId: 39,
