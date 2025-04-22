@@ -4,13 +4,14 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import '@openzeppelin/contracts/security/Pausable.sol';
 import { ECDSA } from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '../libraries/Operatable.sol';
 
 /**
  * @title Orochi Network Token
  */
-contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
+contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard, Pausable {
   /*******************************************************
    * Constructor
    ********************************************************/
@@ -46,6 +47,20 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
    */
   function removeOperator(address operatorOld) external onlyOwner returns (bool) {
     return _removeOperator(operatorOld);
+  }
+
+  /**
+   * Pause the transfer of token
+   */
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  /**
+   * Unpause the transfer of token
+   */
+  function unpause() external onlyOwner {
+    _unpause();
   }
 
   /*******************************************************
@@ -103,5 +118,13 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
    */
   function _unpack(uint256 value) internal pure returns (uint96, address) {
     return (uint96(value >> 160), address(uint160(value)));
+  }
+
+  /*******************************************************
+   * Internal override from erc20
+   ********************************************************/
+
+  function _beforeTokenTransfer(address from, address to, uint256 amount) internal override whenNotPaused {
+    super._beforeTokenTransfer(from, to, amount);
   }
 }

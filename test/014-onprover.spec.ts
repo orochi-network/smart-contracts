@@ -439,3 +439,45 @@ it('should batch burn tokens from multiple users', async () => {
   const totalSupplyAfter = await token.totalSupply();
   expect(totalSupplyAfter).to.equal(hre.ethers.parseUnits('5100', 18));
 });
+
+it('should prevent all token operations when paused (lock token)', async () => {
+  const amount = hre.ethers.parseUnits('1000', 18);
+  const packed = (BigInt(amount) << 160n) + BigInt(user01.address);
+
+  // Mint some token first to user01
+  await expect(token.connect(operator).mint(user01.address, amount)).to.not.be.reverted;
+
+  // Pause the contract
+  await token.connect(deployer).pause();
+  expect(await token.paused()).to.equal(true);
+
+  // All actions below should revert due to pause (i.e., token is "locked")
+
+  // Mint
+  await expect(token.connect(operator).mint(user02.address, amount)).to.be.revertedWith('Pausable: paused');
+
+  // Burn
+  await expect(token.connect(operator).burn(user01.address, amount)).to.be.revertedWith('Pausable: paused');
+
+  // Transfer
+  await expect(token.connect(user01).transfer(user02.address, amount)).to.be.revertedWith('Pausable: paused');
+
+  // batchMint
+  await expect(token.connect(operator).batchMint([packed])).to.be.revertedWith('Pausable: paused');
+
+  // batchBurn
+  await expect(token.connect(operator).batchBurn([packed])).to.be.revertedWith('Pausable: paused');
+});
+
+it('should allow all token operations after unpause', async () => {
+  const amount = hre.ethers.parseUnits('1000', 18);
+  const packed = (BigInt(amount) << 160n) + BigInt(user01.address);
+
+  await token.connect(deployer).unpause();
+
+  await expect(token.connect(operator).mint(user01.address, amount)).to.not.be.reverted;
+  await expect(token.connect(operator).burn(user01.address, amount)).to.not.be.reverted;
+  await expect(token.connect(operator).batchMint([packed])).to.not.be.reverted;
+  await expect(token.connect(operator).batchBurn([packed])).to.not.be.reverted;
+  await expect(token.connect(user01).transfer(user02.address, amount)).to.not.be.reverted;
+});
