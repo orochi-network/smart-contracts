@@ -91,7 +91,7 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard, Paus
    * Batch mint tokens to a specific address
    * @param packedData Array of 160 bytes(address) + 96 bytes(value) elements
    */
-  function batchMint(uint256[] calldata packedData) external onlyOperator returns (uint256) {
+  function batchMint(uint256[] calldata packedData) external nonReentrant onlyOperator returns (uint256) {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address to) = _unpack(packedData[i]);
       _mint(to, amount);
@@ -100,7 +100,7 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard, Paus
   }
 
   // Burn token in packed data
-  function batchBurn(uint256[] calldata packedData) external onlyOperator returns (uint256) {
+  function batchBurn(uint256[] calldata packedData) external nonReentrant onlyOperator returns (uint256) {
     for (uint i = 0; i < packedData.length; i += 1) {
       (uint96 amount, address from) = _unpack(packedData[i]);
       _burn(from, amount);
