@@ -393,3 +393,49 @@ it('should burn to zero', async () => {
   const totalSupply = await token.totalSupply();
   expect(totalSupply).to.equal(hre.ethers.parseUnits('3900', 18));
 });
+
+it('should batch mint tokens to multiple users', async () => {
+  // Check initial total supply
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('3900', 18));
+
+  // Prepare packed mint data
+  const mintAmount1 = hre.ethers.parseUnits('1000', 18);
+  const mintAmount2 = hre.ethers.parseUnits('500', 18);
+  const packed1 = (BigInt(mintAmount1) << 160n) + BigInt(user01.address);
+  const packed2 = (BigInt(mintAmount2) << 160n) + BigInt(user02.address);
+
+  // Perform batch mint
+  await expect(token.connect(operator).batchMint([packed1, packed2])).to.not.be.reverted;
+
+  // Check balances
+  expect(await token.balanceOf(user01.address)).to.equal(hre.ethers.parseUnits('2500', 18)); // 1200 + 1000
+  expect(await token.balanceOf(user02.address)).to.equal(hre.ethers.parseUnits('2800', 18)); // 300 + 500
+
+  // Check new total supply
+  const totalSupplyAfter = await token.totalSupply();
+  expect(totalSupplyAfter).to.equal(hre.ethers.parseUnits('5400', 18));
+});
+
+it('should batch burn tokens from multiple users', async () => {
+  // Check initial total supply
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('5400', 18));
+
+  // Prepare burn data
+  const burnAmount1 = hre.ethers.parseUnits('200', 18);
+  const burnAmount2 = hre.ethers.parseUnits('100', 18);
+  const packed1 = (BigInt(burnAmount1) << 160n) + BigInt(user01.address);
+  const packed2 = (BigInt(burnAmount2) << 160n) + BigInt(user02.address);
+
+  // Perform batch burn
+  await expect(token.connect(operator).batchBurn([packed1, packed2])).to.not.be.reverted;
+
+  // Check balances
+  expect(await token.balanceOf(user01.address)).to.equal(hre.ethers.parseUnits('2300', 18)); // 2200 - 200
+  expect(await token.balanceOf(user02.address)).to.equal(hre.ethers.parseUnits('2700', 18)); // 800 - 100
+
+  // Check new total supply
+  const totalSupplyAfter = await token.totalSupply();
+  expect(totalSupplyAfter).to.equal(hre.ethers.parseUnits('5100', 18));
+});
