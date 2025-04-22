@@ -128,13 +128,13 @@ contract OrosignMasterV1 is Ownable, ReentrancyGuard {
     address[] memory userList,
     uint256[] memory roleList,
     uint256 votingThreshold
-  ) external nonReentrant returns (address newWalletAdress) {
-    newWalletAdress = implementation.cloneDeterministic(_packing(salt, msg.sender));
-    if (newWalletAdress == address(0) || !IOrosignV1(newWalletAdress).init(userList, roleList, votingThreshold)) {
-      revert UnableToInitNewWallet(salt, msg.sender, newWalletAdress);
+  ) external nonReentrant returns (address newWalletAddress) {
+    newWalletAddress = implementation.cloneDeterministic(_packing(salt, msg.sender));
+    if (newWalletAddress == address(0) || !IOrosignV1(newWalletAddress).init(userList, roleList, votingThreshold)) {
+      revert UnableToInitNewWallet(salt, msg.sender, newWalletAddress);
     }
-    emit CreateNewWallet(salt, msg.sender, newWalletAdress);
-    return newWalletAdress;
+    emit CreateNewWallet(salt, msg.sender, newWalletAddress);
+    return newWalletAddress;
   }
 
   /*******************************************************
