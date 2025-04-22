@@ -4,13 +4,14 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import '@openzeppelin/contracts/security/Pausable.sol';
 import { ECDSA } from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '../libraries/Operatable.sol';
 
 /**
  * @title Orochi Network Token
  */
-contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
+contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard, Pausable {
   /*******************************************************
    * Constructor
    ********************************************************/
@@ -48,6 +49,20 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
     return _removeOperator(operatorOld);
   }
 
+  /**
+   * Pause the transfer of token
+   */
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  /**
+   * Unpause the transfer of token
+   */
+  function unpause() external onlyOwner {
+    _unpause();
+  }
+
   /*******************************************************
    * External Operator
    ********************************************************/
@@ -60,5 +75,56 @@ contract OrochiNetworkToken is ERC20, Operatable, Ownable, ReentrancyGuard {
   function mint(address to, uint256 amount) external onlyOperator nonReentrant returns (bool) {
     _mint(to, amount);
     return true;
+  }
+
+  /**
+   * Burn tokens from a specific address
+   * @param from Address to burn tokens from
+   * @param amount Amount of tokens to burn
+   */
+  function burn(address from, uint256 amount) external onlyOperator nonReentrant returns (bool) {
+    _burn(from, amount);
+    return true;
+  }
+
+  /**
+   * Batch mint tokens to a specific address
+   * @param packedData Array of 160 bytes(address) + 96 bytes(value) elements
+   */
+  function batchMint(uint256[] calldata packedData) external onlyOperator returns (uint256) {
+    for (uint i = 0; i < packedData.length; i += 1) {
+      (uint96 amount, address to) = _unpack(packedData[i]);
+      _mint(to, amount);
+    }
+    return packedData.length;
+  }
+
+  // Burn token in packed data
+  function batchBurn(uint256[] calldata packedData) external onlyOperator returns (uint256) {
+    for (uint i = 0; i < packedData.length; i += 1) {
+      (uint96 amount, address from) = _unpack(packedData[i]);
+      _burn(from, amount);
+    }
+    return packedData.length;
+  }
+
+  /*******************************************************
+   * Internal pure
+   ********************************************************/
+
+  /**
+   * Unpack data to get token amount and wallet address
+   * @param value Packed data containing token amount and wallet address
+   */
+  function _unpack(uint256 value) internal pure returns (uint96, address) {
+    return (uint96(value >> 160), address(uint160(value)));
+  }
+
+  /*******************************************************
+   * Internal override from erc20
+   ********************************************************/
+
+  function _beforeTokenTransfer(address from, address to, uint256 amount) internal override whenNotPaused {
+    super._beforeTokenTransfer(from, to, amount);
   }
 }

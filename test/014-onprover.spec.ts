@@ -356,3 +356,128 @@ it('should emit correct TokenClaim event', async () => {
   // Expect TokenClaim event emitted correctly
   await expect(onProver.connect(user03).claim(proof)).to.emit(onProver, 'TokenClaim');
 });
+
+it('should allow operator to burn tokens', async () => {
+  const balanceBefore = await token.balanceOf(user04.address);
+  expect(balanceBefore).to.equal(hre.ethers.parseUnits('4600', 18));
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('8500', 18));
+  // Operator burns tokens from user04
+  const burnAmount = hre.ethers.parseUnits('2000', 18);
+  await expect(token.connect(operator).burn(user04.address, burnAmount)).to.not.be.reverted;
+
+  // Verify user04's balance after burn
+  const balance = await token.balanceOf(user04.address);
+  expect(balance).to.equal(hre.ethers.parseUnits('2600', 18));
+
+  // Verify total supply after burn
+  const totalSupply = await token.totalSupply();
+  expect(totalSupply).to.equal(hre.ethers.parseUnits('6500', 18));
+});
+
+it('should burn to zero', async () => {
+  // User04 burns all their tokens
+  const balanceBefore = await token.balanceOf(user04.address);
+  expect(balanceBefore).to.equal(hre.ethers.parseUnits('2600', 18));
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('6500', 18));
+
+  // User04 burns all their tokens
+  await expect(token.connect(operator).burn(user04.address, balanceBefore)).to.not.be.reverted;
+
+  // Verify user04's balance after burn
+  const balance = await token.balanceOf(user04.address);
+  expect(balance).to.equal(0n);
+
+  // Verify total supply after burn
+  const totalSupply = await token.totalSupply();
+  expect(totalSupply).to.equal(hre.ethers.parseUnits('3900', 18));
+});
+
+it('should batch mint tokens to multiple users', async () => {
+  // Check initial total supply
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('3900', 18));
+
+  // Prepare packed mint data
+  const mintAmount1 = hre.ethers.parseUnits('1000', 18);
+  const mintAmount2 = hre.ethers.parseUnits('500', 18);
+  const packed1 = (BigInt(mintAmount1) << 160n) + BigInt(user01.address);
+  const packed2 = (BigInt(mintAmount2) << 160n) + BigInt(user02.address);
+
+  // Perform batch mint
+  await expect(token.connect(operator).batchMint([packed1, packed2])).to.not.be.reverted;
+
+  // Check balances
+  expect(await token.balanceOf(user01.address)).to.equal(hre.ethers.parseUnits('2500', 18)); // 1200 + 1000
+  expect(await token.balanceOf(user02.address)).to.equal(hre.ethers.parseUnits('2800', 18)); // 300 + 500
+
+  // Check new total supply
+  const totalSupplyAfter = await token.totalSupply();
+  expect(totalSupplyAfter).to.equal(hre.ethers.parseUnits('5400', 18));
+});
+
+it('should batch burn tokens from multiple users', async () => {
+  // Check initial total supply
+  const totalSupplyBefore = await token.totalSupply();
+  expect(totalSupplyBefore).to.equal(hre.ethers.parseUnits('5400', 18));
+
+  // Prepare burn data
+  const burnAmount1 = hre.ethers.parseUnits('200', 18);
+  const burnAmount2 = hre.ethers.parseUnits('100', 18);
+  const packed1 = (BigInt(burnAmount1) << 160n) + BigInt(user01.address);
+  const packed2 = (BigInt(burnAmount2) << 160n) + BigInt(user02.address);
+
+  // Perform batch burn
+  await expect(token.connect(operator).batchBurn([packed1, packed2])).to.not.be.reverted;
+
+  // Check balances
+  expect(await token.balanceOf(user01.address)).to.equal(hre.ethers.parseUnits('2300', 18)); // 2200 - 200
+  expect(await token.balanceOf(user02.address)).to.equal(hre.ethers.parseUnits('2700', 18)); // 800 - 100
+
+  // Check new total supply
+  const totalSupplyAfter = await token.totalSupply();
+  expect(totalSupplyAfter).to.equal(hre.ethers.parseUnits('5100', 18));
+});
+
+it('should prevent all token operations when paused (lock token)', async () => {
+  const amount = hre.ethers.parseUnits('1000', 18);
+  const packed = (BigInt(amount) << 160n) + BigInt(user01.address);
+
+  // Mint some token first to user01
+  await expect(token.connect(operator).mint(user01.address, amount)).to.not.be.reverted;
+
+  // Pause the contract
+  await token.connect(deployer).pause();
+  expect(await token.paused()).to.equal(true);
+
+  // All actions below should revert due to pause (i.e., token is "locked")
+
+  // Mint
+  await expect(token.connect(operator).mint(user02.address, amount)).to.be.revertedWith('Pausable: paused');
+
+  // Burn
+  await expect(token.connect(operator).burn(user01.address, amount)).to.be.revertedWith('Pausable: paused');
+
+  // Transfer
+  await expect(token.connect(user01).transfer(user02.address, amount)).to.be.revertedWith('Pausable: paused');
+
+  // batchMint
+  await expect(token.connect(operator).batchMint([packed])).to.be.revertedWith('Pausable: paused');
+
+  // batchBurn
+  await expect(token.connect(operator).batchBurn([packed])).to.be.revertedWith('Pausable: paused');
+});
+
+it('should allow all token operations after unpause', async () => {
+  const amount = hre.ethers.parseUnits('1000', 18);
+  const packed = (BigInt(amount) << 160n) + BigInt(user01.address);
+
+  await token.connect(deployer).unpause();
+
+  await expect(token.connect(operator).mint(user01.address, amount)).to.not.be.reverted;
+  await expect(token.connect(operator).burn(user01.address, amount)).to.not.be.reverted;
+  await expect(token.connect(operator).batchMint([packed])).to.not.be.reverted;
+  await expect(token.connect(operator).batchBurn([packed])).to.not.be.reverted;
+  await expect(token.connect(user01).transfer(user02.address, amount)).to.not.be.reverted;
+});
